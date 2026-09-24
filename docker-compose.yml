@@ -1,0 +1,21 @@
+# Local Postgres so you can develop against the same database engine
+# production uses, when you want to (SQLite remains the zero-setup
+# default for day-to-day work -- see backend/app/core/config.py).
+#
+# Usage:
+#   docker compose up -d
+#   DATABASE_URL=postgresql+psycopg2://postgres:devpassword@localhost:5432/portfolio \
+#     ./backend/.venv/bin/alembic upgrade head
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
