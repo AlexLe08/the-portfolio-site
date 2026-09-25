@@ -5,11 +5,19 @@ FastAPI + SQLAlchemy + Alembic. Defaults to SQLite locally, Postgres in producti
 ## Setup
 
 ```bash
+cd backend
 python3 -m venv .venv
 ./.venv/bin/pip install -e ".[test]"
 cp .env.example .env
 ./.venv/bin/alembic upgrade head
+./.venv/bin/python seed.py
 ```
+
+`seed.py` inserts the two real case-study projects (the Discord bot and
+the SearchInput library) so the API returns actual content instead of an
+empty list. Safe to skip on a database that already has rows — it just
+inserts, so re-running it against a non-empty `projects` table will fail
+on the `slug` unique constraint rather than silently duplicating data.
 
 ## Run
 
