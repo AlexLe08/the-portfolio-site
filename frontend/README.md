@@ -52,3 +52,5 @@ Pages that fetch backend data are rendered per-request
 build time — project data can change at any time via the backend's admin
 API, so a build-time snapshot would go stale. This means the build does
 NOT require the backend to be reachable.
+
+run cli frontend

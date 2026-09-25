@@ -53,3 +53,4 @@ docker compose up -d          # from the repo root
 export DATABASE_URL=postgresql+psycopg2://postgres:devpassword@localhost:5432/portfolio
 ./.venv/bin/alembic upgrade head
 ```
+run cli backend
