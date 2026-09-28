@@ -13,4 +13,10 @@ RUN pip install --no-cache-dir -e .
 COPY . .
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form (not exec-array form) is required here so $PORT actually
+# expands -- the array form ["uvicorn", ...] passes the literal string
+# "${PORT:-8000}" to uvicorn with no shell to interpret it. Render sets
+# $PORT dynamically per-service (commonly 10000, not 8000); locally, with
+# no $PORT set, this falls back to 8000 -- the same port docker-compose
+# and our local `uvicorn --reload` commands already expect.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

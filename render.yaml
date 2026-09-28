@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: portfolio-backend
+    runtime: docker
+    plan: free
+    rootDir: backend
+    # No dockerCommand override -- uses the Dockerfile's own CMD, which
+    # already reads $PORT (see Dockerfile). rootDir matters specifically
+    # because this is a monorepo: without it, Render would look for a
+    # Dockerfile at the repo root, not inside backend/.
+    healthCheckPath: /health
+    # Runs after the image builds, before traffic switches to the new
+    # version. If this fails (a bad migration), Render cancels the
+    # deploy and keeps the previous version live -- exactly the
+    # behavior you want from a failed schema change.
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false # set manually in the Render dashboard to your Neon connection string -- never committed
+      - key: ADMIN_API_KEY
+        generateValue: true # Render generates and stores a random secret; view it in the dashboard when you need it for admin requests
+      - key: ALLOWED_ORIGINS
+        sync: false # set manually once you know your Vercel production URL
