@@ -6,13 +6,15 @@ from app.routers import contact, projects
 
 app = FastAPI(title="Portfolio API", version="0.1.0")
 
-# The frontend (Next.js, on a different origin/port) needs explicit
-# permission to call this API from a browser. In production this should
-# be your real domain, not "*" — an open CORS policy on a write-capable
-# API is a real vulnerability, not just a lint warning.
+# The frontend (Next.js, on a different origin) needs explicit permission
+# to call this API from a browser. allowed_origins_list comes from the
+# ALLOWED_ORIGINS env var -- localhost in dev, your real Vercel/production
+# domain in prod. An open ("*") policy on a write-capable API would let
+# any website's JavaScript submit to /projects or /contact on a visitor's
+# behalf; this keeps that door shut to everything except domains we name.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"] if settings.environment == "development" else [],
+    allow_origins=settings.allowed_origins_list,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
