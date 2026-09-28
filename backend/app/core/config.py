@@ -23,5 +23,16 @@ class Settings(BaseSettings):
 
     environment: str = "development"
 
+    # Comma-separated list, e.g. "https://your-site.vercel.app,https://yourdomain.com"
+    # Kept as a single string (not a list) because env vars are always
+    # strings -- pydantic-settings would need a custom parser to accept a
+    # list directly from an environment variable, which is unnecessary
+    # complexity for something this simple to split ourselves.
+    allowed_origins: str = "http://localhost:3000"
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
 
 settings = Settings()
