@@ -9,11 +9,10 @@ services:
     # because this is a monorepo: without it, Render would look for a
     # Dockerfile at the repo root, not inside backend/.
     healthCheckPath: /health
-    # Runs after the image builds, before traffic switches to the new
-    # version. If this fails (a bad migration), Render cancels the
-    # deploy and keeps the previous version live -- exactly the
-    # behavior you want from a failed schema change.
-    preDeployCommand: alembic upgrade head
+    # Migrations run inside the container's own startup command instead
+    # of here -- see Dockerfile. preDeployCommand is a paid-plan-only
+    # feature on Render; the free plan rejects a Blueprint that sets it,
+    # even as an unused/empty value.
     envVars:
       - key: ENVIRONMENT
         value: production

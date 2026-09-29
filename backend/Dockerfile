@@ -13,10 +13,14 @@ RUN pip install --no-cache-dir -e .
 COPY . .
 
 EXPOSE 8000
-# Shell form (not exec-array form) is required here so $PORT actually
-# expands -- the array form ["uvicorn", ...] passes the literal string
-# "${PORT:-8000}" to uvicorn with no shell to interpret it. Render sets
-# $PORT dynamically per-service (commonly 10000, not 8000); locally, with
-# no $PORT set, this falls back to 8000 -- the same port docker-compose
-# and our local `uvicorn --reload` commands already expect.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# alembic upgrade head runs first, every single container start -- this
+# is what stands in for Render's preDeployCommand, which is paid-plan-only
+# (see render.yaml). It's safe to run repeatedly, including on every
+# free-tier sleep/wake cycle: alembic checks the database's recorded
+# migration version and no-ops if there's nothing new to apply. If a
+# migration genuinely fails, `&&` stops the chain before uvicorn starts,
+# the container never becomes healthy, and Render's own health-check-gated
+# rollout keeps the previous (working) version serving traffic instead of
+# replacing it with a broken one -- so most of preDeployCommand's real
+# safety property survives even without the dedicated feature.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
