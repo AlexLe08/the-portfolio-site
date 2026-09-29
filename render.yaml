@@ -12,7 +12,8 @@ services:
     # Migrations run inside the container's own startup command instead
     # of here -- see Dockerfile. preDeployCommand is a paid-plan-only
     # feature on Render; the free plan rejects a Blueprint that sets it,
-    # even as an unused/empty value.
+    # even as an unused/empty value. 
+    # This results in one extra database round trip to check the migration version each wake-up, as Free-tier has frequent 15 minute idle sleep cycles; milliseconds of increased time, acceptable at this scale for a free project.
     envVars:
       - key: ENVIRONMENT
         value: production
