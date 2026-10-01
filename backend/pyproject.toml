@@ -9,7 +9,7 @@ dependencies = [
     "alembic>=1.13",
     "pydantic-settings>=2.4",
     "pydantic[email]>=2.8",   # enables EmailStr validation used in schemas.py
-    "psycopg2-binary>=2.9",   # Postgres driver, used in production
+    "psycopg2-binary>=3.2",   # Postgres driver, used in production
 ]
 
 [project.optional-dependencies]

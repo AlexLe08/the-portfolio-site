@@ -50,6 +50,6 @@ column rename, for example; it'll see that as a drop + an add).
 
 ```bash
 docker compose up -d          # from the repo root
-export DATABASE_URL=postgresql+psycopg2://postgres:devpassword@localhost:5432/portfolio
+export DATABASE_URL=postgresql+psycopg://postgres:devpassword@localhost:5432/portfolio
 ./.venv/bin/alembic upgrade head
 ```
