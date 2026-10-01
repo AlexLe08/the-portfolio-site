@@ -4,7 +4,7 @@
 #
 # Usage:
 #   docker compose up -d
-#   DATABASE_URL=postgresql+psycopg2://postgres:devpassword@localhost:5432/portfolio \
+#   DATABASE_URL=postgresql+psycopg://postgres:devpassword@localhost:5432/portfolio \
 #     ./backend/.venv/bin/alembic upgrade head
 services:
   db:
