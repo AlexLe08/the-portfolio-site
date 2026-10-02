@@ -1,17 +1,42 @@
+/* ---------------------------------------------------------------------
+   Design tokens
+   A technical-document identity: paper, ink, one accent (signal blue)
+   that carries nearly all emphasis, and a second accent (oxide) kept
+   rare on purpose -- reserved for incident/debugging callouts so its
+   scarcity itself reads as "pay attention here" in case-study content.
+   ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f6f6f3;
+  --paper-raised: #ffffff;
+  --ink: #1c1e22;
+  --muted: #5b616b;
+  --rule: #c9cdd3;
+  --rule-strong: #9aa0a8;
+  --signal: #2f5fa3;
+  --signal-soft: #eaf0f8;
+  --oxide: #b5502c;
+  --oxide-soft: #f7ebe6;
+
+  --font-body: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-technical: var(--font-mono), "SFMono-Regular", Consolas, monospace;
+
+  --content-width: 42rem; /* ~75-80ch at body size */
+  --sheet-width: 56rem; /* wider "sheet" the content sits inside on desktop */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------------------------------------------------------------------
+   Base / reset
+   ------------------------------------------------------------------ */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html {
   height: 100%;
+  color-scheme: light;
+  scroll-padding-top: env(safe-area-inset-top, 0px);
 }
 
 html,
@@ -24,26 +49,301 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--signal) 40%, transparent);
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+a:hover {
+  text-decoration-color: var(--signal);
+}
+
+/* Visible keyboard focus everywhere, not just the mouse-friendly spots --
+   a deliberate callback to the accessibility rigor in the SearchInput
+   case study this same site is presenting. */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------------------------------------------------------------------
+   Layout shell
+   ------------------------------------------------------------------ */
+.sheet {
+  width: 100%;
+  max-width: var(--sheet-width);
+  margin-inline: auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    padding-inline: 2.5rem;
+  }
+}
+
+.prose-width {
+  max-width: var(--content-width);
+}
+
+/* ---------------------------------------------------------------------
+   Title block
+   A drafting-sheet convention, not a hero banner: a bordered table of
+   real facts, divided by ruled cells rather than a middle-dot string or
+   an eyebrow label. Every cell reports something true, nothing decorative.
+   ------------------------------------------------------------------ */
+.title-block {
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+}
+
+.title-block__heading {
+  padding: 1.75rem 1.5rem 1.25rem;
+}
+
+.title-block__name {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.title-block__role {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 1.0625rem;
+}
+
+.title-block__facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--rule-strong);
+}
+
+@media (max-width: 560px) {
+  .title-block__facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.title-block__fact {
+  padding: 0.85rem 1.5rem;
+  border-left: 1px solid var(--rule);
+}
+
+.title-block__fact:first-child {
+  border-left: none;
+}
+
+@media (max-width: 560px) {
+  .title-block__fact {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+  }
+  .title-block__fact:first-child {
+    border-top: none;
+  }
+}
+
+.title-block__fact-label {
+  font-family: var(--font-technical);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.title-block__fact-value {
+  margin-top: 0.2rem;
+  font-size: 0.9375rem;
+}
+
+/* ---------------------------------------------------------------------
+   Section rule
+   The label lives on the rule itself, as one unit -- not a floating
+   tag above a separate heading.
+   ------------------------------------------------------------------ */
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 3rem 0 1.5rem;
+}
+
+.section-rule__label {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.section-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+/* ---------------------------------------------------------------------
+   Project cards
+   Flat, bordered, no radius-and-shadow kit. Border brightens to signal
+   blue on hover/focus -- the one piece of non-decorative motion.
+   ------------------------------------------------------------------ */
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.project-card {
+  display: block;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.project-card:hover,
+.project-card:focus-visible {
+  border-color: var(--signal);
+}
+
+.project-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.project-card__summary {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  max-width: 60ch;
+}
+
+.project-card__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+.tag {
+  font-family: var(--font-technical);
+  font-size: 0.75rem;
+  color: var(--signal);
+  border: 1px solid color-mix(in srgb, var(--signal) 45%, transparent);
+  padding: 0.15rem 0.5rem;
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------------
+   Project detail page
+   ------------------------------------------------------------------ */
+.detail-header {
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detail-header__title {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.detail-header__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.detail-header__repo {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+}
+
+/* Case-study markdown content. Headings use the section-rule motif only
+   at the top level (h2); deeper levels stay plain so the rule device
+   doesn't get diluted into decoration. */
+.case-study h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2.5rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.case-study h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.case-study h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.case-study p {
+  margin: 0.9rem 0;
+  max-width: 68ch;
+}
+
+.case-study ul,
+.case-study ol {
+  margin: 0.9rem 0;
+  padding-left: 1.4rem;
+}
+
+.case-study li {
+  margin: 0.4rem 0;
+  max-width: 64ch;
+}
+
+.case-study li::marker {
+  color: var(--muted);
+}
+
+.case-study strong {
+  font-weight: 600;
+}
+
+.case-study code {
+  font-family: var(--font-technical);
+  font-size: 0.875em;
+  background: var(--signal-soft);
+  padding: 0.1em 0.35em;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  font-size: 0.9375rem;
 }
