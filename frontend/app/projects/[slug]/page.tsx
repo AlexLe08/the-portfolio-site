@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Markdown from "react-markdown";
+import Link from "next/link";
 import { api } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -24,14 +25,32 @@ export default async function ProjectDetailPage({ params }: Props) {
   }
 
   return (
-    <main>
-      <h1>{data.title}</h1>
-      <p>{data.stack.join(", ")}</p>
-      {data.repo_url && <a href={data.repo_url}>View repository</a>}
+    <main className="sheet">
+      <div className="prose-width">
+        <Link href="/" className="back-link">
+          All projects
+        </Link>
 
-      <article>
-        <Markdown>{data.case_study_md}</Markdown>
-      </article>
+        <header className="detail-header">
+          <h1 className="detail-header__title">{data.title}</h1>
+          <div className="detail-header__stack">
+            {data.stack.map((tech) => (
+              <span className="tag" key={tech}>
+                {tech}
+              </span>
+            ))}
+          </div>
+          {data.repo_url && (
+            <a href={data.repo_url} className="detail-header__repo">
+              View repository
+            </a>
+          )}
+        </header>
+
+        <article className="case-study">
+          <Markdown>{data.case_study_md}</Markdown>
+        </article>
+      </div>
     </main>
   );
 }

@@ -29,19 +29,71 @@ export default async function HomePage() {
   }
 
   return (
-    <main>
-      <h1>Alexander Le</h1>
-      <p>Full-stack projects and case studies.</p>
+    <main className="sheet">
+      <div className="prose-width">
+        <div className="title-block">
+          <div className="title-block__heading">
+            <h1 className="title-block__name">Alexander Le</h1>
+            <p className="title-block__role">
+              Full-stack engineer, backend-leaning. TypeScript and Python,
+              with four years building production React at CVS Health.
+            </p>
+          </div>
+          <div className="title-block__facts">
+            <div className="title-block__fact">
+              <div className="title-block__fact-label">role</div>
+              <div className="title-block__fact-value">
+                Software Engineer
+              </div>
+            </div>
+            <div className="title-block__fact">
+              <div className="title-block__fact-label">based in</div>
+              <div className="title-block__fact-value">
+                Worcester, MA
+              </div>
+            </div>
+            <div className="title-block__fact">
+              <div className="title-block__fact-label">status</div>
+              <div className="title-block__fact-value">
+                Open to opportunities
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <ul>
-        {data.map((project) => (
-          <li key={project.slug}>
-            <Link href={`/projects/${project.slug}`}>{project.title}</Link>
-            <p>{project.summary}</p>
-            <p>{project.stack.join(", ")}</p>
-          </li>
-        ))}
-      </ul>
+        <p style={{ marginTop: "1.75rem", maxWidth: "62ch" }}>
+          This site documents two recent projects end to end: the
+          architecture decisions, the tests that caught real bugs, and the
+          incidents that shaped the final design. Read a case study below,
+          or look at how this site itself is built in{" "}
+          <a href="https://github.com/AlexLe08/the-portfolio-site">the repository</a>.
+        </p>
+
+        <div className="section-rule">
+          <h2 className="section-rule__label">Projects</h2>
+        </div>
+
+        <ul className="project-list">
+          {data.map((project) => (
+            <li key={project.slug}>
+              <Link
+                href={`/projects/${project.slug}`}
+                className="project-card"
+              >
+                <div className="project-card__title">{project.title}</div>
+                <p className="project-card__summary">{project.summary}</p>
+                <div className="project-card__stack">
+                  {project.stack.map((tech) => (
+                    <span className="tag" key={tech}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </main>
   );
 }
