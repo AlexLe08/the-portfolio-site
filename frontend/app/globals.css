@@ -347,3 +347,135 @@ button:focus-visible {
   margin-bottom: 2rem;
   font-size: 0.9375rem;
 }
+
+
+/* ---------------------------------------------------------------------
+   Site header
+   Present on every page via layout.tsx. Deliberately quiet -- the home
+   page's title block already carries the name at full size, so this is
+   wayfinding between pages, not a second hero competing with it.
+   ------------------------------------------------------------------ */
+.site-header {
+  border-bottom: 1px solid var(--rule);
+}
+
+.site-header__inner {
+  width: 100%;
+  max-width: var(--sheet-width);
+  margin-inline: auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (min-width: 640px) {
+  .site-header__inner {
+    padding-inline: 2.5rem;
+  }
+}
+
+.site-header__brand {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.9375rem;
+}
+
+.site-header__nav {
+  font-size: 0.9375rem;
+}
+
+/* ---------------------------------------------------------------------
+   Forms
+   Flat bordered inputs, matching the project cards -- no inset shadows,
+   no rounded pill fields. Focus uses the same signal-blue ring as links
+   and cards, so the form doesn't introduce a second focus language.
+   ------------------------------------------------------------------ */
+.form-field {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.form-input {
+  width: 100%;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.form-input:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 1px;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+}
+
+.form-button {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+}
+
+.form-button:hover:not(:disabled) {
+  background: var(--signal);
+  border-color: var(--signal);
+}
+
+.form-button:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.form-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Reuses the oxide accent from the design tokens -- the same color
+   reserved for incident/debugging callouts in case-study content, so a
+   form error reads as the same kind of "something specific went wrong"
+   signal rather than inventing a third accent color just for this. */
+.form-status {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9375rem;
+  border: 1px solid;
+}
+
+.form-status--error {
+  color: var(--oxide);
+  background: var(--oxide-soft);
+  border-color: color-mix(in srgb, var(--oxide) 45%, transparent);
+}
+
+.form-status--success {
+  color: var(--signal);
+  background: var(--signal-soft);
+  border-color: color-mix(in srgb, var(--signal) 45%, transparent);
+}
