@@ -32,7 +32,6 @@
 
 ## Known issues
 
-- Test row(s) in production `contact_messages`; delete when convenient.
 - Seeded projects have `repo_url = null`; add real repository links.
 
 ## Next up (candidates, unordered)

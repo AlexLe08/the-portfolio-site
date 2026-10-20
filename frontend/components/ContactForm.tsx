@@ -50,6 +50,8 @@ export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  // Honeypot: hidden from people, filled in by form-filling bots.
+  const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -59,7 +61,7 @@ export function ContactForm() {
     setErrorMessage("");
 
     try {
-      const { error } = await api.POST("/contact", { body: { name, email, message } });
+      const { error } = await api.POST("/contact", { body: { name, email, message, website } });
       if (error) {
         // `error` is the typed 422 validation shape from the OpenAPI spec.
         // Real network failures (backend asleep, CORS block) throw instead
@@ -131,6 +133,22 @@ export function ContactForm() {
           onChange={(e) => setMessage(e.target.value)}
           className="form-input form-textarea"
           disabled={status === "submitting"}
+        />
+      </div>
+
+      {/* aria-hidden + tabIndex -1 keep it away from screen readers and
+          keyboard users; it is positioned off-screen in CSS rather than
+          type="hidden" or display:none, which many bots skip. */}
+      <div className="form-hp" aria-hidden="true">
+        <label htmlFor="website">Leave this field empty</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
         />
       </div>
 

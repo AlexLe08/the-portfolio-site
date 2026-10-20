@@ -98,6 +98,11 @@ export interface components {
             email: string;
             /** Message */
             message: string;
+            /**
+             * Website
+             * @default
+             */
+            website: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {

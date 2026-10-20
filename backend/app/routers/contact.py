@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime, timezone
 
 import httpx2
 from fastapi import APIRouter, BackgroundTasks, Depends
@@ -116,7 +117,13 @@ def notify_email(name: str, email: str, message: str) -> None:
 
 @router.post("", response_model=schemas.ContactConfirmation, status_code=201)
 def submit_contact_message(payload: schemas.ContactCreate, background_tasks: BackgroundTasks ,db: Session = Depends(get_db)):
-    message = models.ContactMessage(**payload.model_dump())
+    if payload.website:
+        # Honeypot tripped. Answer exactly like a success so the bot has no
+        # signal to adapt to, but save and notify nothing.
+        logger.info("Contact honeypot tripped; submission discarded")
+        return schemas.ContactConfirmation(id=0, created_at=datetime.now(timezone.utc))
+
+    message = models.ContactMessage(**payload.model_dump(exclude={"website"}))
     db.add(message)
     db.commit()
     db.refresh(message)

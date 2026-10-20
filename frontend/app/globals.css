@@ -427,6 +427,15 @@ button:focus-visible {
   opacity: 0.6;
 }
 
+/* Spam honeypot (see ContactForm). Off-screen, not display:none. */
+.form-hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .form-actions {
   margin-top: 1.5rem;
 }
