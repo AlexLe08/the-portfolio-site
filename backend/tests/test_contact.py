@@ -143,16 +143,38 @@ def test_webhook_connection_error_does_not_fail_the_request(client, monkeypatch,
     assert "secret-token" not in caplog.text
 
 
-def test_webhook_error_status_is_logged_without_leaking_the_url(client, monkeypatch, caplog):
-    def not_found_post(url, **kwargs):
-        return httpx2.Response(404, request=httpx2.Request("POST", url))
+def test_webhook_error_status_and_body_are_logged_without_leaking_the_url(client, monkeypatch, caplog):
+    def unauthorized_post(url, **kwargs):
+        return httpx2.Response(
+            401,
+            json={"message": "Invalid Webhook Token", "code": 50027},
+            request=httpx2.Request("POST", url),
+        )
 
     monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", not_found_post)
+    monkeypatch.setattr(contact.httpx2, "post", unauthorized_post)
 
     with caplog.at_level(logging.WARNING, logger=contact.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
-    assert "HTTPStatusError" in caplog.text
+    assert "HTTP 401" in caplog.text
+    assert "Invalid Webhook Token" in caplog.text
     assert "secret-token" not in caplog.text
+
+
+def test_webhook_error_body_in_log_is_truncated(client, monkeypatch, caplog):
+    def noisy_post(url, **kwargs):
+        return httpx2.Response(
+            500, text="x" * 1000, request=httpx2.Request("POST", url)
+        )
+
+    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(contact.httpx2, "post", noisy_post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        client.post("/contact", json=_payload())
+
+    assert "HTTP 500" in caplog.text
+    assert "x" * 200 in caplog.text
+    assert "x" * 201 not in caplog.text
