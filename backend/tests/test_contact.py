@@ -1,4 +1,5 @@
 import logging
+import re
 
 import httpx2
 import pytest
@@ -97,6 +98,8 @@ def test_webhook_receives_submitted_message(client, webhook_calls):
         "Email": "jamie@example.com",
     }
     assert call["json"]["allowed_mentions"] == {"parse": []}
+    # Discord requires "DiscordBot ($url, $version)"; see contact.DISCORD_USER_AGENT.
+    assert re.fullmatch(r"DiscordBot \(\S+, \S+\)", call["headers"]["User-Agent"])
     assert call["timeout"] == 5
 
 
@@ -161,6 +164,44 @@ def test_webhook_error_status_and_body_are_logged_without_leaking_the_url(client
     assert "HTTP 401" in caplog.text
     assert "Invalid Webhook Token" in caplog.text
     assert "secret-token" not in caplog.text
+
+
+def test_cloudflare_html_error_page_is_logged_by_its_title(client, monkeypatch, caplog):
+    page = (
+        "<!doctype html>\n<!--[if lt IE 7]> <html class='no-js ie6 oldie'> <![endif]-->\n"
+        "<html><head>\n<title>Access denied | discord.com used Cloudflare to "
+        "restrict access</title>\n</head><body>" + "padding " * 200 + "</body></html>"
+    )
+
+    def blocked_post(url, **kwargs):
+        return httpx2.Response(429, text=page, request=httpx2.Request("POST", url))
+
+    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(contact.httpx2, "post", blocked_post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert "HTTP 429" in caplog.text
+    assert "Access denied | discord.com used Cloudflare to restrict access" in caplog.text
+    assert "<!doctype" not in caplog.text.lower()
+    assert "padding" not in caplog.text
+
+
+def test_html_error_page_without_title_is_still_logged_safely(client, monkeypatch, caplog):
+    def blocked_post(url, **kwargs):
+        return httpx2.Response(
+            403, text="<html><body>blocked</body></html>", request=httpx2.Request("POST", url)
+        )
+
+    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(contact.httpx2, "post", blocked_post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        client.post("/contact", json=_payload())
+
+    assert "HTTP 403 [HTML page: no title]" in caplog.text
 
 
 def test_webhook_error_body_in_log_is_truncated(client, monkeypatch, caplog):
