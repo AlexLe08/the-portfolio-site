@@ -33,6 +33,7 @@ the free-tier-specific issues hit along the way:
 - [`docs/render-runbook.md`](docs/render-runbook.md) — backend hosting
 - [`docs/vercel-runbook.md`](docs/vercel-runbook.md) — frontend hosting
 - [`docs/ci-cd-runbook.md`](docs/ci-cd-runbook.md) — GitHub Actions and branch protection
+- [`docs/roadmap.md`](docs/roadmap.md): status, known issues, and next steps
 
 All three hosting services were chosen specifically for having a free tier
 with no mechanism to silently start billing — no payment method is on file
