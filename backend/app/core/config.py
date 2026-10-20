@@ -19,6 +19,16 @@ class Settings(BaseSettings):
     # Webhook receives contact form info from database
     discord_webhook_url: str = ""
 
+    # Email notification for new contact messages, sent through Resend's HTTP
+    # API (Render's free tier blocks outbound SMTP). Both the key and the
+    # recipient must be set for email to be sent; otherwise it is skipped.
+    # Without a verified Resend domain, the sender must stay
+    # onboarding@resend.dev and the recipient must be the address on your
+    # Resend account.
+    resend_api_key: str = ""
+    notify_email_to: str = ""
+    email_from: str = "Portfolio Contact <onboarding@resend.dev>"
+
     # Simple shared-secret auth for the single-admin write endpoints.
     # See Step 3's routers/projects.py for how this gets used — and the
     # note there on why this is enough auth for a site with one admin.
