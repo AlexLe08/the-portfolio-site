@@ -10,16 +10,13 @@
   on free tiers with no payment method on file.
 - CI: two required checks on `main` via a branch ruleset.
 - Visual design pass, shared site header, runbooks for every service.
+- ContactForm handles network failures: `api.POST` throws when the backend
+  is unreachable or CORS blocks the request, so the call is wrapped in
+  try/catch and shows a "may be waking up" error (Render free-tier cold
+  starts take 30–50 seconds).
 
 ## Known issues
 
-- **ContactForm doesn't handle network failures.** `api.POST` throws,
-  rather than returning `error`, when the backend is unreachable or CORS
-  blocks the request. There is no try/catch, so the form stays stuck on
-  "Sending…" with every field disabled. The code comment claiming a catch
-  exists is wrong. Fix: wrap the call in try/catch and show an error that
-  mentions the backend may be waking up (Render free-tier cold starts take
-  30–50 seconds).
 - Test row(s) in production `contact_messages`; delete when convenient.
 - Seeded projects have `repo_url = null`; add real repository links.
 

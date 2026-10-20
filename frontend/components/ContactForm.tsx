@@ -26,26 +26,22 @@ export function ContactForm() {
     setStatus("submitting");
     setErrorMessage("");
 
-    const { error } = await api.POST("/contact", {
-      body: { name, email, message },
-    });
-
-    if (error) {
-      // `error` here is the typed 422 validation-error shape from the
-      // OpenAPI spec -- not a generic catch. A real network failure
-      // (backend asleep, CORS block) throws instead of returning `error`,
-      // which is why that case is handled separately in the catch below.
+    try {
+      const { error } = await api.POST("/contact", { body: { name, email, message } });
+      if (error) {
+        // `error` is the typed 422 validation shape from the OpenAPI spec.
+        // Real network failures (backend asleep, CORS block) throw instead
+        // and are handled in the catch below.
+        setStatus("error");
+        setErrorMessage("The message wasn't sent. Check the email address and try again.");
+        return;
+      }
+      setStatus("success");
+      setName(""); setEmail(""); setMessage("");
+    } catch {
       setStatus("error");
-      setErrorMessage(
-        "The message wasn't sent. Check the email address and try again.",
-      );
-      return;
+      setErrorMessage("Couldn't reach the server. It may be waking up, so please try again in a minute.");
     }
-
-    setStatus("success");
-    setName("");
-    setEmail("");
-    setMessage("");
   }
 
   if (status === "success") {
