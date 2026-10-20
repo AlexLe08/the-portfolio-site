@@ -39,8 +39,10 @@
 - Admin UI for creating and editing projects, replacing curl/Swagger.
   Needs an auth decision first: the shared admin key can't safely live in
   browser JavaScript.
-- Spam protection on `/contact` (honeypot field and/or rate limiting).
-  The endpoint is public and unauthenticated.
+- Finish spam protection on `/contact`: the honeypot and an in-memory
+  per-visitor rate limit are in. After deploying, set `CLIENT_IP_HEADER` on
+  Render and run the check in "Verifying the rate limit" in
+  `docs/render-runbook.md`; until then every visitor shares one limit.
 - Content pass on home page copy and the case studies.
 - Playwright smoke tests against the deployed site; Sentry on both
   services.

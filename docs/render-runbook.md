@@ -38,6 +38,30 @@ which variables exist.
 | `DISCORD_WEBHOOK_URL` | Discord webhook URL, pasted manually | `sync: false` in render.yaml. Create it in Discord under channel settings > Integrations > Webhooks. Optional: when empty or unset, contact-message notifications are skipped. Each submission posts one embed (the message limit is 4000 characters so it fits Discord's 4096-character embed description). Delivery failures never fail the request (the message is already saved in Postgres either way) and are logged as `Discord notification failed: HTTP <status> <Discord's response>` when Discord rejects the call, or `... failed: <ErrorType>` for network errors. An `HTTP 401` ("Invalid Webhook Token") or `404` means the URL in Render is wrong or the webhook was deleted or regenerated: re-copy it from Discord, with no quotes or spaces. A GET on the URL (`curl -s -o /dev/null -w "%{http_code}\n" "<url>"`) returns 200 when it is valid. An `HTTP 429 [HTML page: ... Cloudflare ...]` line is different: Cloudflare, which fronts Discord, is blocking the service's shared outbound IP, so the URL is fine. This is outside the app's control; a redeploy may land on a different IP |
 | `RESEND_API_KEY` | Resend API key, pasted manually | `sync: false` in render.yaml. Create it in the Resend dashboard under API Keys. Optional: email is skipped unless both this and `NOTIFY_EMAIL_TO` are set. Email goes through Resend's HTTP API because Render's free tier blocks outbound SMTP (ports 25, 465, 587). Failures are logged as `Email notification failed: HTTP <status> <Resend's response>` and never fail the request |
 | `NOTIFY_EMAIL_TO` | the address that receives contact messages | `sync: false`. Without a verified Resend domain, this must be the email on your Resend account (the `onboarding@resend.dev` test sender can't send anywhere else; a `403` "You can only send testing emails to your own email address" means they differ). Each email sets `reply_to` to the visitor, so replying goes straight to them. `EMAIL_FROM` (default `Portfolio Contact <onboarding@resend.dev>`) is optional; set it only after verifying a domain in Resend |
+| `CLIENT_IP_HEADER` | request header naming the visitor, e.g. `CF-Connecting-IP` | Optional but needed in production. `POST /contact` allows 5 messages per hour per visitor (`CONTACT_RATE_LIMIT`, `CONTACT_RATE_WINDOW_SECONDS`). Behind Render's proxy the socket address is the proxy's, so without this every visitor shares one limit. Only name a header the platform overwrites, because a caller can forge any other and dodge the limit. Verify it after setting it; see "Verifying the rate limit" below. The limiter is in-memory: it resets on restart and isn't shared across instances |
+
+## Verifying the rate limit
+
+Render's docs don't say which client-IP header is trustworthy, so check it
+empirically after setting `CLIENT_IP_HEADER`. Send 6 requests with the
+honeypot field set (they save and notify nothing), each with a different
+forged value for the header:
+
+```sh
+for i in 1 2 3 4 5 6; do
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST "$API_URL/contact" \
+    -H 'content-type: application/json' -H "CF-Connecting-IP: 10.0.0.$i" \
+    -d '{"name":"a","email":"a@b.co","message":"hi","website":"x"}'
+done
+```
+
+- The 6th returns `429`: the platform overwrites the header, so the limiter
+  keys on the real client. Done.
+- All six return `201`: the header is forgeable. Don't rely on it; key on a
+  fixed entry of `X-Forwarded-For` instead.
+
+The limit is per visitor, so run this from a connection you can afford to
+have blocked for an hour.
 
 ## Free-tier limitations hit during setup, and the workarounds
 

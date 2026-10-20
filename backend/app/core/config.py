@@ -29,6 +29,16 @@ class Settings(BaseSettings):
     notify_email_to: str = ""
     email_from: str = "Portfolio Contact <onboarding@resend.dev>"
 
+    # Per-visitor limit on POST /contact. Visitors are told apart by the value
+    # of this request header when it is set (e.g. CF-Connecting-IP on Render),
+    # otherwise by the socket's peer address. Behind a proxy that address is
+    # the proxy's, so production must set this or all visitors share one
+    # limit. Only name a header the platform overwrites: a header a caller can
+    # forge lets them dodge the limit. See docs/render-runbook.md.
+    client_ip_header: str = ""
+    contact_rate_limit: int = 5
+    contact_rate_window_seconds: int = 3600
+
     # Simple shared-secret auth for the single-admin write endpoints.
     # See Step 3's routers/projects.py for how this gets used — and the
     # note there on why this is enough auth for a site with one admin.

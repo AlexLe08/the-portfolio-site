@@ -21,6 +21,17 @@ def no_real_notifications(monkeypatch):
     monkeypatch.setattr(settings, "notify_email_to", "")
 
 
+@pytest.fixture(autouse=True)
+def fresh_contact_rate_limit(monkeypatch):
+    """The contact limiter is module-level state; don't let tests share it."""
+    from app.routers import contact
+
+    monkeypatch.setattr(settings, "client_ip_header", "")
+    contact.limiter.reset()
+    yield
+    contact.limiter.reset()
+
+
 @pytest.fixture()
 def db_session():
     """

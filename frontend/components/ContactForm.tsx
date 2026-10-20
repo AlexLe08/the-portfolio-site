@@ -61,7 +61,16 @@ export function ContactForm() {
     setErrorMessage("");
 
     try {
-      const { error } = await api.POST("/contact", { body: { name, email, message, website } });
+      const { error, response } = await api.POST("/contact", {
+        body: { name, email, message, website },
+      });
+      if (response.status === 429) {
+        // Rate limited (see backend routers/contact.py). Not in the OpenAPI
+        // error shapes, so it is detected by status rather than by `error`.
+        setStatus("error");
+        setErrorMessage("Too many messages from your connection. Please try again in an hour.");
+        return;
+      }
       if (error) {
         // `error` is the typed 422 validation shape from the OpenAPI spec.
         // Real network failures (backend asleep, CORS block) throw instead
