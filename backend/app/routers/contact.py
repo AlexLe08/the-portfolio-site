@@ -39,6 +39,16 @@ def notify_discord(name: str, email: str, message: str) -> None:
             timeout=5,
         )
         response.raise_for_status()
+    except httpx2.HTTPStatusError as exc:
+        # Discord answered with an error. Its status and response body (e.g.
+        # 401 "Invalid Webhook Token") say what is wrong and don't contain the
+        # webhook URL. Must come before the HTTPError clause below, since
+        # HTTPStatusError is a subclass of HTTPError.
+        logger.warning(
+            "Discord notification failed: HTTP %s %s",
+            exc.response.status_code,
+            exc.response.text[:200],
+        )
     except (httpx2.HTTPError, httpx2.InvalidURL) as exc:
         # The message is already saved; never fail the request over a
         # notification. Log only the exception type: the webhook URL is a
