@@ -1,4 +1,5 @@
 import logging
+import re
 
 import httpx2
 from fastapi import APIRouter, BackgroundTasks, Depends
@@ -15,6 +16,26 @@ logger = logging.getLogger(__name__)
 # Discord rejects the whole post if an embed description exceeds this.
 # schemas.ContactCreate caps messages below it; the slice below is a guard.
 DISCORD_EMBED_DESCRIPTION_LIMIT = 4096
+
+# Discord's API docs require a User-Agent of this form and say requests
+# without one may be blocked with a Cloudflare error (httpx2's default
+# doesn't match it).
+DISCORD_USER_AGENT = "DiscordBot (https://github.com/AlexLe08/the-portfolio-site, 1.0)"
+
+
+def _describe_error_body(response: httpx2.Response) -> str:
+    """Short, log-safe description of a Discord error response.
+
+    Discord's own errors are JSON, so the first 200 characters are enough.
+    A block from Cloudflare (which fronts Discord) is a full HTML page, where
+    the first 200 characters are just markup; its <title> names the error.
+    """
+    text = response.text
+    if text.lstrip()[:15].lower().startswith(("<!doctype", "<html")):
+        match = re.search(r"<title>(.*?)</title>", text, re.IGNORECASE | re.DOTALL)
+        title = " ".join(match.group(1).split())[:150] if match else "no title"
+        return f"[HTML page: {title}]"
+    return text[:200]
 
 def notify_discord(name: str, email: str, message: str) -> None:
     if not settings.discord_webhook_url:
@@ -36,6 +57,7 @@ def notify_discord(name: str, email: str, message: str) -> None:
                 # Visitor-supplied text: never let it ping anyone.
                 "allowed_mentions": {"parse": []},
             },
+            headers={"User-Agent": DISCORD_USER_AGENT},
             timeout=5,
         )
         response.raise_for_status()
@@ -47,7 +69,7 @@ def notify_discord(name: str, email: str, message: str) -> None:
         logger.warning(
             "Discord notification failed: HTTP %s %s",
             exc.response.status_code,
-            exc.response.text[:200],
+            _describe_error_body(exc.response),
         )
     except (httpx2.HTTPError, httpx2.InvalidURL) as exc:
         # The message is already saved; never fail the request over a
