@@ -12,7 +12,7 @@ services:
     # Migrations run inside the container's own startup command instead
     # of here -- see Dockerfile. preDeployCommand is a paid-plan-only
     # feature on Render; the free plan rejects a Blueprint that sets it,
-    # even as an unused/empty value. 
+    # even as an unused/empty value.
     # This results in one extra database round trip to check the migration version each wake-up, as Free-tier has frequent 15 minute idle sleep cycles; milliseconds of increased time, acceptable at this scale for a free project.
     envVars:
       - key: ENVIRONMENT
@@ -23,3 +23,5 @@ services:
         generateValue: true # Render generates and stores a random secret; view it in the dashboard when you need it for admin requests
       - key: ALLOWED_ORIGINS
         sync: false # set manually once you know your Vercel production URL
+      - key: DISCORD_WEBHOOK_URL # set manually in the Render dashboard after generating a webhook url
+        sync: false

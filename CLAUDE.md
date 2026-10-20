@@ -1,0 +1,120 @@
+# CLAUDE.md
+
+Project instructions for Claude Code. Personal working-style preferences
+live in `CLAUDE.local.md` (gitignored). Current status and next steps live
+in `docs/roadmap.md`.
+
+## What this is
+
+Personal portfolio and case-study site for Alexander Le, built as a real
+product meant to keep growing, not just a portfolio piece.
+Live: https://the-portfolio-site-flax.vercel.app
+
+Monorepo:
+- `backend/`: FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2. Deployed to
+  Render (Docker, free tier). Postgres on Neon in production; SQLite
+  locally and in CI.
+- `frontend/`: Next.js App Router, React 19, TypeScript. Deployed to
+  Vercel (Hobby).
+- `docs/`: one runbook per service, plus `roadmap.md`.
+- `render.yaml`: Render Blueprint. `docker-compose.yml`: optional local
+  Postgres.
+
+## Commands
+
+Backend (run from `backend/`, always via venv binaries; there is no plain
+`python` on macOS):
+- Setup: `python3 -m venv .venv && ./.venv/bin/pip install -e ".[test]"`
+- Migrate: `./.venv/bin/alembic upgrade head`
+- Seed (empty database only, fails on duplicate slugs): `./.venv/bin/python seed.py`
+- Run: `./.venv/bin/uvicorn app.main:app --reload` (interactive docs at localhost:8000/docs)
+- Test: `./.venv/bin/pytest -v`
+- New migration after editing `app/models.py`:
+  `./.venv/bin/alembic revision --autogenerate -m "describe change"`, then
+  read the generated file before upgrading. Autogenerate treats a column
+  rename as drop + add, which deletes data.
+
+Frontend (run from `frontend/`; expects the backend at
+`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`):
+- `npm run dev`, `npm run lint`, `npm run build`
+- After any backend route or schema change, regenerate the typed client:
+  export `backend/openapi.json` (command in `frontend/README.md`), then
+  `npm run generate:types`.
+
+Before opening a PR, run backend `pytest` and frontend `lint` + `build`.
+These are exactly what CI runs.
+
+## Architecture rules
+
+Backend layering: routers → schemas → models/database. `app/core/`
+(config, security) is imported by other layers and imports nothing from
+them. Imports only point downward.
+- `schemas.py` (API contract) stays separate from `models.py` (storage).
+  One model can back several schemas; `ProjectSummary` deliberately omits
+  `case_study_md`.
+- All configuration goes through `Settings` in `app/core/config.py`. Never
+  read `os.environ` anywhere else.
+- Every schema change goes through an Alembic migration. `create_all` is
+  for tests only.
+- Tests use an in-memory SQLite database with `StaticPool`, swapped in via
+  `app.dependency_overrides[get_db]` (see `tests/conftest.py`). Keep tests
+  isolated from each other and from `dev.db`.
+- There is no `services/` layer yet. Extract one when a route handler
+  starts doing more than HTTP handling plus a simple query.
+
+Frontend:
+- Server Components by default. Use `"use client"` only for real
+  interactivity (currently only `components/ContactForm.tsx`).
+- Pages that fetch backend data set `export const dynamic = "force-dynamic"`,
+  because project data can change at any time via the admin API.
+- `lib/api-types.ts` is generated: never hand-edit it. All API calls go
+  through the typed client in `lib/api.ts`.
+
+## Hard constraints and known gotchas
+
+- **Free tiers only.** Never configure or suggest anything that adds a
+  payment method or a paid feature on Neon, Render, or Vercel. If a
+  feature is paid-only, find a free-tier workaround or ask first.
+- Render's free tier has no `preDeployCommand` and no shell access.
+  Migrations run in the Dockerfile CMD (`alembic upgrade head && uvicorn ...`).
+  The CMD must stay in shell form so `${PORT:-8000}` expands.
+- The Postgres driver is psycopg v3 (`psycopg[binary]`). SQLAlchemy 2.1+
+  maps bare `postgresql://` URLs to it. Use `postgresql+psycopg://` in
+  docs and examples, never psycopg2.
+- CORS origins come from `ALLOWED_ORIGINS` (comma-separated). Server-side
+  fetches aren't affected by CORS; client-side ones (`ContactForm`) are.
+  Vercel preview URLs are not allowed origins.
+- CI required checks are the job ids `test` (`backend.yml`) and `build`
+  (`frontend.yml`). Don't rename them without updating the GitHub ruleset.
+  Don't add `paths:` filters to workflow triggers: a required check that
+  never runs hangs as "Expected" forever. Don't add a standalone `tsc`
+  step, because `next build` type-checks after generating Next's own types.
+- `next/font/google` needs network access at build time.
+- Dependency ranges are open upward, and changed defaults have already
+  broken things twice (Starlette's TestClient moving to `httpx2`,
+  SQLAlchemy 2.1 switching drivers). When something breaks after a fresh
+  install, check the library's changelog first.
+
+## Design system (`frontend/app/globals.css`)
+
+The visual identity is a technical document. Tokens on `:root`: paper,
+ink, muted, rule, signal (blue, the primary accent), and oxide (rust,
+reserved for errors and incident callouts only). IBM Plex Sans for all
+text; Plex Mono only for literal technical identifiers (stack tags,
+title-block labels).
+
+Avoid: uppercase or letter-spaced eyebrow labels, arrow-suffixed links,
+middot-joined lists, rounded-and-shadowed cards, gradients, and new accent
+colors. Keep visible `:focus-visible` rings on everything interactive.
+
+## Workflow
+
+- `main` is protected: branch, PR, CI green, merge. Merging to `main`
+  auto-deploys both services.
+- Never commit secrets. `.env` and `.env.local` are gitignored; variable
+  names are documented in the `.env.example` files and
+  `docs/render-runbook.md`.
+- Runbooks: `docs/neon-runbook.md`, `docs/render-runbook.md`,
+  `docs/vercel-runbook.md`, `docs/ci-cd-runbook.md`. Read the relevant one
+  before changing deployment, CI, or database setup, and update it when
+  that setup changes.

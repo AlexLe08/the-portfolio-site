@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ProjectSummary(BaseModel):
@@ -33,9 +33,11 @@ class ProjectCreate(BaseModel):
 
 
 class ContactCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=200)
     email: EmailStr
-    message: str
+    # Capped below Discord's 4096-character embed description limit so the
+    # whole message fits in one webhook notification (see routers/contact.py).
+    message: str = Field(min_length=1, max_length=4000)
 
 
 class ContactConfirmation(BaseModel):
