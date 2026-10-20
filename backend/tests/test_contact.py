@@ -338,3 +338,33 @@ def test_discord_failure_does_not_stop_the_email(client, monkeypatch, caplog):
     assert response.status_code == 201
     assert "Discord notification failed: HTTP 429" in caplog.text
     assert sent == [contact.RESEND_API_URL]
+
+
+def test_honeypot_submission_looks_successful_but_is_discarded(client, db_session, webhook_calls):
+    response = client.post("/contact", json=_payload(website="http://spam.example"))
+
+    assert response.status_code == 201
+    assert set(response.json()) == {"id", "created_at"}
+    assert db_session.query(contact.models.ContactMessage).count() == 0
+    assert webhook_calls == []
+
+
+def test_honeypot_trip_is_logged_without_the_submission(client, caplog):
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        client.post("/contact", json=_payload(message="secret body", website="x"))
+
+    assert "honeypot tripped" in caplog.text
+    assert "secret body" not in caplog.text
+
+
+def test_honeypot_submission_sends_no_email(client, email_calls):
+    client.post("/contact", json=_payload(website="x"))
+
+    assert email_calls == []
+
+
+def test_empty_honeypot_is_saved_normally(client, db_session):
+    response = client.post("/contact", json=_payload(website=""))
+
+    assert response.status_code == 201
+    assert db_session.query(contact.models.ContactMessage).count() == 1

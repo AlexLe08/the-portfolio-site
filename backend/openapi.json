@@ -219,6 +219,11 @@
             "maxLength": 4000,
             "minLength": 1,
             "title": "Message"
+          },
+          "website": {
+            "type": "string",
+            "title": "Website",
+            "default": ""
           }
         },
         "type": "object",
