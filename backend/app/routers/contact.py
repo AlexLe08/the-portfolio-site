@@ -120,7 +120,9 @@ def submit_contact_message(payload: schemas.ContactCreate, background_tasks: Bac
     if payload.website:
         # Honeypot tripped. Answer exactly like a success so the bot has no
         # signal to adapt to, but save and notify nothing.
-        logger.info("Contact honeypot tripped; submission discarded")
+        # warning, not info: the root logger's default level is WARNING and
+        # uvicorn doesn't change it, so info would never reach the logs.
+        logger.warning("Contact honeypot tripped; submission discarded")
         return schemas.ContactConfirmation(id=0, created_at=datetime.now(timezone.utc))
 
     message = models.ContactMessage(**payload.model_dump(exclude={"website"}))

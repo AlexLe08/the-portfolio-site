@@ -349,6 +349,14 @@ def test_honeypot_submission_looks_successful_but_is_discarded(client, db_sessio
     assert webhook_calls == []
 
 
+def test_honeypot_trip_is_logged_without_the_submission(client, caplog):
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        client.post("/contact", json=_payload(message="secret body", website="x"))
+
+    assert "honeypot tripped" in caplog.text
+    assert "secret body" not in caplog.text
+
+
 def test_honeypot_submission_sends_no_email(client, email_calls):
     client.post("/contact", json=_payload(website="x"))
 
