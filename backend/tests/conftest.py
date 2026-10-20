@@ -4,8 +4,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.database import Base, get_db
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def no_real_notifications(monkeypatch):
+    """
+    Settings are read from the developer's real .env, which may hold a live
+    Discord webhook or Resend key. Blank them for every test so nothing can
+    send a real notification; tests that need one set it explicitly.
+    """
+    monkeypatch.setattr(settings, "discord_webhook_url", "")
+    monkeypatch.setattr(settings, "resend_api_key", "")
+    monkeypatch.setattr(settings, "notify_email_to", "")
 
 
 @pytest.fixture()

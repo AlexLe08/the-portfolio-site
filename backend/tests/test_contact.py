@@ -27,6 +27,25 @@ def webhook_calls(monkeypatch):
     return calls
 
 
+EMAIL_KEY = "re_test_secret_key"
+EMAIL_TO = "me@example.com"
+
+
+@pytest.fixture()
+def email_calls(monkeypatch):
+    """Configure Resend and record httpx2.post calls instead of sending them."""
+    calls = []
+
+    def fake_post(url, **kwargs):
+        calls.append({"url": url, **kwargs})
+        return httpx2.Response(200, json={"id": "abc"}, request=httpx2.Request("POST", url))
+
+    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(contact.httpx2, "post", fake_post)
+    return calls
+
+
 def test_submit_contact_message(client):
     response = client.post(
         "/contact",
@@ -219,3 +238,103 @@ def test_webhook_error_body_in_log_is_truncated(client, monkeypatch, caplog):
     assert "HTTP 500" in caplog.text
     assert "x" * 200 in caplog.text
     assert "x" * 201 not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "key, to",
+    [("", EMAIL_TO), (EMAIL_KEY, ""), ("", "")],
+    ids=["no-key", "no-recipient", "neither"],
+)
+def test_no_email_sent_unless_key_and_recipient_are_both_set(client, monkeypatch, key, to):
+    calls = []
+    monkeypatch.setattr(contact.settings, "resend_api_key", key)
+    monkeypatch.setattr(contact.settings, "notify_email_to", to)
+    monkeypatch.setattr(contact.httpx2, "post", lambda *a, **kw: calls.append(a))
+
+    response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert calls == []
+
+
+def test_email_notification_payload(client, email_calls):
+    response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert len(email_calls) == 1
+    call = email_calls[0]
+    assert call["url"] == contact.RESEND_API_URL
+    assert call["headers"] == {"Authorization": f"Bearer {EMAIL_KEY}"}
+    body = call["json"]
+    assert body["to"] == [EMAIL_TO]
+    assert body["from"] == contact.settings.email_from
+    assert body["reply_to"] == "jamie@example.com"
+    assert body["subject"] == "New contact message from Jamie"
+    assert "Hi there" in body["text"]
+    assert "Jamie" in body["text"] and "jamie@example.com" in body["text"]
+
+
+def test_email_subject_cannot_contain_line_breaks(client, email_calls):
+    client.post("/contact", json=_payload(name="Jamie\r\nBcc: evil@example.com"))
+
+    subject = email_calls[0]["json"]["subject"]
+    assert "\n" not in subject and "\r" not in subject
+
+
+def test_email_error_status_is_logged_without_leaking_the_key(client, monkeypatch, caplog):
+    def forbidden_post(url, **kwargs):
+        return httpx2.Response(
+            403,
+            json={"name": "validation_error", "message": "You can only send testing emails to your own email address"},
+            request=httpx2.Request("POST", url),
+        )
+
+    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(contact.httpx2, "post", forbidden_post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert "Email notification failed: HTTP 403" in caplog.text
+    assert "only send testing emails" in caplog.text
+    assert EMAIL_KEY not in caplog.text
+
+
+def test_email_connection_error_does_not_fail_the_request(client, monkeypatch, caplog):
+    def failing_post(url, **kwargs):
+        raise httpx2.ConnectError(f"cannot connect, key {EMAIL_KEY}")
+
+    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(contact.httpx2, "post", failing_post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert "Email notification failed: ConnectError" in caplog.text
+    assert EMAIL_KEY not in caplog.text
+
+
+def test_discord_failure_does_not_stop_the_email(client, monkeypatch, caplog):
+    sent = []
+
+    def post(url, **kwargs):
+        if url == WEBHOOK_URL:
+            return httpx2.Response(429, text="<html><title>Access denied</title></html>", request=httpx2.Request("POST", url))
+        sent.append(url)
+        return httpx2.Response(200, json={"id": "abc"}, request=httpx2.Request("POST", url))
+
+    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(contact.httpx2, "post", post)
+
+    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+        response = client.post("/contact", json=_payload())
+
+    assert response.status_code == 201
+    assert "Discord notification failed: HTTP 429" in caplog.text
+    assert sent == [contact.RESEND_API_URL]

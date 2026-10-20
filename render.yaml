@@ -25,3 +25,7 @@ services:
         sync: false # set manually once you know your Vercel production URL
       - key: DISCORD_WEBHOOK_URL # set manually in the Render dashboard after generating a webhook url
         sync: false
+      - key: RESEND_API_KEY # set manually in the Render dashboard (Resend > API Keys); optional, email is skipped when empty
+        sync: false
+      - key: NOTIFY_EMAIL_TO # set manually: the address that receives contact messages (your Resend account email)
+        sync: false
