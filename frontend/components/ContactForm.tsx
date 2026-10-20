@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
+import type { components } from "@/lib/api-types";
 
 // Everything in this file runs in the browser, not on the server -- the
 // "use client" directive above is what makes that possible. This is the
@@ -13,6 +14,37 @@ import { api } from "@/lib/api";
 // in the browser console, it means Render's ALLOWED_ORIGINS doesn't
 // include the origin this page is served from (see docs/render-runbook.md).
 type Status = "idle" | "submitting" | "success" | "error";
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "name",
+  email: "email address",
+  message: "message",
+};
+
+const GENERIC_ERROR = "The message wasn't sent. Check the email address and try again.";
+
+// Turns the first 422 validation error from the backend into a specific
+// message. The limits come from the error's own `ctx`, so schemas.py stays
+// the single source of truth. Anything unrecognized (e.g. a bad email)
+// falls back to the generic message.
+function describeValidationError(
+  detail: components["schemas"]["ValidationError"][] | undefined,
+): string {
+  const first = detail?.[0];
+  const field = first && FIELD_LABELS[String(first.loc.at(-1))];
+  if (!first || !field) return GENERIC_ERROR;
+
+  if (first.type === "string_too_short") {
+    return `Please enter your ${field}.`;
+  }
+  if (first.type === "string_too_long") {
+    const { max_length } = (first.ctx ?? {}) as { max_length?: number };
+    if (!max_length) return `Your ${field} is too long.`;
+    const yours = typeof first.input === "string" ? ` (yours is ${first.input.length})` : "";
+    return `Your ${field} is too long. The limit is ${max_length} characters${yours}.`;
+  }
+  return GENERIC_ERROR;
+}
 
 export function ContactForm() {
   const [name, setName] = useState("");
@@ -33,7 +65,7 @@ export function ContactForm() {
         // Real network failures (backend asleep, CORS block) throw instead
         // and are handled in the catch below.
         setStatus("error");
-        setErrorMessage("The message wasn't sent. Check the email address and try again.");
+        setErrorMessage(describeValidationError(error.detail));
         return;
       }
       setStatus("success");

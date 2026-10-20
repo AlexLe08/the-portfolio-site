@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # with zero setup. Production sets DATABASE_URL to a Postgres URL.
     database_url: str = "sqlite:///./dev.db"
 
+    # Webhook receives contact form info from database
+    discord_webhook_url: str = ""
+
     # Simple shared-secret auth for the single-admin write endpoints.
     # See Step 3's routers/projects.py for how this gets used — and the
     # note there on why this is enough auth for a site with one admin.

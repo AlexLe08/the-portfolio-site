@@ -10,12 +10,12 @@ dependencies = [
     "pydantic-settings>=2.4",
     "pydantic[email]>=2.8",   # enables EmailStr validation used in schemas.py
     "psycopg[binary]>=3.2",   # Postgres driver, used in production
+    "httpx2>=2.13,<3",  # Discord webhook client; also what starlette.testclient prefers over plain httpx
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest>=8.0",
-    "httpx2",  # starlette.testclient now prefers httpx2 over plain httpx
 ]
 
 [build-system]

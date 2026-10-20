@@ -14,6 +14,14 @@
   is unreachable or CORS blocks the request, so the call is wrapped in
   try/catch and shows a "may be waking up" error (Render free-tier cold
   starts take 30–50 seconds).
+- Contact messages post to a Discord channel via webhook (one embed per
+  message, mentions disabled, runs as a background task so it never slows
+  or fails the request). Optional via `DISCORD_WEBHOOK_URL`; failures are
+  logged, not retried.
+- `/contact` length limits: name 1–200, message 1–4000 characters (4000
+  keeps the message inside Discord's 4096-character embed description).
+  ContactForm builds specific error text from the backend's 422 detail.
+- Webhook and length-limit tests (22 backend tests total).
 
 ## Known issues
 
@@ -27,8 +35,6 @@
   browser JavaScript.
 - Spam protection on `/contact` (honeypot field and/or rate limiting).
   The endpoint is public and unauthenticated.
-- Notification when a contact message arrives. Messages are currently
-  stored but nothing alerts anyone.
 - Content pass on home page copy and the case studies.
 - Playwright smoke tests against the deployed site; Sentry on both
   services.
