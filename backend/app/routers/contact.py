@@ -3,9 +3,10 @@ import re
 from datetime import datetime, timezone
 
 import httpx2
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.core.config import settings
+from app.core.rate_limit import SlidingWindowLimiter
 
 
 from app import models, schemas
@@ -25,6 +26,30 @@ DISCORD_USER_AGENT = "DiscordBot (https://github.com/AlexLe08/the-portfolio-site
 
 
 RESEND_API_URL = "https://api.resend.com/emails"
+
+limiter = SlidingWindowLimiter(
+    settings.contact_rate_limit, settings.contact_rate_window_seconds
+)
+
+
+def _client_key(request: Request) -> str:
+    """Identify the visitor for rate limiting (see Settings.client_ip_header)."""
+    if settings.client_ip_header:
+        value = request.headers.get(settings.client_ip_header, "").strip()
+        if value:
+            # The value is client-influenced; keep stored keys small.
+            return value[:100]
+    return request.client.host if request.client else "unknown"
+
+
+def enforce_rate_limit(request: Request) -> None:
+    retry_after = limiter.check(_client_key(request))
+    if retry_after:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many messages. Please try again later.",
+            headers={"Retry-After": str(int(retry_after) + 1)},
+        )
 
 
 def _describe_error_body(response: httpx2.Response) -> str:
@@ -115,7 +140,12 @@ def notify_email(name: str, email: str, message: str) -> None:
         _log_notification_failure("Email", exc)
 
 
-@router.post("", response_model=schemas.ContactConfirmation, status_code=201)
+@router.post(
+    "",
+    response_model=schemas.ContactConfirmation,
+    status_code=201,
+    dependencies=[Depends(enforce_rate_limit)],
+)
 def submit_contact_message(payload: schemas.ContactCreate, background_tasks: BackgroundTasks ,db: Session = Depends(get_db)):
     if payload.website:
         # Honeypot tripped. Answer exactly like a success so the bot has no
