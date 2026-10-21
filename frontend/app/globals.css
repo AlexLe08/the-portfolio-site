@@ -181,6 +181,19 @@ button:focus-visible {
 }
 
 /* ---------------------------------------------------------------------
+   Intro
+   Owner-editable markdown copy (home.intro, contact.intro). Usually one
+   paragraph; spaced like case-study paragraphs when there are more.
+   ------------------------------------------------------------------ */
+.intro {
+  max-width: 62ch;
+}
+
+.intro p + p {
+  margin-top: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------
    Section rule
    The label lives on the rule itself, as one unit -- not a floating
    tag above a separate heading.

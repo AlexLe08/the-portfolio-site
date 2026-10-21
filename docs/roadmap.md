@@ -49,6 +49,13 @@
   The migration itself seeds the current home-page copy and
   `site.description`, so production gets it on deploy without a shell.
   Backend suite is now 66 tests.
+- Frontend reads site copy (content pass, step 2a): `lib/content.ts`
+  fetches `/content` once per request (`React.cache`) and merges it over
+  built-in fallbacks, giving up after 5 seconds so a cold backend never
+  holds a page. `*.intro` keys render as markdown, other keys as plain
+  text. Home and contact pages read it (contact is now `force-dynamic`);
+  project pages have `generateMetadata` (title and summary). Only keys
+  listed in the fallbacks are read, so a new key needs a code change.
 
 ## Known issues
 
@@ -64,9 +71,10 @@
   `site_content` table, not a hosted CMS like Sanity or Contentful; the
   only editor is the owner, projects already live in Postgres, and the
   admin UI can edit both). Remaining steps:
-  2. Frontend: pages read copy from `/content` with fallback text if the
-     backend is cold or a key is missing; `generateMetadata` on project
-     pages; contact page intro; GitHub and LinkedIn links.
+  2. Frontend (2b): GitHub and LinkedIn links. Needs the LinkedIn URL
+     and a placement decision from the owner. `contact.intro` isn't seeded
+     in production; its fallback text was drafted by Claude, so PUT the
+     owner's own wording.
   3. Content, applied through `/docs` (no deploy): case studies start at
      `##` (the page already renders the title as the only `<h1>`), real
      `repo_url`s, positioning line, optional third case study on this
