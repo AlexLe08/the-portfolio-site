@@ -472,6 +472,11 @@
             "type": "boolean",
             "title": "Published",
             "default": false
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order",
+            "default": 0
           }
         },
         "type": "object",
@@ -641,6 +646,17 @@
               }
             ],
             "title": "Published"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
           }
         },
         "additionalProperties": false,

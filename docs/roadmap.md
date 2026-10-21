@@ -60,10 +60,13 @@
   and on the contact page. The URLs live in `lib/links.ts`, not
   `site_content`: the header renders from the root layout, and reading
   `/content` there would put a backend call on every route.
-
-## Known issues
-
-- Seeded projects have `repo_url = null`; add real repository links.
+- Real `repo_url`s on both seeded projects, and their case studies no
+  longer open with a duplicate `#` heading (applied through PATCH).
+- Project order: a `sort_order` column (lowest first, `id` breaks ties),
+  settable on create and through PATCH. The list previously had no
+  `ORDER BY`, so Postgres could reorder it after any update. Values go
+  in steps of 10 so a project can slot in without renumbering the rest.
+  Backend suite is now 68 tests.
 
 ## Next up (candidates, unordered)
 
@@ -75,11 +78,13 @@
   `site_content` table, not a hosted CMS like Sanity or Contentful; the
   only editor is the owner, projects already live in Postgres, and the
   admin UI can edit both). Remaining steps:
-  3. Content, applied through `/docs` (no deploy): case studies start at
-     `##` (the page already renders the title as the only `<h1>`), real
-     `repo_url`s, positioning line, optional third case study on this
-     site itself, and the owner's own `contact.intro` (not seeded; the
-     fallback text was drafted by Claude). Facts come from the owner.
+  3. Content, applied through `/docs` (no deploy): positioning line
+     (`home.role`), a third case study on this site itself shown first
+     (`portfolio-site`, `sort_order` 10; then the component library at
+     20 and the Discord bot at 30), and `home.intro`, which still says
+     "two recent projects". The owner's own `contact.intro` is deferred;
+     the fallback text was drafted by Claude. Add more `repo_url`s as
+     other repositories go public. Facts come from the owner.
 - Media library (after the content pass): images and other media stored
   as URLs, never as bytes in Postgres. A `media` table (url, required alt
   text, width, height, content type), an admin upload endpoint to object

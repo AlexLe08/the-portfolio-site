@@ -180,6 +180,11 @@ export interface components {
              * @default false
              */
             published: boolean;
+            /**
+             * Sort Order
+             * @default 0
+             */
+            sort_order: number;
         };
         /**
          * ProjectDetail
@@ -239,6 +244,8 @@ export interface components {
             repo_url?: string | null;
             /** Published */
             published?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
         };
         /** ValidationError */
         ValidationError: {
