@@ -34,6 +34,9 @@
   (5 per hour, `429` after that), keyed on `CF-Connecting-IP` via
   `CLIENT_IP_HEADER`. Verified in production, including that separate
   networks get separate limits.
+- `app/services/` layer: the Discord and email notifiers moved out of
+  `routers/contact.py` into `services/notifications.py`. The router keeps
+  HTTP concerns only (rate-limit dependency, honeypot, save, scheduling).
 
 ## Known issues
 
@@ -52,10 +55,6 @@
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.
-- Extract a `services/` layer for notifications. `routers/contact.py` now
-  holds two notifiers, shared error logging, the honeypot check and the
-  rate-limit dependency (`enforce_rate_limit`, `_client_key`); moving the
-  notifiers out would match the rule in CLAUDE.md.
 - Contact rate limiter follow-ups: it is in-memory, so it resets on restart
   or cold start and isn't shared across instances (move to the database or
   Redis only if the service ever scales out). `ContactForm`'s 429 message

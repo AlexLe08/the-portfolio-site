@@ -36,7 +36,7 @@ class ContactCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: EmailStr
     # Capped below Discord's 4096-character embed description limit so the
-    # whole message fits in one webhook notification (see routers/contact.py).
+    # whole message fits in one webhook notification (see services/notifications.py).
     message: str = Field(min_length=1, max_length=4000)
     # Honeypot: the form renders this field hidden, so people never fill it
     # but form-filling bots do. Not stored (see routers/contact.py). No length

@@ -5,6 +5,7 @@ import httpx2
 import pytest
 
 from app.routers import contact
+from app.services import notifications
 
 WEBHOOK_URL = "https://discord.example/api/webhooks/123/secret-token"
 
@@ -22,8 +23,8 @@ def webhook_calls(monkeypatch):
         calls.append({"url": url, **kwargs})
         return httpx2.Response(204, request=httpx2.Request("POST", url))
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", fake_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", fake_post)
     return calls
 
 
@@ -40,9 +41,9 @@ def email_calls(monkeypatch):
         calls.append({"url": url, **kwargs})
         return httpx2.Response(200, json={"id": "abc"}, request=httpx2.Request("POST", url))
 
-    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
-    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
-    monkeypatch.setattr(contact.httpx2, "post", fake_post)
+    monkeypatch.setattr(notifications.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(notifications.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(notifications.httpx2, "post", fake_post)
     return calls
 
 
@@ -94,8 +95,8 @@ def test_submit_contact_message_accepts_lengths_at_the_limit(client, overrides):
 
 def test_no_webhook_call_when_url_not_configured(client, monkeypatch):
     calls = []
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", "")
-    monkeypatch.setattr(contact.httpx2, "post", lambda *a, **kw: calls.append(a))
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", "")
+    monkeypatch.setattr(notifications.httpx2, "post", lambda *a, **kw: calls.append(a))
 
     response = client.post("/contact", json=_payload())
 
@@ -117,7 +118,7 @@ def test_webhook_receives_submitted_message(client, webhook_calls):
         "Email": "jamie@example.com",
     }
     assert call["json"]["allowed_mentions"] == {"parse": []}
-    # Discord requires "DiscordBot ($url, $version)"; see contact.DISCORD_USER_AGENT.
+    # Discord requires "DiscordBot ($url, $version)"; see notifications.DISCORD_USER_AGENT.
     assert re.fullmatch(r"DiscordBot \(\S+, \S+\)", call["headers"]["User-Agent"])
     assert call["timeout"] == 5
 
@@ -154,10 +155,10 @@ def test_webhook_connection_error_does_not_fail_the_request(client, monkeypatch,
     def failing_post(url, **kwargs):
         raise httpx2.ConnectError(f"cannot connect to {url}")
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", failing_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", failing_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
@@ -173,10 +174,10 @@ def test_webhook_error_status_and_body_are_logged_without_leaking_the_url(client
             request=httpx2.Request("POST", url),
         )
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", unauthorized_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", unauthorized_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
@@ -195,10 +196,10 @@ def test_cloudflare_html_error_page_is_logged_by_its_title(client, monkeypatch, 
     def blocked_post(url, **kwargs):
         return httpx2.Response(429, text=page, request=httpx2.Request("POST", url))
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", blocked_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", blocked_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
@@ -214,10 +215,10 @@ def test_html_error_page_without_title_is_still_logged_safely(client, monkeypatc
             403, text="<html><body>blocked</body></html>", request=httpx2.Request("POST", url)
         )
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", blocked_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", blocked_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         client.post("/contact", json=_payload())
 
     assert "HTTP 403 [HTML page: no title]" in caplog.text
@@ -229,10 +230,10 @@ def test_webhook_error_body_in_log_is_truncated(client, monkeypatch, caplog):
             500, text="x" * 1000, request=httpx2.Request("POST", url)
         )
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.httpx2, "post", noisy_post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.httpx2, "post", noisy_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         client.post("/contact", json=_payload())
 
     assert "HTTP 500" in caplog.text
@@ -247,9 +248,9 @@ def test_webhook_error_body_in_log_is_truncated(client, monkeypatch, caplog):
 )
 def test_no_email_sent_unless_key_and_recipient_are_both_set(client, monkeypatch, key, to):
     calls = []
-    monkeypatch.setattr(contact.settings, "resend_api_key", key)
-    monkeypatch.setattr(contact.settings, "notify_email_to", to)
-    monkeypatch.setattr(contact.httpx2, "post", lambda *a, **kw: calls.append(a))
+    monkeypatch.setattr(notifications.settings, "resend_api_key", key)
+    monkeypatch.setattr(notifications.settings, "notify_email_to", to)
+    monkeypatch.setattr(notifications.httpx2, "post", lambda *a, **kw: calls.append(a))
 
     response = client.post("/contact", json=_payload())
 
@@ -263,11 +264,11 @@ def test_email_notification_payload(client, email_calls):
     assert response.status_code == 201
     assert len(email_calls) == 1
     call = email_calls[0]
-    assert call["url"] == contact.RESEND_API_URL
+    assert call["url"] == notifications.RESEND_API_URL
     assert call["headers"] == {"Authorization": f"Bearer {EMAIL_KEY}"}
     body = call["json"]
     assert body["to"] == [EMAIL_TO]
-    assert body["from"] == contact.settings.email_from
+    assert body["from"] == notifications.settings.email_from
     assert body["reply_to"] == "jamie@example.com"
     assert body["subject"] == "New contact message from Jamie"
     assert "Hi there" in body["text"]
@@ -289,11 +290,11 @@ def test_email_error_status_is_logged_without_leaking_the_key(client, monkeypatc
             request=httpx2.Request("POST", url),
         )
 
-    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
-    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
-    monkeypatch.setattr(contact.httpx2, "post", forbidden_post)
+    monkeypatch.setattr(notifications.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(notifications.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(notifications.httpx2, "post", forbidden_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
@@ -306,11 +307,11 @@ def test_email_connection_error_does_not_fail_the_request(client, monkeypatch, c
     def failing_post(url, **kwargs):
         raise httpx2.ConnectError(f"cannot connect, key {EMAIL_KEY}")
 
-    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
-    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
-    monkeypatch.setattr(contact.httpx2, "post", failing_post)
+    monkeypatch.setattr(notifications.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(notifications.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(notifications.httpx2, "post", failing_post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
@@ -327,17 +328,17 @@ def test_discord_failure_does_not_stop_the_email(client, monkeypatch, caplog):
         sent.append(url)
         return httpx2.Response(200, json={"id": "abc"}, request=httpx2.Request("POST", url))
 
-    monkeypatch.setattr(contact.settings, "discord_webhook_url", WEBHOOK_URL)
-    monkeypatch.setattr(contact.settings, "resend_api_key", EMAIL_KEY)
-    monkeypatch.setattr(contact.settings, "notify_email_to", EMAIL_TO)
-    monkeypatch.setattr(contact.httpx2, "post", post)
+    monkeypatch.setattr(notifications.settings, "discord_webhook_url", WEBHOOK_URL)
+    monkeypatch.setattr(notifications.settings, "resend_api_key", EMAIL_KEY)
+    monkeypatch.setattr(notifications.settings, "notify_email_to", EMAIL_TO)
+    monkeypatch.setattr(notifications.httpx2, "post", post)
 
-    with caplog.at_level(logging.WARNING, logger=contact.logger.name):
+    with caplog.at_level(logging.WARNING, logger=notifications.logger.name):
         response = client.post("/contact", json=_payload())
 
     assert response.status_code == 201
     assert "Discord notification failed: HTTP 429" in caplog.text
-    assert sent == [contact.RESEND_API_URL]
+    assert sent == [notifications.RESEND_API_URL]
 
 
 def test_honeypot_submission_looks_successful_but_is_discarded(client, db_session, webhook_calls):
