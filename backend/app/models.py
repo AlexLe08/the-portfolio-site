@@ -17,6 +17,9 @@ class Project(Base):
     case_study_md: Mapped[str] = mapped_column(Text)
     repo_url: Mapped[str | None] = mapped_column(String(300), nullable=True)
     published: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Position in the project list, lowest first. server_default lets the
+    # migration add this NOT NULL column to rows that already exist.
+    sort_order: Mapped[int] = mapped_column(Integer, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

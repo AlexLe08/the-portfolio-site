@@ -11,7 +11,13 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.get("", response_model=list[schemas.ProjectSummary])
 def list_projects(db: Session = Depends(get_db)):
-    stmt = select(models.Project).where(models.Project.published.is_(True))
+    # Without ORDER BY, Postgres returns rows in whatever order it finds them,
+    # and an UPDATE can move a row. id breaks ties so the order is stable.
+    stmt = (
+        select(models.Project)
+        .where(models.Project.published.is_(True))
+        .order_by(models.Project.sort_order, models.Project.id)
+    )
     return db.scalars(stmt).all()
 
 

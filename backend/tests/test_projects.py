@@ -29,6 +29,17 @@ def test_list_projects_only_returns_published(client, db_session):
     assert slugs == ["published-one"]
 
 
+def test_list_projects_orders_by_sort_order_then_id(client, db_session):
+    make_project(db_session, slug="third", sort_order=2)
+    make_project(db_session, slug="tied-first", sort_order=1)
+    make_project(db_session, slug="tied-second", sort_order=1)
+
+    response = client.get("/projects")
+
+    slugs = [p["slug"] for p in response.json()]
+    assert slugs == ["tied-first", "tied-second", "third"]
+
+
 def test_project_summary_omits_case_study_body(client, db_session):
     make_project(db_session, slug="published-one")
 
@@ -182,6 +193,19 @@ def test_update_project_can_publish_a_draft(client, db_session):
 
     assert response.status_code == 200
     assert client.get("/projects/draft-one").status_code == 200
+
+
+def test_update_project_can_change_sort_order(client, db_session):
+    make_project(db_session, slug="first", sort_order=1)
+    make_project(db_session, slug="second", sort_order=2)
+
+    response = client.patch(
+        "/projects/second", json={"sort_order": 0}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 200
+    slugs = [p["slug"] for p in client.get("/projects").json()]
+    assert slugs == ["second", "first"]
 
 
 def test_update_project_rejects_null_for_required_fields(client, db_session):

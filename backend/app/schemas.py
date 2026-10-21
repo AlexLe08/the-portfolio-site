@@ -30,6 +30,7 @@ class ProjectCreate(BaseModel):
     case_study_md: str
     repo_url: str | None = None
     published: bool = False
+    sort_order: int = 0
 
 
 class ProjectUpdate(BaseModel):
@@ -48,6 +49,7 @@ class ProjectUpdate(BaseModel):
     case_study_md: str | None = None
     repo_url: str | None = None
     published: bool | None = None
+    sort_order: int | None = None
 
     @model_validator(mode="after")
     def reject_null_for_required_fields(self) -> "ProjectUpdate":
