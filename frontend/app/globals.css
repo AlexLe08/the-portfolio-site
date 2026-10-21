@@ -380,6 +380,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 @media (min-width: 640px) {
@@ -393,10 +394,16 @@ button:focus-visible {
   text-decoration: none;
   color: var(--ink);
   font-size: 0.9375rem;
+  /* On the narrowest phones the nav links wrap instead of the name. */
+  white-space: nowrap;
 }
 
 .site-header__nav {
   font-size: 0.9375rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem 1.25rem;
 }
 
 /* ---------------------------------------------------------------------

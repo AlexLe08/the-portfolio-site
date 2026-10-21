@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PROFILE_LINKS } from "@/lib/links";
 
 // A plain Server Component -- no interactivity needed, so no "use client"
 // and no client-side JS shipped for this at all. Rendered once, in
@@ -15,6 +16,10 @@ export function SiteHeader() {
         </Link>
         <nav className="site-header__nav">
           <Link href="/contact">Contact</Link>
+          {/* Plain <a>, not <Link>: these leave the site. Same tab, so the
+              browser's back button works the way visitors expect. */}
+          <a href={PROFILE_LINKS.github}>GitHub</a>
+          <a href={PROFILE_LINKS.linkedin}>LinkedIn</a>
         </nav>
       </div>
     </header>

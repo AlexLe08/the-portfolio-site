@@ -2,6 +2,7 @@ import Link from "next/link";
 import Markdown from "react-markdown";
 import { ContactForm } from "@/components/ContactForm";
 import { getContent } from "@/lib/content";
+import { PROFILE_LINKS } from "@/lib/links";
 
 // The intro comes from the backend and can change any time via the admin API.
 export const dynamic = "force-dynamic";
@@ -29,6 +30,12 @@ export default async function ContactPage() {
         </div>
 
         <ContactForm />
+
+        <p className="intro" style={{ marginTop: "2rem" }}>
+          You can also find me on{" "}
+          <a href={PROFILE_LINKS.github}>GitHub</a> and{" "}
+          <a href={PROFILE_LINKS.linkedin}>LinkedIn</a>.
+        </p>
       </div>
     </main>
   );
