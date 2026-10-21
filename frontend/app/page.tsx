@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import Markdown from "react-markdown";
 import { api } from "@/lib/api";
+import { getContent } from "@/lib/content";
 
 // Without this, Next.js tries to statically pre-render this page once at
 // BUILD time -- wrong here, because project data can change any time
@@ -11,6 +14,11 @@ import { api } from "@/lib/api";
 // the background -- rather than either extreme.
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getContent();
+  return { description: content["site.description"] };
+}
+
 // No `useState`, no `useEffect`, no loading spinner state to manage.
 // This component is an async function because it's a React Server
 // Component (the default for anything in app/ that doesn't say "use
@@ -19,7 +27,11 @@ export const dynamic = "force-dynamic";
 // visiting the page gets fully-rendered content on the first response,
 // not a blank page that then fires off a client-side request.
 export default async function HomePage() {
-  const { data, error } = await api.GET("/projects");
+  // Started together so the content request adds no wait of its own.
+  const [{ data, error }, content] = await Promise.all([
+    api.GET("/projects"),
+    getContent(),
+  ]);
 
   if (error) {
     // `error` is typed from the OpenAPI spec's error responses -- this
@@ -34,40 +46,33 @@ export default async function HomePage() {
         <div className="title-block">
           <div className="title-block__heading">
             <h1 className="title-block__name">Alexander Le</h1>
-            <p className="title-block__role">
-              Full-stack engineer, backend-leaning. TypeScript and Python,
-              with four years building production React at CVS Health.
-            </p>
+            <p className="title-block__role">{content["home.role"]}</p>
           </div>
           <div className="title-block__facts">
             <div className="title-block__fact">
               <div className="title-block__fact-label">role</div>
               <div className="title-block__fact-value">
-                Software Engineer
+                {content["home.fact.role"]}
               </div>
             </div>
             <div className="title-block__fact">
               <div className="title-block__fact-label">based in</div>
               <div className="title-block__fact-value">
-                Worcester, MA
+                {content["home.fact.location"]}
               </div>
             </div>
             <div className="title-block__fact">
               <div className="title-block__fact-label">status</div>
               <div className="title-block__fact-value">
-                Open to opportunities
+                {content["home.fact.status"]}
               </div>
             </div>
           </div>
         </div>
 
-        <p style={{ marginTop: "1.75rem", maxWidth: "62ch" }}>
-          This site documents two recent projects end to end: the
-          architecture decisions, the tests that caught real bugs, and the
-          incidents that shaped the final design. Read a case study below,
-          or look at how this site itself is built in{" "}
-          <a href="https://github.com/AlexLe08/the-portfolio-site">the repository</a>.
-        </p>
+        <div className="intro" style={{ marginTop: "1.75rem" }}>
+          <Markdown>{content["home.intro"]}</Markdown>
+        </div>
 
         <div className="section-rule">
           <h2 className="section-rule__label">Projects</h2>

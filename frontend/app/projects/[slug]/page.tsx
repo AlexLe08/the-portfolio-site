@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import Markdown from "react-markdown";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -9,11 +11,25 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// Memoized per request so generateMetadata and the page share one fetch.
+const getProject = cache((slug: string) =>
+  api.GET("/projects/{slug}", { params: { path: { slug } } }),
+);
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const { data } = await getProject(slug);
+  // Missing project: the page itself calls notFound(), so keep the defaults.
+  if (!data) return {};
+  return {
+    title: `${data.title} — Alexander Le`,
+    description: data.summary,
+  };
+}
+
 export default async function ProjectDetailPage({ params }: Props) {
   const { slug } = await params;
-  const { data, response } = await api.GET("/projects/{slug}", {
-    params: { path: { slug } },
-  });
+  const { data, response } = await getProject(slug);
 
   // The backend returns a real 404 for an unknown or unpublished slug
   // (see routers/projects.py). next/navigation's notFound() is Next's
