@@ -67,25 +67,26 @@
   `ORDER BY`, so Postgres could reorder it after any update. Values go
   in steps of 10 so a project can slot in without renumbering the rest.
   Backend suite is now 68 tests.
+- Content pass complete (step 3 applied through the admin API, no
+  deploy): positioning line (`home.role`), `home.intro` updated for
+  three projects, and a case study on this site itself (`portfolio-site`)
+  shown first. Order: `portfolio-site` 10, `enterprise-search-input` 20,
+  `discord-reminder-bot` 30. The fallbacks in `lib/content.ts` were
+  updated to match. Decision recorded: site copy lives in our own
+  `site_content` table, not a hosted CMS like Sanity or Contentful; the
+  only editor is the owner, projects already live in Postgres, and the
+  admin UI can edit both.
 
 ## Next up (candidates, unordered)
 
 - Admin UI for creating and editing projects, replacing curl/Swagger.
   Needs an auth decision first: the shared admin key can't safely live in
   browser JavaScript.
-- Content pass, in progress. Site copy moves out of code into the
-  backend so text can change without a deploy (decision: our own
-  `site_content` table, not a hosted CMS like Sanity or Contentful; the
-  only editor is the owner, projects already live in Postgres, and the
-  admin UI can edit both). Remaining steps:
-  3. Content, applied through `/docs` (no deploy): positioning line
-     (`home.role`), a third case study on this site itself shown first
-     (`portfolio-site`, `sort_order` 10; then the component library at
-     20 and the Discord bot at 30), and `home.intro`, which still says
-     "two recent projects". The owner's own `contact.intro` is deferred;
-     the fallback text was drafted by Claude. Add more `repo_url`s as
-     other repositories go public. Facts come from the owner.
-- Media library (after the content pass): images and other media stored
+- Content follow-ups: the owner's own `contact.intro` (the current text
+  was drafted by Claude), and `repo_url`s for other repositories as they
+  go public. After any `PUT /content/{key}`, update the matching fallback
+  in `lib/content.ts`.
+- Media library: images and other media stored
   as URLs, never as bytes in Postgres. A `media` table (url, required alt
   text, width, height, content type), an admin upload endpoint to object
   storage, and an upload screen in the admin UI. Until then, images work
