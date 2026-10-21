@@ -5,6 +5,8 @@ frontend, deployed as two independently-hosted services sharing one repo.
 
 **Live site**: https://the-portfolio-site-flax.vercel.app
 
+**Backend API**: https://portfolio-backend-leto.onrender.com
+
 ## Architecture
 
 ``` frontend/ Next.js (App Router) + TypeScript, deployed on Vercel

@@ -9,6 +9,7 @@ in `docs/roadmap.md`.
 Personal portfolio and case-study site for Alexander Le, built as a real
 product meant to keep growing, not just a portfolio piece.
 Live: https://the-portfolio-site-flax.vercel.app
+Backend API: https://portfolio-backend-leto.onrender.com (`/health`, `/docs`)
 
 Monorepo:
 - `backend/`: FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2. Deployed to

@@ -4,6 +4,9 @@ Render hosts the FastAPI backend as a Docker-based web service, deployed
 from `render.yaml` (a Render "Blueprint" — infrastructure as code, same
 idea as the GitHub Actions workflows).
 
+The deployed service is at https://portfolio-backend-leto.onrender.com
+(`/health` for a liveness check, `/docs` for the interactive API docs).
+
 ## Why Render, specifically
 
 Same requirement as Neon: no way to be charged without deliberately
@@ -38,30 +41,47 @@ which variables exist.
 | `DISCORD_WEBHOOK_URL` | Discord webhook URL, pasted manually | `sync: false` in render.yaml. Create it in Discord under channel settings > Integrations > Webhooks. Optional: when empty or unset, contact-message notifications are skipped. Each submission posts one embed (the message limit is 4000 characters so it fits Discord's 4096-character embed description). Delivery failures never fail the request (the message is already saved in Postgres either way) and are logged as `Discord notification failed: HTTP <status> <Discord's response>` when Discord rejects the call, or `... failed: <ErrorType>` for network errors. An `HTTP 401` ("Invalid Webhook Token") or `404` means the URL in Render is wrong or the webhook was deleted or regenerated: re-copy it from Discord, with no quotes or spaces. A GET on the URL (`curl -s -o /dev/null -w "%{http_code}\n" "<url>"`) returns 200 when it is valid. An `HTTP 429 [HTML page: ... Cloudflare ...]` line is different: Cloudflare, which fronts Discord, is blocking the service's shared outbound IP, so the URL is fine. This is outside the app's control; a redeploy may land on a different IP |
 | `RESEND_API_KEY` | Resend API key, pasted manually | `sync: false` in render.yaml. Create it in the Resend dashboard under API Keys. Optional: email is skipped unless both this and `NOTIFY_EMAIL_TO` are set. Email goes through Resend's HTTP API because Render's free tier blocks outbound SMTP (ports 25, 465, 587). Failures are logged as `Email notification failed: HTTP <status> <Resend's response>` and never fail the request |
 | `NOTIFY_EMAIL_TO` | the address that receives contact messages | `sync: false`. Without a verified Resend domain, this must be the email on your Resend account (the `onboarding@resend.dev` test sender can't send anywhere else; a `403` "You can only send testing emails to your own email address" means they differ). Each email sets `reply_to` to the visitor, so replying goes straight to them. `EMAIL_FROM` (default `Portfolio Contact <onboarding@resend.dev>`) is optional; set it only after verifying a domain in Resend |
-| `CLIENT_IP_HEADER` | request header naming the visitor, e.g. `CF-Connecting-IP` | Optional but needed in production. `POST /contact` allows 5 messages per hour per visitor (`CONTACT_RATE_LIMIT`, `CONTACT_RATE_WINDOW_SECONDS`). Behind Render's proxy the socket address is the proxy's, so without this every visitor shares one limit. Only name a header the platform overwrites, because a caller can forge any other and dodge the limit. Verify it after setting it; see "Verifying the rate limit" below. The limiter is in-memory: it resets on restart and isn't shared across instances |
+| `CLIENT_IP_HEADER` | request header naming the visitor, e.g. `CF-Connecting-IP` | Optional but needed in production. `POST /contact` allows 5 messages per hour per visitor (`CONTACT_RATE_LIMIT`, `CONTACT_RATE_WINDOW_SECONDS`). Behind Render's proxy the socket address is the proxy's, so without this every visitor shares one limit. Only name a header the platform overwrites, because a caller can forge any other and dodge the limit. Cloudflare rejects client-supplied copies of `CF-Connecting-IP`, so for this header the condition holds. Verify the limiter after changing it; see "Verifying the rate limit" below. The limiter is in-memory: it resets on restart and isn't shared across instances |
 
 ## Verifying the rate limit
 
-Render's docs don't say which client-IP header is trustworthy, so check it
-empirically after setting `CLIENT_IP_HEADER`. Send 6 requests with the
-honeypot field set (they save and notify nothing), each with a different
-forged value for the header:
+Run this after changing `CLIENT_IP_HEADER` or anything about the limiter.
+Every request sets the honeypot field, so nothing is saved or sent. The
+first request can take 30-50 seconds if the service is asleep.
 
 ```sh
+API_URL=https://portfolio-backend-leto.onrender.com
 for i in 1 2 3 4 5 6; do
-  curl -s -o /dev/null -w "%{http_code}\n" -X POST "$API_URL/contact" \
-    -H 'content-type: application/json' -H "CF-Connecting-IP: 10.0.0.$i" \
+  curl -s -o /dev/null -w "request $i: %{http_code}\n" -X POST "$API_URL/contact" \
+    -H 'content-type: application/json' \
     -d '{"name":"a","email":"a@b.co","message":"hi","website":"x"}'
 done
 ```
 
-- The 6th returns `429`: the platform overwrites the header, so the limiter
-  keys on the real client. Done.
-- All six return `201`: the header is forgeable. Don't rely on it; key on a
-  fixed entry of `X-Forwarded-For` instead.
+Expect five `201`s, then `429` with `Retry-After` of about an hour. This
+blocks your own connection (including the real contact form) for that
+hour, so run it when you can afford that.
 
-The limit is per visitor, so run this from a connection you can afford to
-have blocked for an hour.
+Two things to know about how Render is set up:
+
+- **A forged `CF-Connecting-IP` can't be tested, and can't be used.**
+  Cloudflare, which fronts Render, rejects a request that carries that
+  header from the client: `403` with body `error code: 1000`, before it
+  reaches the app. So the header the app sees is the one Cloudflare sets,
+  not one a caller chose. Don't add a forged-header step to this check; it
+  only ever returns `403`.
+- **The loop alone can't tell "per visitor" from "everyone shares one
+  key".** If `CLIENT_IP_HEADER` were unset, the key would be the proxy's
+  address and the 6th request would still return `429`. To rule that out,
+  after the loop blocks you, send one more honeypot request from a
+  different network (a phone on cellular, for example). `201` means each
+  visitor has their own limit. `429` means they share one: check that
+  `CLIENT_IP_HEADER` is set on the Render service.
+
+Status: verified against production on 2026-10-21. The loop gave five
+`201`s, then `429` with `Retry-After: 3585`. The blocked connection showed
+the form's "too many messages" error, and a real message sent from a
+different network (VPN) went through, so each visitor has their own limit.
 
 ## Free-tier limitations hit during setup, and the workarounds
 

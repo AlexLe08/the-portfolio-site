@@ -18,7 +18,7 @@ static/dynamic rendering) are first-class here without extra config.
    of `rootDir: backend` in `render.yaml` — without it, Vercel looks for a
    Next.js app at the repo root and won't find one.
 3. Add an environment variable: `NEXT_PUBLIC_API_URL` = the Render backend
-   URL (e.g. `https://portfolio-backend.onrender.com`, no trailing slash).
+   URL (`https://portfolio-backend-leto.onrender.com`, no trailing slash).
 4. Deploy.
 
 ## Environment variables

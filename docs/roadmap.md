@@ -29,9 +29,16 @@
   in case a dedicated IP (paid Render plan) ever makes it reliable.
 - Tests can no longer send real notifications: `conftest.py` blanks the
   Discord and Resend settings for every test.
+- Spam protection on `/contact`: a honeypot field (tripped submissions get a
+  fake `201`, nothing saved or sent) and an in-memory per-visitor rate limit
+  (5 per hour, `429` after that), keyed on `CF-Connecting-IP` via
+  `CLIENT_IP_HEADER`. Verified in production, including that separate
+  networks get separate limits.
 
 ## Known issues
 
+- Test row in production `contact_messages` (the 2026-10-21 rate-limit
+  check); delete when convenient.
 - Seeded projects have `repo_url = null`; add real repository links.
 
 ## Next up (candidates, unordered)
@@ -39,10 +46,6 @@
 - Admin UI for creating and editing projects, replacing curl/Swagger.
   Needs an auth decision first: the shared admin key can't safely live in
   browser JavaScript.
-- Finish spam protection on `/contact`: the honeypot and an in-memory
-  per-visitor rate limit are in. After deploying, set `CLIENT_IP_HEADER` on
-  Render and run the check in "Verifying the rate limit" in
-  `docs/render-runbook.md`; until then every visitor shares one limit.
 - Content pass on home page copy and the case studies.
 - Playwright smoke tests against the deployed site; Sentry on both
   services.
