@@ -36,7 +36,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Project */
+        patch: operations["update_project_projects__slug__patch"];
         trace?: never;
     };
     "/contact": {
@@ -166,6 +167,28 @@ export interface components {
             /** Stack */
             stack: string[];
         };
+        /**
+         * ProjectUpdate
+         * @description A partial update: only the fields present in the request body change.
+         *
+         *     No slug: it's the project's URL, and changing it would break links
+         *     people have already shared. extra="forbid" makes sending one a 422
+         *     instead of a silent no-op.
+         */
+        ProjectUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** Stack */
+            stack?: string[] | null;
+            /** Case Study Md */
+            case_study_md?: string | null;
+            /** Repo Url */
+            repo_url?: string | null;
+            /** Published */
+            published?: boolean | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -253,6 +276,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_project_projects__slug__patch: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-admin-key": string;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

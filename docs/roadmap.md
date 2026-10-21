@@ -37,6 +37,11 @@
 - `app/services/` layer: the Discord and email notifiers moved out of
   `routers/contact.py` into `services/notifications.py`. The router keeps
   HTTP concerns only (rate-limit dependency, honeypot, save, scheduling).
+- `PATCH /projects/{slug}` (admin key): partial updates via
+  `exclude_unset`, so production content can be edited through `/docs`
+  instead of only created. Slug can't change (it's the URL); explicit
+  `null` is only accepted for `repo_url`. Drafts are patchable, which is
+  how a draft gets published. Backend suite is now 57 tests.
 
 ## Known issues
 
@@ -47,7 +52,28 @@
 - Admin UI for creating and editing projects, replacing curl/Swagger.
   Needs an auth decision first: the shared admin key can't safely live in
   browser JavaScript.
-- Content pass on home page copy and the case studies.
+- Content pass, in progress. Site copy moves out of code into the
+  backend so text can change without a deploy (decision: our own
+  `site_content` table, not a hosted CMS like Sanity or Contentful; the
+  only editor is the owner, projects already live in Postgres, and the
+  admin UI can edit both). Remaining steps:
+  1. Backend: `site_content` table and migration (key to markdown value),
+     public `GET /content`, admin-key `PUT /content/{key}`, seeded with
+     the current copy.
+  2. Frontend: pages read copy from `/content` with fallback text if the
+     backend is cold or a key is missing; `generateMetadata` on project
+     pages; contact page intro; GitHub and LinkedIn links.
+  3. Content, applied through `/docs` (no deploy): case studies start at
+     `##` (the page already renders the title as the only `<h1>`), real
+     `repo_url`s, positioning line, optional third case study on this
+     site itself. Facts come from the owner.
+- Media library (after the content pass): images and other media stored
+  as URLs, never as bytes in Postgres. A `media` table (url, required alt
+  text, width, height, content type), an admin upload endpoint to object
+  storage, and an upload screen in the admin UI. Until then, images work
+  as markdown `![alt](url)` inside content values. Before choosing a
+  storage provider, confirm its free tier needs no payment method; check
+  `next/image` remote-image config in the bundled Next docs.
 - Playwright smoke tests against the deployed site; Sentry on both
   services.
 - Allow Vercel preview origins in CORS if previews ever need client-side
