@@ -64,6 +64,26 @@ class ProjectUpdate(BaseModel):
         return self
 
 
+# Lowercase dotted segments, e.g. "home.intro" or "home.fact.location".
+# Strict on purpose: PUT creates keys that don't exist yet, so a loose
+# pattern would let typos like "Home Intro " pile up as orphan rows.
+CONTENT_KEY_PATTERN = r"^[a-z0-9_]+(\.[a-z0-9_]+)*$"
+
+
+class ContentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    value: str
+
+
+class ContentEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    key: str
+    value: str
+    updated_at: datetime
+
+
 class ContactCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: EmailStr
