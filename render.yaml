@@ -29,5 +29,5 @@ services:
         sync: false
       - key: NOTIFY_EMAIL_TO # set manually: the address that receives contact messages (your Resend account email)
         sync: false
-      - key: CLIENT_IP_HEADER # names the visitor for the /contact rate limit; unverified until the check in docs/render-runbook.md passes
+      - key: CLIENT_IP_HEADER # names the visitor for the /contact rate limit; see docs/render-runbook.md
         value: CF-Connecting-IP
