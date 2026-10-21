@@ -2,21 +2,21 @@ import { cache } from "react";
 import { api } from "./api";
 
 // What the site shows when the backend is cold, down, or missing a key.
-// These mirror the values seeded by the backend's site_content migration;
-// once the owner edits a key through PUT /content/{key}, the backend's
-// value wins and the text here only appears during an outage.
+// These mirror the production values. The backend's value always wins, so
+// the text here only appears during an outage; after editing a key through
+// PUT /content/{key}, update it here too so an outage doesn't show old copy.
 //
 // Keys ending in "intro" are rendered as markdown (links, paragraphs).
 // The rest are short labels rendered as plain text.
 const FALLBACK_CONTENT = {
   "site.description": "Full-stack case studies and projects.",
   "home.role":
-    "Full-stack engineer, backend-leaning. TypeScript and Python, with four years building production React at CVS Health.",
+    "Software engineer building technology for e-commerce and healthcare. TypeScript and Python, with four years of production React at CVS Health.",
   "home.fact.role": "Software Engineer",
   "home.fact.location": "Worcester, MA",
   "home.fact.status": "Open to opportunities",
   "home.intro":
-    "This site documents two recent projects end to end: the architecture decisions, the tests that caught real bugs, and the incidents that shaped the final design. Read a case study below, or look at how this site itself is built in [the repository](https://github.com/AlexLe08/the-portfolio-site).",
+    "This site documents three recent projects end to end: the architecture decisions, the tests that caught real bugs, and the incidents that shaped the final design. The first is this site itself.",
   "contact.intro":
     "Questions about a case study, or a role you think fits? Send a message and I'll reply by email.",
 };
