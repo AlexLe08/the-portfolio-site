@@ -116,3 +116,91 @@ def test_create_project_with_duplicate_slug_returns_409(client, db_session):
     )
 
     assert response.status_code == 409
+
+
+def test_update_project_without_admin_key_is_rejected(client, db_session):
+    make_project(db_session, slug="existing")
+
+    response = client.patch("/projects/existing", json={"title": "New"})
+
+    assert response.status_code == 422  # missing required header
+
+
+def test_update_project_with_wrong_admin_key_is_rejected(client, db_session):
+    make_project(db_session, slug="existing")
+
+    response = client.patch(
+        "/projects/existing", json={"title": "New"}, headers={"x-admin-key": "wrong-key"}
+    )
+
+    assert response.status_code == 401
+
+
+def test_update_missing_project_returns_404(client):
+    response = client.patch(
+        "/projects/does-not-exist", json={"title": "New"}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_project_changes_only_sent_fields(client, db_session):
+    make_project(db_session, slug="existing", repo_url="https://example.com/repo")
+
+    response = client.patch(
+        "/projects/existing",
+        json={"title": "Renamed", "stack": ["Go"]},
+        headers=ADMIN_HEADERS,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == "Renamed"
+    assert body["stack"] == ["Go"]
+    assert body["summary"] == "A project for testing."
+    assert body["case_study_md"] == "# Test"
+    assert body["repo_url"] == "https://example.com/repo"
+
+
+def test_update_project_can_clear_repo_url(client, db_session):
+    make_project(db_session, slug="existing", repo_url="https://example.com/repo")
+
+    response = client.patch(
+        "/projects/existing", json={"repo_url": None}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 200
+    assert response.json()["repo_url"] is None
+
+
+def test_update_project_can_publish_a_draft(client, db_session):
+    make_project(db_session, slug="draft-one", published=False)
+
+    response = client.patch(
+        "/projects/draft-one", json={"published": True}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 200
+    assert client.get("/projects/draft-one").status_code == 200
+
+
+def test_update_project_rejects_null_for_required_fields(client, db_session):
+    make_project(db_session, slug="existing")
+
+    response = client.patch(
+        "/projects/existing", json={"title": None}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 422
+    assert client.get("/projects/existing").json()["title"] == "Test Project"
+
+
+def test_update_project_rejects_slug_change(client, db_session):
+    make_project(db_session, slug="existing")
+
+    response = client.patch(
+        "/projects/existing", json={"slug": "renamed"}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 422
+    assert client.get("/projects/existing").status_code == 200

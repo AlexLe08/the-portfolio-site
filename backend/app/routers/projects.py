@@ -43,3 +43,23 @@ def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(project)
     return project
+
+
+@router.patch(
+    "/{slug}",
+    response_model=schemas.ProjectDetail,
+    dependencies=[Depends(require_admin_key)],
+)
+def update_project(slug: str, payload: schemas.ProjectUpdate, db: Session = Depends(get_db)):
+    # Unlike the public GET, drafts are found too: publishing one is an update.
+    project = db.scalar(select(models.Project).where(models.Project.slug == slug))
+    if project is None:
+        raise HTTPException(404, "Project not found")
+
+    # exclude_unset: only fields the client actually sent, so omitting a
+    # field leaves it alone while sending "repo_url": null clears it.
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(project, field, value)
+    db.commit()
+    db.refresh(project)
+    return project

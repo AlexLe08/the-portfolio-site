@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 class ProjectSummary(BaseModel):
@@ -30,6 +30,38 @@ class ProjectCreate(BaseModel):
     case_study_md: str
     repo_url: str | None = None
     published: bool = False
+
+
+class ProjectUpdate(BaseModel):
+    """A partial update: only the fields present in the request body change.
+
+    No slug: it's the project's URL, and changing it would break links
+    people have already shared. extra="forbid" makes sending one a 422
+    instead of a silent no-op.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = None
+    summary: str | None = None
+    stack: list[str] | None = None
+    case_study_md: str | None = None
+    repo_url: str | None = None
+    published: bool | None = None
+
+    @model_validator(mode="after")
+    def reject_null_for_required_fields(self) -> "ProjectUpdate":
+        # None is the default for "not sent", so it has to be allowed in the
+        # types above. Sent explicitly, it only makes sense for repo_url, the
+        # one nullable column; anywhere else it would fail at the database.
+        nulls = sorted(
+            name
+            for name in self.model_fields_set
+            if name != "repo_url" and getattr(self, name) is None
+        )
+        if nulls:
+            raise ValueError(f"cannot be null: {', '.join(nulls)}")
+        return self
 
 
 class ContactCreate(BaseModel):
