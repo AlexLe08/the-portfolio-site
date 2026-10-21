@@ -60,8 +60,10 @@ them. Imports only point downward.
 - Tests use an in-memory SQLite database with `StaticPool`, swapped in via
   `app.dependency_overrides[get_db]` (see `tests/conftest.py`). Keep tests
   isolated from each other and from `dev.db`.
-- There is no `services/` layer yet. Extract one when a route handler
-  starts doing more than HTTP handling plus a simple query.
+- `app/services/` holds logic that isn't HTTP handling (currently
+  `notifications.py`: Discord and email). Routers call services; services
+  import from `core` but never from routers. Move logic there when a route
+  handler starts doing more than HTTP handling plus a simple query.
 
 Frontend:
 - Server Components by default. Use `"use client"` only for real
