@@ -56,6 +56,10 @@
   text. Home and contact pages read it (contact is now `force-dynamic`);
   project pages have `generateMetadata` (title and summary). Only keys
   listed in the fallbacks are read, so a new key needs a code change.
+- GitHub and LinkedIn links (content pass, step 2b) in the site header
+  and on the contact page. The URLs live in `lib/links.ts`, not
+  `site_content`: the header renders from the root layout, and reading
+  `/content` there would put a backend call on every route.
 
 ## Known issues
 
@@ -71,14 +75,11 @@
   `site_content` table, not a hosted CMS like Sanity or Contentful; the
   only editor is the owner, projects already live in Postgres, and the
   admin UI can edit both). Remaining steps:
-  2. Frontend (2b): GitHub and LinkedIn links. Needs the LinkedIn URL
-     and a placement decision from the owner. `contact.intro` isn't seeded
-     in production; its fallback text was drafted by Claude, so PUT the
-     owner's own wording.
   3. Content, applied through `/docs` (no deploy): case studies start at
      `##` (the page already renders the title as the only `<h1>`), real
      `repo_url`s, positioning line, optional third case study on this
-     site itself. Facts come from the owner.
+     site itself, and the owner's own `contact.intro` (not seeded; the
+     fallback text was drafted by Claude). Facts come from the owner.
 - Media library (after the content pass): images and other media stored
   as URLs, never as bytes in Postgres. A `media` table (url, required alt
   text, width, height, content type), an admin upload endpoint to object
