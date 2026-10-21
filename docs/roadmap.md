@@ -3,7 +3,7 @@
 ## Done
 
 - Backend: projects API (public reads, admin-key-protected create),
-  contact endpoint, Alembic migrations, 10 isolated tests.
+  contact endpoint, Alembic migrations, isolated in-memory SQLite tests.
 - Frontend: home page, project detail pages rendering markdown case
   studies, contact form; typed API client generated from OpenAPI.
 - Deployment: Render (backend), Neon (Postgres), Vercel (frontend), all
@@ -37,8 +37,6 @@
 
 ## Known issues
 
-- Test row in production `contact_messages` (the 2026-10-21 rate-limit
-  check); delete when convenient.
 - Seeded projects have `repo_url = null`; add real repository links.
 
 ## Next up (candidates, unordered)
