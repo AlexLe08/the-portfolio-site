@@ -42,6 +42,13 @@
   instead of only created. Slug can't change (it's the URL); explicit
   `null` is only accepted for `repo_url`. Drafts are patchable, which is
   how a draft gets published. Backend suite is now 57 tests.
+- `site_content` table (content pass, step 1): public `GET /content`
+  returns a flat `{key: value}` map; admin-key `PUT /content/{key}`
+  creates or replaces one value. Keys are lowercase dotted segments
+  (`home.fact.location`), validated strictly because PUT creates keys.
+  The migration itself seeds the current home-page copy and
+  `site.description`, so production gets it on deploy without a shell.
+  Backend suite is now 66 tests.
 
 ## Known issues
 
@@ -57,9 +64,6 @@
   `site_content` table, not a hosted CMS like Sanity or Contentful; the
   only editor is the owner, projects already live in Postgres, and the
   admin UI can edit both). Remaining steps:
-  1. Backend: `site_content` table and migration (key to markdown value),
-     public `GET /content`, admin-key `PUT /content/{key}`, seeded with
-     the current copy.
   2. Frontend: pages read copy from `/content` with fallback text if the
      backend is cold or a key is missing; `generateMetadata` on project
      pages; contact page intro; GitHub and LinkedIn links.

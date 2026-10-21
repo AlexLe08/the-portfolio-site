@@ -22,6 +22,22 @@ class Project(Base):
     )
 
 
+class SiteContent(Base):
+    """Site copy (intro text, facts, page blurbs), keyed like "home.intro".
+
+    The key is the primary key: there's exactly one value per key, and the
+    frontend only ever looks values up by key.
+    """
+
+    __tablename__ = "site_content"
+
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class ContactMessage(Base):
     __tablename__ = "contact_messages"
 

@@ -222,6 +222,94 @@
         }
       }
     },
+    "/content": {
+      "get": {
+        "tags": [
+          "content"
+        ],
+        "summary": "List Content",
+        "operationId": "list_content_content_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response List Content Content Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/content/{key}": {
+      "put": {
+        "tags": [
+          "content"
+        ],
+        "summary": "Put Content",
+        "operationId": "put_content_content__key__put",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+              "title": "Key"
+            }
+          },
+          {
+            "name": "x-admin-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -292,6 +380,44 @@
           "message"
         ],
         "title": "ContactCreate"
+      },
+      "ContentEntry": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "updated_at"
+        ],
+        "title": "ContentEntry"
+      },
+      "ContentUpdate": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "ContentUpdate"
       },
       "HTTPValidationError": {
         "properties": {
