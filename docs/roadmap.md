@@ -21,7 +21,7 @@
 - `/contact` length limits: name 1–200, message 1–4000 characters (4000
   keeps the message inside Discord's 4096-character embed description).
   ContactForm builds specific error text from the backend's 422 detail.
-- Webhook and length-limit tests (22 backend tests total).
+- Webhook and length-limit tests. Backend suite is now 49 tests.
 - Email notification via Resend's HTTP API (SMTP is blocked on Render's
   free tier), with `reply_to` set to the visitor. Added because Cloudflare
   blocks Discord requests from Render's shared outbound IP
@@ -53,7 +53,13 @@
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.
 - Extract a `services/` layer for notifications. `routers/contact.py` now
-  holds two notifiers plus shared error logging; moving them out would
-  match the rule in CLAUDE.md.
+  holds two notifiers, shared error logging, the honeypot check and the
+  rate-limit dependency (`enforce_rate_limit`, `_client_key`); moving the
+  notifiers out would match the rule in CLAUDE.md.
+- Contact rate limiter follow-ups: it is in-memory, so it resets on restart
+  or cold start and isn't shared across instances (move to the database or
+  Redis only if the service ever scales out). `ContactForm`'s 429 message
+  hard-codes "in an hour" and won't follow `CONTACT_RATE_WINDOW_SECONDS`;
+  the backend's `Retry-After` header could drive the text instead.
 - Verify a domain in Resend to email anyone other than yourself, and
   switch `EMAIL_FROM` to it.
