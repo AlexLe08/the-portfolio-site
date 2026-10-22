@@ -1,3 +1,5 @@
+import pytest
+
 from app import models
 
 ADMIN_HEADERS = {"x-admin-key": "dev-only-change-me"}
@@ -127,6 +129,55 @@ def test_create_project_with_duplicate_slug_returns_409(client, db_session):
     )
 
     assert response.status_code == 409
+
+
+@pytest.mark.parametrize(
+    "slug",
+    [
+        "",
+        "Has-Capitals",
+        "has space",
+        "under_score",
+        "-leading-hyphen",
+        "trailing-hyphen-",
+        "double--hyphen",
+        "slash/in-it",
+        "a" * 121,  # longer than the String(120) column
+    ],
+)
+def test_create_project_rejects_malformed_slug(client, slug):
+    response = client.post(
+        "/projects",
+        json={
+            "slug": slug,
+            "title": "New",
+            "summary": "S",
+            "stack": [],
+            "case_study_md": "x",
+        },
+        headers=ADMIN_HEADERS,
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_project_accepts_slug_at_max_length(client):
+    slug = "a" * 120
+
+    response = client.post(
+        "/projects",
+        json={
+            "slug": slug,
+            "title": "New",
+            "summary": "S",
+            "stack": [],
+            "case_study_md": "x",
+        },
+        headers=ADMIN_HEADERS,
+    )
+
+    assert response.status_code == 201
+    assert response.json()["slug"] == slug
 
 
 def test_update_project_without_admin_key_is_rejected(client, db_session):

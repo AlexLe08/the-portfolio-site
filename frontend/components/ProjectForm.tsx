@@ -38,6 +38,7 @@ export function ProjectForm({ action, project }: Props) {
             name="slug"
             required
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            maxLength={120}
             aria-describedby="slug-help"
             className="form-input"
           />

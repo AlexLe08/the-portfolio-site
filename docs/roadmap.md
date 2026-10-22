@@ -134,12 +134,14 @@
   shown during a cold start would overwrite real copy. Each key needs a
   description in a `Record<ContentKey, string>`, so a new key without
   one fails the build. Empty values are rejected (there's no delete).
+- Slug validation on the backend: `ProjectCreate.slug` must match
+  `SLUG_PATTERN` (lowercase words joined by single hyphens, the same rule
+  as the admin form) and be at most 120 characters, matching the column.
+  SQLite ignores `String(120)`, so an over-long slug used to pass tests
+  and fail only on Postgres. Backend suite is now 100 tests.
 
 ## Next up (candidates, unordered)
 
-- Validate slugs on the backend too (`ProjectCreate` accepts any
-  string). The admin form already enforces lowercase words joined by
-  hyphens, but curl and `/docs` bypass it.
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-ups, now doable at `/admin/content` and
   `/admin/projects`: the owner's own `contact.intro` (the current text

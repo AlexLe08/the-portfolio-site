@@ -30,8 +30,17 @@ class ProjectAdmin(ProjectDetail):
     sort_order: int
 
 
+# Lowercase words joined by single hyphens, e.g. "portfolio-site". The
+# slug is the project's URL and can't change after creation (see
+# ProjectUpdate), so a malformed one would be stuck there for good.
+# Same rule as the admin form's pattern attribute (ProjectForm.tsx).
+SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+
+
 class ProjectCreate(BaseModel):
-    slug: str
+    # max_length matches the String(120) column. Postgres enforces that
+    # limit but SQLite doesn't, so without it tests pass and prod 500s.
+    slug: str = Field(max_length=120, pattern=SLUG_PATTERN)
     title: str
     summary: str
     stack: list[str]

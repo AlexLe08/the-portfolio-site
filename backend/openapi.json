@@ -660,6 +660,8 @@
         "properties": {
           "slug": {
             "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
             "title": "Slug"
           },
           "title": {
