@@ -8,7 +8,7 @@ import { api } from "./api";
 //
 // Keys ending in "intro" are rendered as markdown (links, paragraphs).
 // The rest are short labels rendered as plain text.
-const FALLBACK_CONTENT = {
+export const FALLBACK_CONTENT = {
   "site.description": "Full-stack case studies and projects.",
   "home.role":
     "Software engineer building technology for e-commerce and healthcare. TypeScript and Python, with four years of production React at CVS Health.",

@@ -593,3 +593,21 @@ button:focus-visible {
   color: var(--muted);
   font-style: italic;
 }
+
+.admin-toolbar--section {
+  margin-top: 2.5rem;
+}
+
+.content-field {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.content-field__key {
+  display: block;
+  font-family: var(--font-technical);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+}

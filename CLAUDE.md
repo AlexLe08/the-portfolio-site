@@ -68,8 +68,12 @@ them. Imports only point downward.
 Frontend:
 - Server Components by default. Use `"use client"` only for real
   interactivity (currently `components/ContactForm.tsx`,
-  `components/LoginForm.tsx`, `components/ProjectForm.tsx`, and the
-  required `app/admin/error.tsx`).
+  `components/LoginForm.tsx`, `components/ProjectForm.tsx`,
+  `components/ContentField.tsx`, and the required `app/admin/error.tsx`).
+- A new site-content key goes in `FALLBACK_CONTENT` (`lib/content.ts`)
+  and in `DESCRIPTIONS` (`app/admin/content/page.tsx`); the build fails
+  until both have it. Admin code never reads content through
+  `getContent()`, which silently falls back.
 - Admin pages (`app/admin/`) and admin Server Actions each call
   `verifySession()` from `lib/session.ts` first, directly or through
   `adminApi()` in `lib/admin-api.ts`, which every admin backend call uses.

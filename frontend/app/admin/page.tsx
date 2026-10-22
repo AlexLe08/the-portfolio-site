@@ -49,6 +49,11 @@ export default async function AdminPage() {
           </tbody>
         </table>
 
+        <div className="admin-toolbar admin-toolbar--section">
+          <h2 className="admin-heading">Site content</h2>
+          <Link href="/admin/content">Edit site content</Link>
+        </div>
+
         <form action={logout} className="form-actions">
           <button type="submit" className="form-button">
             Sign out

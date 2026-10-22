@@ -124,19 +124,28 @@
   `redirect()` and `notFound()` complete in the browser and the 404 page
   is sent as `200`; acceptable for `noindex` admin pages. Verified end to
   end in headless Chrome against a seeded local backend.
+- Site content editor (admin UI, PR 3c; admin UI complete):
+  `/admin/content` has one form per key, matching `PUT /content/{key}`,
+  so each save stands alone. It lists only the keys `lib/content.ts`
+  reads, prefilling unsaved ones with their built-in text, and flags
+  values that differ from that text, which shows during outages. It
+  fetches `/content` directly, not through `getContent()`: that helper
+  falls back to built-in text after 5 seconds, and saving a fallback
+  shown during a cold start would overwrite real copy. Each key needs a
+  description in a `Record<ContentKey, string>`, so a new key without
+  one fails the build. Empty values are rejected (there's no delete).
 
 ## Next up (candidates, unordered)
 
 - Validate slugs on the backend too (`ProjectCreate` accepts any
   string). The admin form already enforces lowercase words joined by
   hyphens, but curl and `/docs` bypass it.
-- Admin UI, PR 3c: site content editor (public `GET /content` plus
-  `PUT /content/{key}`).
 - Project deletion, only if unpublishing ever stops being enough.
-- Content follow-ups: the owner's own `contact.intro` (the current text
+- Content follow-ups, now doable at `/admin/content` and
+  `/admin/projects`: the owner's own `contact.intro` (the current text
   was drafted by Claude), and `repo_url`s for other repositories as they
-  go public. After any `PUT /content/{key}`, update the matching fallback
-  in `lib/content.ts`.
+  go public. Then sync the fallbacks in `lib/content.ts`; the editor
+  flags every key whose stored value differs.
 - Media library: images and other media stored
   as URLs, never as bytes in Postgres. A `media` table (url, required alt
   text, width, height, content type), an admin upload endpoint to object
