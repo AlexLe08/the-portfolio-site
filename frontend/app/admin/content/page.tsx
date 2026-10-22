@@ -5,7 +5,7 @@ import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
 import { FALLBACK_CONTENT, type ContentKey } from "@/lib/content";
 
 export const metadata = {
-  title: "Site content — Admin",
+  title: "Site content",
 };
 
 // Typed against ContentKey, so adding a key to lib/content.ts without

@@ -1,6 +1,5 @@
 from app import models
-
-ADMIN_HEADERS = {"x-admin-key": "dev-only-change-me"}
+from tests.helpers import ADMIN_HEADERS
 
 
 def make_entry(db_session, key="home.intro", value="Hello."):

@@ -22,6 +22,14 @@ def no_real_notifications(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def known_admin_key(monkeypatch):
+    """A real .env may set ADMIN_API_KEY; tests send tests.helpers.ADMIN_KEY."""
+    from tests.helpers import ADMIN_KEY
+
+    monkeypatch.setattr(settings, "admin_api_key", ADMIN_KEY)
+
+
+@pytest.fixture(autouse=True)
 def fresh_contact_rate_limit(monkeypatch):
     """The contact limiter is module-level state; don't let tests share it."""
     from app.routers import contact

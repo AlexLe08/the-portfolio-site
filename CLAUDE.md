@@ -59,9 +59,16 @@ them. Imports only point downward.
   for tests only.
 - Tests use an in-memory SQLite database with `StaticPool`, swapped in via
   `app.dependency_overrides[get_db]` (see `tests/conftest.py`). Keep tests
-  isolated from each other and from `dev.db`.
+  isolated from each other and from `dev.db`. `conftest.py` also pins
+  every setting a developer's `.env` could change (admin key, login,
+  notifications); shared helpers live in `tests/helpers.py`, not in
+  another test module.
+- Every `String(n)` column needs a matching `max_length` on the schemas
+  that write it: SQLite ignores the limit, so only Postgres would fail.
 - `app/services/` holds logic that isn't HTTP handling (currently
-  `notifications.py`: Discord and email). Routers call services; services
+  `notifications.py`: Discord and email; `projects.py`: project queries
+  shared by the public and admin routers, including the one list order).
+  Routers call services and turn results into HTTP (404, 409); services
   import from `core` but never from routers. Move logic there when a route
   handler starts doing more than HTTP handling plus a simple query.
 
@@ -82,6 +89,12 @@ Frontend:
   which already makes them dynamic, so they don't set `force-dynamic`.
 - Pages that fetch backend data set `export const dynamic = "force-dynamic"`,
   because project data can change at any time via the admin API.
+- Admin editors use `useSaveAction()` (`lib/use-save-action.ts`) and
+  `SaveStatus`, which submit through `onSubmit` so a rejected save keeps
+  the edit. Project field rules (slug pattern, max lengths) live in
+  `lib/project-rules.ts`, mirroring `schemas.ProjectCreate`.
+- Page titles are just the page's own name; `title.template` in
+  `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
 

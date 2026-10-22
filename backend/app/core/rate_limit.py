@@ -2,6 +2,8 @@ import threading
 import time
 from collections import deque
 
+from fastapi import HTTPException
+
 
 class SlidingWindowLimiter:
     """Allow at most `limit` hits per key within the last `window` seconds.
@@ -53,3 +55,15 @@ class SlidingWindowLimiter:
         self._hits = {k: h for k, h in self._hits.items() if h and h[-1] > cutoff}
         if len(self._hits) >= self.max_keys:
             del self._hits[next(iter(self._hits))]
+
+
+def enforce_rate_limit(limiter: SlidingWindowLimiter, key: str, detail: str) -> None:
+    """Record a hit for `key`, or raise a 429 whose Retry-After says when to
+    try again (rounded up, so retrying right on time isn't still early)."""
+    retry_after = limiter.check(key)
+    if retry_after:
+        raise HTTPException(
+            status_code=429,
+            detail=detail,
+            headers={"Retry-After": str(int(retry_after) + 1)},
+        )

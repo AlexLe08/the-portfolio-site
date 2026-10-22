@@ -8,7 +8,7 @@ import { PROFILE_LINKS } from "@/lib/links";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Contact — Alexander Le",
+  title: "Contact",
 };
 
 export default async function ContactPage() {

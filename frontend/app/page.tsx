@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Markdown from "react-markdown";
+import { StackTags } from "@/components/StackTags";
 import { api } from "@/lib/api";
-import { getContent } from "@/lib/content";
+import { getContent, type ContentKey } from "@/lib/content";
 
 // Without this, Next.js tries to statically pre-render this page once at
 // BUILD time -- wrong here, because project data can change any time
@@ -13,6 +14,13 @@ import { getContent } from "@/lib/content";
 // (`export const revalidate = 60`) -- cached for 60s, then refreshed in
 // the background -- rather than either extreme.
 export const dynamic = "force-dynamic";
+
+// The title block's facts row: fixed labels, editable values.
+const FACTS: { label: string; key: ContentKey }[] = [
+  { label: "role", key: "home.fact.role" },
+  { label: "based in", key: "home.fact.location" },
+  { label: "status", key: "home.fact.status" },
+];
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getContent();
@@ -49,24 +57,12 @@ export default async function HomePage() {
             <p className="title-block__role">{content["home.role"]}</p>
           </div>
           <div className="title-block__facts">
-            <div className="title-block__fact">
-              <div className="title-block__fact-label">role</div>
-              <div className="title-block__fact-value">
-                {content["home.fact.role"]}
+            {FACTS.map(({ label, key }) => (
+              <div className="title-block__fact" key={key}>
+                <div className="title-block__fact-label">{label}</div>
+                <div className="title-block__fact-value">{content[key]}</div>
               </div>
-            </div>
-            <div className="title-block__fact">
-              <div className="title-block__fact-label">based in</div>
-              <div className="title-block__fact-value">
-                {content["home.fact.location"]}
-              </div>
-            </div>
-            <div className="title-block__fact">
-              <div className="title-block__fact-label">status</div>
-              <div className="title-block__fact-value">
-                {content["home.fact.status"]}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -87,13 +83,7 @@ export default async function HomePage() {
               >
                 <div className="project-card__title">{project.title}</div>
                 <p className="project-card__summary">{project.summary}</p>
-                <div className="project-card__stack">
-                  {project.stack.map((tech) => (
-                    <span className="tag" key={tech}>
-                      {tech}
-                    </span>
-                  ))}
-                </div>
+                <StackTags stack={project.stack} className="project-card__stack" />
               </Link>
             </li>
           ))}

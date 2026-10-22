@@ -1,6 +1,6 @@
 import pytest
 
-from tests.test_projects import ADMIN_HEADERS, make_project
+from tests.helpers import ADMIN_HEADERS, make_project
 
 
 @pytest.mark.parametrize("path", ["/admin/projects", "/admin/projects/anything"])

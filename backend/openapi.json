@@ -666,6 +666,7 @@
           },
           "title": {
             "type": "string",
+            "maxLength": 200,
             "title": "Title"
           },
           "summary": {
@@ -686,7 +687,8 @@
           "repo_url": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 300
               },
               {
                 "type": "null"
@@ -807,7 +809,8 @@
           "title": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 200
               },
               {
                 "type": "null"
@@ -854,7 +857,8 @@
           "repo_url": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 300
               },
               {
                 "type": "null"

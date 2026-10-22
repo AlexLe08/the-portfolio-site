@@ -1,8 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, type FormEvent } from "react";
 import type { ProjectFormState } from "@/app/admin/projects/actions";
+import { SaveStatus } from "@/components/SaveStatus";
 import type { components } from "@/lib/api-types";
+import { MAX_LENGTH, SLUG_PATTERN } from "@/lib/project-rules";
+import { useSaveAction } from "@/lib/use-save-action";
 
 type Project = components["schemas"]["ProjectAdmin"];
 
@@ -15,19 +17,10 @@ type Props = {
 };
 
 export function ProjectForm({ action, project }: Props) {
-  const [state, formAction, pending] = useActionState(action, null);
-
-  // Submitted through onSubmit rather than the form's action prop. React
-  // resets a form after its action prop runs, even when the server rejects
-  // the save, which would wipe a long case-study edit.
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => formAction(formData));
-  }
+  const { state, pending, onSubmit } = useSaveAction(action);
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={onSubmit}>
       {!project && (
         <div className="form-field">
           <label htmlFor="slug" className="form-label">
@@ -37,8 +30,8 @@ export function ProjectForm({ action, project }: Props) {
             id="slug"
             name="slug"
             required
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            maxLength={120}
+            pattern={SLUG_PATTERN}
+            maxLength={MAX_LENGTH.slug}
             aria-describedby="slug-help"
             className="form-input"
           />
@@ -53,7 +46,14 @@ export function ProjectForm({ action, project }: Props) {
         <label htmlFor="title" className="form-label">
           Title
         </label>
-        <input id="title" name="title" required defaultValue={project?.title} className="form-input" />
+        <input
+          id="title"
+          name="title"
+          required
+          maxLength={MAX_LENGTH.title}
+          defaultValue={project?.title}
+          className="form-input"
+        />
       </div>
 
       <div className="form-field">
@@ -94,6 +94,7 @@ export function ProjectForm({ action, project }: Props) {
           id="repo_url"
           name="repo_url"
           type="url"
+          maxLength={MAX_LENGTH.repo_url}
           aria-describedby="repo-help"
           defaultValue={project?.repo_url ?? ""}
           className="form-input"
@@ -146,16 +147,7 @@ export function ProjectForm({ action, project }: Props) {
         <label htmlFor="published">Published (shown on the site)</label>
       </div>
 
-      {state && "error" in state && (
-        <div className="form-status form-status--error" role="alert">
-          {state.error}
-        </div>
-      )}
-      {state && "saved" in state && !pending && (
-        <div className="form-status form-status--success" role="status">
-          Saved.
-        </div>
-      )}
+      <SaveStatus state={state} pending={pending} />
 
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>

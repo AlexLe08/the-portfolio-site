@@ -5,7 +5,7 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
 
 export const metadata = {
-  title: "Edit project — Admin",
+  title: "Edit project",
 };
 
 export default async function EditProjectPage({ params }: PageProps<"/admin/projects/[slug]">) {

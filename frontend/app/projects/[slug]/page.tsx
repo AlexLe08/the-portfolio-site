@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import Markdown from "react-markdown";
 import Link from "next/link";
+import { StackTags } from "@/components/StackTags";
 import { api } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Missing project: the page itself calls notFound(), so keep the defaults.
   if (!data) return {};
   return {
-    title: `${data.title} — Alexander Le`,
+    title: data.title,
     description: data.summary,
   };
 }
@@ -49,13 +50,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
         <header className="detail-header">
           <h1 className="detail-header__title">{data.title}</h1>
-          <div className="detail-header__stack">
-            {data.stack.map((tech) => (
-              <span className="tag" key={tech}>
-                {tech}
-              </span>
-            ))}
-          </div>
+          <StackTags stack={data.stack} className="detail-header__stack" />
           {data.repo_url && (
             <a href={data.repo_url} className="detail-header__repo">
               View repository

@@ -3,7 +3,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { getSessionToken } from "@/lib/session";
 
 export const metadata = {
-  title: "Sign in — Admin",
+  title: "Sign in",
 };
 
 export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/login">) {
