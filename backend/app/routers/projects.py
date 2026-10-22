@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.core.security import require_admin_key
+from app.core.security import require_admin
 from app.database import get_db
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -35,7 +35,7 @@ def get_project(slug: str, db: Session = Depends(get_db)):
     "",
     response_model=schemas.ProjectDetail,
     status_code=201,
-    dependencies=[Depends(require_admin_key)],
+    dependencies=[Depends(require_admin)],
 )
 def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db)):
     existing = db.scalar(
@@ -54,7 +54,7 @@ def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db)
 @router.patch(
     "/{slug}",
     response_model=schemas.ProjectDetail,
-    dependencies=[Depends(require_admin_key)],
+    dependencies=[Depends(require_admin)],
 )
 def update_project(slug: str, payload: schemas.ProjectUpdate, db: Session = Depends(get_db)):
     # Unlike the public GET, drafts are found too: publishing one is an update.

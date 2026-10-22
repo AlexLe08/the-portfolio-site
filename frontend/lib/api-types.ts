@@ -91,6 +91,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -112,6 +129,26 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminLogin */
+        AdminLogin: {
+            /** Password */
+            password: string;
+        };
+        /** AdminToken */
+        AdminToken: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
         /** ContactConfirmation */
         ContactConfirmation: {
             /** Id */
@@ -292,9 +329,7 @@ export interface operations {
     create_project_projects_post: {
         parameters: {
             query?: never;
-            header: {
-                "x-admin-key": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -358,9 +393,7 @@ export interface operations {
     update_project_projects__slug__patch: {
         parameters: {
             query?: never;
-            header: {
-                "x-admin-key": string;
-            };
+            header?: never;
             path: {
                 slug: string;
             };
@@ -450,9 +483,7 @@ export interface operations {
     put_content_content__key__put: {
         parameters: {
             query?: never;
-            header: {
-                "x-admin-key": string;
-            };
+            header?: never;
             path: {
                 key: string;
             };
@@ -471,6 +502,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentEntry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminToken"];
                 };
             };
             /** @description Validation Error */

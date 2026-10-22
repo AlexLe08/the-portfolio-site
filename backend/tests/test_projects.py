@@ -74,7 +74,7 @@ def test_create_project_without_admin_key_is_rejected(client):
         },
     )
 
-    assert response.status_code == 422  # missing required header
+    assert response.status_code == 401  # no credentials at all
 
 
 def test_create_project_with_wrong_admin_key_is_rejected(client):
@@ -134,7 +134,7 @@ def test_update_project_without_admin_key_is_rejected(client, db_session):
 
     response = client.patch("/projects/existing", json={"title": "New"})
 
-    assert response.status_code == 422  # missing required header
+    assert response.status_code == 401  # no credentials at all
 
 
 def test_update_project_with_wrong_admin_key_is_rejected(client, db_session):
