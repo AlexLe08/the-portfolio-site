@@ -32,6 +32,19 @@ def fresh_contact_rate_limit(monkeypatch):
     contact.limiter.reset()
 
 
+@pytest.fixture(autouse=True)
+def no_admin_login(monkeypatch):
+    """Like the notification settings: a real .env may set these. Login is
+    off unless a test turns it on (see tests/test_auth.py)."""
+    from app.routers import auth
+
+    monkeypatch.setattr(settings, "admin_password_hash", "")
+    monkeypatch.setattr(settings, "jwt_secret", "")
+    auth.limiter.reset()
+    yield
+    auth.limiter.reset()
+
+
 @pytest.fixture()
 def db_session():
     """

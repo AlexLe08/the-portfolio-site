@@ -11,6 +11,8 @@ dependencies = [
     "pydantic[email]>=2.8",   # enables EmailStr validation used in schemas.py
     "psycopg[binary]>=3.2",   # Postgres driver, used in production
     "httpx2>=2.13,<3",  # Discord webhook client; also what starlette.testclient prefers over plain httpx
+    "pyjwt>=2.10",        # signs and checks admin session tokens (POST /auth/login)
+    "argon2-cffi>=23.1",  # checks the admin password against its stored hash
 ]
 
 [project.optional-dependencies]

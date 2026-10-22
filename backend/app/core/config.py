@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,10 +40,21 @@ class Settings(BaseSettings):
     contact_rate_limit: int = 5
     contact_rate_window_seconds: int = 3600
 
-    # Simple shared-secret auth for the single-admin write endpoints.
-    # See Step 3's routers/projects.py for how this gets used — and the
-    # note there on why this is enough auth for a site with one admin.
+    # Shared-secret auth for the single-admin write endpoints, sent as the
+    # X-Admin-Key header from curl or /docs. See core/security.py.
     admin_api_key: str = "dev-only-change-me"
+
+    # Browser login for the admin UI (POST /auth/login). The password is
+    # stored only as an argon2 hash (make one with `python hash_password.py`),
+    # and a successful login returns a JWT signed with jwt_secret. Login is
+    # turned off until both are set; the admin key keeps working either way.
+    admin_password_hash: str = ""
+    jwt_secret: str = ""
+    admin_session_minutes: int = 480
+    # One shared limit on all login attempts, not per visitor: logins arrive
+    # through the frontend's server, so every attempt has the same address.
+    login_rate_limit: int = 5
+    login_rate_window_seconds: int = 900
 
     environment: str = "development"
 
@@ -52,6 +64,16 @@ class Settings(BaseSettings):
     # list directly from an environment variable, which is unnecessary
     # complexity for something this simple to split ourselves.
     allowed_origins: str = "http://localhost:3000"
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def jwt_secret_long_enough(cls, value: str) -> str:
+        # HS256 keys shorter than its 32-byte output are guessable faster
+        # than the hash itself (RFC 7518 section 3.2). Fail at startup
+        # rather than sign tokens with a weak key.
+        if value and len(value.encode()) < 32:
+            raise ValueError("JWT_SECRET must be at least 32 bytes (try `openssl rand -hex 32`)")
+        return value
 
     @property
     def allowed_origins_list(self) -> list[str]:

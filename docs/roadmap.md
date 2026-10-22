@@ -77,11 +77,28 @@
   only editor is the owner, projects already live in Postgres, and the
   admin UI can edit both.
 
+- Admin login (admin UI, PR 1 of 3): `POST /auth/login` checks a password
+  against an argon2 hash (`ADMIN_PASSWORD_HASH`) and returns a JWT signed
+  with `JWT_SECRET` (8-hour default). Admin endpoints accept that token as
+  `Authorization: Bearer` or the existing `X-Admin-Key`; a request with
+  neither is now `401`, not `422`. One shared login rate limit (5 per 15
+  minutes). `/docs` has an Authorize button. Backend suite is now 83 tests.
+  Decision recorded: FastAPI owns login and Next.js acts as a
+  backend-for-frontend, holding the token in an httpOnly cookie on its own
+  domain. Rejected: Next-only password auth (puts the security logic in
+  the frontend, and Vercel functions can't share a rate limiter); cookies
+  set by the backend (`vercel.app` to `onrender.com` is cross-site, so
+  Safari blocks them); tokens in `localStorage` (readable by any injected
+  script). GitHub login is a later upgrade that replaces only the
+  password check.
+
 ## Next up (candidates, unordered)
 
-- Admin UI for creating and editing projects, replacing curl/Swagger.
-  Needs an auth decision first: the shared admin key can't safely live in
-  browser JavaScript.
+- Admin UI, PR 2: login page and Server Action on the frontend, the token
+  in an httpOnly cookie, a `verifySession()` check in every admin action.
+  Before building, check Vercel Hobby's function duration limit against a
+  30–50 second Render cold start.
+- Admin UI, PR 3: screens for editing projects, then site content.
 - Content follow-ups: the owner's own `contact.intro` (the current text
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. After any `PUT /content/{key}`, update the matching fallback

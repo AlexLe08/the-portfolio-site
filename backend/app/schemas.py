@@ -86,6 +86,20 @@ class ContentEntry(BaseModel):
     updated_at: datetime
 
 
+class AdminLogin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Capped because argon2 hashes whatever it's given: an unbounded field
+    # would let one request burn CPU on a multi-megabyte "password".
+    password: str = Field(min_length=1, max_length=256)
+
+
+class AdminToken(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+
+
 class ContactCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: EmailStr

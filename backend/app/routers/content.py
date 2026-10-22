@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.core.security import require_admin_key
+from app.core.security import require_admin
 from app.database import get_db
 
 router = APIRouter(prefix="/content", tags=["content"])
@@ -19,7 +19,7 @@ def list_content(db: Session = Depends(get_db)):
 @router.put(
     "/{key}",
     response_model=schemas.ContentEntry,
-    dependencies=[Depends(require_admin_key)],
+    dependencies=[Depends(require_admin)],
 )
 def put_content(
     payload: schemas.ContentUpdate,

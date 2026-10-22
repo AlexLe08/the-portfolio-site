@@ -32,7 +32,7 @@ def test_list_content_returns_key_value_map(client, db_session):
 def test_put_content_without_admin_key_is_rejected(client):
     response = client.put("/content/home.intro", json={"value": "New."})
 
-    assert response.status_code == 422
+    assert response.status_code == 401
 
 
 def test_put_content_with_wrong_admin_key_is_rejected(client):
