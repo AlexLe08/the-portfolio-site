@@ -38,14 +38,15 @@ SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 
 class ProjectCreate(BaseModel):
-    # max_length matches the String(120) column. Postgres enforces that
-    # limit but SQLite doesn't, so without it tests pass and prod 500s.
+    # Each max_length matches its String(n) column in models.py. Postgres
+    # enforces those limits but SQLite doesn't, so without them tests pass
+    # and prod 500s.
     slug: str = Field(max_length=120, pattern=SLUG_PATTERN)
-    title: str
+    title: str = Field(max_length=200)
     summary: str
     stack: list[str]
     case_study_md: str
-    repo_url: str | None = None
+    repo_url: str | None = Field(default=None, max_length=300)
     published: bool = False
     sort_order: int = 0
 
@@ -60,11 +61,12 @@ class ProjectUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str | None = None
+    # Same limits as ProjectCreate.
+    title: str | None = Field(default=None, max_length=200)
     summary: str | None = None
     stack: list[str] | None = None
     case_study_md: str | None = None
-    repo_url: str | None = None
+    repo_url: str | None = Field(default=None, max_length=300)
     published: bool | None = None
     sort_order: int | None = None
 

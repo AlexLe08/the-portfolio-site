@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useActionState, type FormEvent } from "react";
 import type { ContentFormState } from "@/app/admin/content/actions";
+import { SaveStatus } from "@/components/SaveStatus";
+import { useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // updateContent bound to this key.
@@ -17,18 +18,10 @@ type Props = {
 // One form per key, matching PUT /content/{key}: each save stands alone,
 // so a failure can never leave it unclear which values were saved.
 export function ContentField({ action, contentKey, description, value, fallback, isSet }: Props) {
-  const [state, formAction, pending] = useActionState(action, null);
+  const { state, pending, onSubmit } = useSaveAction(action);
   const id = `content-${contentKey.replaceAll(".", "-")}`;
   const markdown = contentKey.endsWith("intro");
   const multiline = markdown || fallback.length > 60;
-
-  // Through onSubmit, not the action prop, so a rejected save keeps the
-  // edit (see ProjectForm).
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => formAction(formData));
-  }
 
   // After a save the page isn't re-fetched, so compare against what was
   // just saved rather than the value the page loaded with.
@@ -42,7 +35,7 @@ export function ContentField({ action, contentKey, description, value, fallback,
   }
 
   return (
-    <form onSubmit={handleSubmit} className="content-field">
+    <form onSubmit={onSubmit} className="content-field">
       <label htmlFor={id} className="form-label">
         <span className="content-field__key">{contentKey}</span> {description}
         {markdown && " (markdown)"}
@@ -73,16 +66,7 @@ export function ContentField({ action, contentKey, description, value, fallback,
         </p>
       )}
 
-      {state && "error" in state && (
-        <div className="form-status form-status--error" role="alert">
-          {state.error}
-        </div>
-      )}
-      {state && "saved" in state && !pending && (
-        <div className="form-status form-status--success" role="status">
-          Saved.
-        </div>
-      )}
+      <SaveStatus state={state} pending={pending} />
 
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>

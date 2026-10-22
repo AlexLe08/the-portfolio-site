@@ -5,14 +5,14 @@ import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 
 // Everything in this file runs in the browser, not on the server -- the
-// "use client" directive above is what makes that possible. This is the
-// first component in the project that needs it: useState and a submit
-// handler both require interactivity no Server Component can provide.
-// It's also the first place a fetch from this frontend actually crosses
-// the browser's CORS boundary -- every page so far fetched server-to-server,
-// where CORS doesn't apply at all. If this form fails with a CORS error
-// in the browser console, it means Render's ALLOWED_ORIGINS doesn't
-// include the origin this page is served from (see docs/render-runbook.md).
+// "use client" directive above is what makes that possible: useState and a
+// submit handler both require interactivity no Server Component can provide.
+// It's also the only place a fetch from this frontend crosses the browser's
+// CORS boundary -- every other backend call runs server-to-server (pages
+// and Server Actions), where CORS doesn't apply at all. If this form fails
+// with a CORS error in the browser console, it means Render's
+// ALLOWED_ORIGINS doesn't include the origin this page is served from (see
+// docs/render-runbook.md).
 type Status = "idle" | "submitting" | "success" | "error";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -80,7 +80,9 @@ export function ContactForm() {
         return;
       }
       setStatus("success");
-      setName(""); setEmail(""); setMessage("");
+      setName("");
+      setEmail("");
+      setMessage("");
     } catch {
       setStatus("error");
       setErrorMessage("Couldn't reach the server. It may be waking up, so please try again in a minute.");

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { api } from "@/lib/api";
+import { SERVER_UNREACHABLE } from "@/lib/messages";
 import { createSession, deleteSession } from "@/lib/session";
 
 // Server Actions: these run only on the server, though LoginForm calls
@@ -29,7 +30,7 @@ export async function login(_previous: LoginState, formData: FormData): Promise<
       signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
     });
   } catch {
-    return { error: "Couldn't reach the server. It may be waking up, so try again in a minute." };
+    return { error: SERVER_UNREACHABLE };
   }
 
   const { data, response } = result;

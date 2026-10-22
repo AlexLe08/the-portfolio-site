@@ -139,6 +139,17 @@
   as the admin form) and be at most 120 characters, matching the column.
   SQLite ignores `String(120)`, so an over-long slug used to pass tests
   and fail only on Postgres. Backend suite is now 100 tests.
+- Refactor pass (no feature changes): project queries and their list
+  order moved into `services/projects.py`; one `enforce_rate_limit()`
+  for both 429s; `tests/helpers.py` for shared test helpers, and
+  `conftest.py` now pins `ADMIN_API_KEY` (a real key in `.env` used to
+  fail the suite). Frontend: `useSaveAction` + `SaveStatus` shared by
+  both admin editors, `lib/project-rules.ts` for the slug rule and
+  lengths, a shared "server unreachable" message, metadata title
+  templates, and a `StackTags` component. One bug fix found on the way:
+  `title` and `repo_url` had no `max_length` (same Postgres-only failure
+  as the slug). Backend suite is now 104 tests. Verified in headless
+  Chrome against a seeded local backend (titles, saves, rejected saves).
 
 ## Next up (candidates, unordered)
 

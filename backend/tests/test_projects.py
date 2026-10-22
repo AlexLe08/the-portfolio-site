@@ -1,23 +1,6 @@
 import pytest
 
-from app import models
-
-ADMIN_HEADERS = {"x-admin-key": "dev-only-change-me"}
-
-
-def make_project(db_session, **overrides):
-    defaults = dict(
-        slug="test-project",
-        title="Test Project",
-        summary="A project for testing.",
-        stack=["Python"],
-        case_study_md="# Test",
-        published=True,
-    )
-    project = models.Project(**{**defaults, **overrides})
-    db_session.add(project)
-    db_session.commit()
-    return project
+from tests.helpers import ADMIN_HEADERS, make_project
 
 
 def test_list_projects_only_returns_published(client, db_session):
@@ -178,6 +161,37 @@ def test_create_project_accepts_slug_at_max_length(client):
 
     assert response.status_code == 201
     assert response.json()["slug"] == slug
+
+
+# Each is one character over its String(n) column, which SQLite ignores.
+OVER_LONG_FIELDS = [{"title": "t" * 201}, {"repo_url": "https://example.com/" + "r" * 281}]
+
+
+@pytest.mark.parametrize("overrides", OVER_LONG_FIELDS)
+def test_create_project_rejects_values_longer_than_their_columns(client, overrides):
+    response = client.post(
+        "/projects",
+        json={
+            "slug": "new",
+            "title": "New",
+            "summary": "S",
+            "stack": [],
+            "case_study_md": "x",
+            **overrides,
+        },
+        headers=ADMIN_HEADERS,
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize("overrides", OVER_LONG_FIELDS)
+def test_update_project_rejects_values_longer_than_their_columns(client, db_session, overrides):
+    make_project(db_session, slug="existing")
+
+    response = client.patch("/projects/existing", json=overrides, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
 
 
 def test_update_project_without_admin_key_is_rejected(client, db_session):

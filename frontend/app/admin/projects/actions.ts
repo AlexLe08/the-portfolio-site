@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
 import type { components } from "@/lib/api-types";
+import { SERVER_UNREACHABLE } from "@/lib/messages";
+import { isValidSlug, MAX_LENGTH } from "@/lib/project-rules";
 
 // adminApi() calls verifySession() first, so every action here checks the
 // session itself: Server Actions can be POSTed to directly, without the
@@ -12,18 +14,15 @@ export type ProjectFormState = { error: string } | { saved: true } | null;
 
 type ProjectFields = Omit<components["schemas"]["ProjectCreate"], "slug">;
 
-// Same rule as a URL segment: lowercase words joined by single hyphens.
-const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
-const UNREACHABLE = "Couldn't reach the server. It may be waking up, so try again in a minute.";
-
 export async function createProject(
   _previous: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
   const slug = String(formData.get("slug") ?? "").trim();
-  if (!SLUG_PATTERN.test(slug)) {
-    return { error: "The slug can only use lowercase letters, numbers and single hyphens." };
+  if (!isValidSlug(slug)) {
+    return {
+      error: `The slug can only use lowercase letters, numbers and single hyphens, up to ${MAX_LENGTH.slug} characters.`,
+    };
   }
   const parsed = parseProjectForm(formData);
   if ("error" in parsed) return parsed;
@@ -33,7 +32,7 @@ export async function createProject(
   try {
     result = await api.POST("/projects", { body: { slug, ...parsed.fields } });
   } catch {
-    return { error: UNREACHABLE };
+    return { error: SERVER_UNREACHABLE };
   }
   const { response, error } = result;
   redirectIfUnauthorized(response);
@@ -61,7 +60,7 @@ export async function updateProject(
       body: parsed.fields,
     });
   } catch {
-    return { error: UNREACHABLE };
+    return { error: SERVER_UNREACHABLE };
   }
   const { response, error } = result;
   redirectIfUnauthorized(response);

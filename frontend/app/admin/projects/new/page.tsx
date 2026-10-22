@@ -4,7 +4,7 @@ import { ProjectForm } from "@/components/ProjectForm";
 import { verifySession } from "@/lib/session";
 
 export const metadata = {
-  title: "New project — Admin",
+  title: "New project",
 };
 
 export default async function NewProjectPage() {

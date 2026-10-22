@@ -1,6 +1,7 @@
 "use server";
 
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { SERVER_UNREACHABLE } from "@/lib/messages";
 
 // adminApi() calls verifySession() first: Server Actions can be POSTed to
 // directly, so this one checks the session itself.
@@ -27,7 +28,7 @@ export async function updateContent(
       body: { value },
     });
   } catch {
-    return { error: "Couldn't reach the server. It may be waking up, so try again in a minute." };
+    return { error: SERVER_UNREACHABLE };
   }
   const { response, error } = result;
   redirectIfUnauthorized(response);

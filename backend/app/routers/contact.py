@@ -1,22 +1,19 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
-from app.core.config import settings
-from app.core.rate_limit import SlidingWindowLimiter
-
 
 from app import models, schemas
+from app.core.config import settings
+from app.core.rate_limit import SlidingWindowLimiter, enforce_rate_limit
 from app.database import get_db
 from app.services import notifications
 
 router = APIRouter(prefix="/contact", tags=["contact"])
 logger = logging.getLogger(__name__)
 
-limiter = SlidingWindowLimiter(
-    settings.contact_rate_limit, settings.contact_rate_window_seconds
-)
+limiter = SlidingWindowLimiter(settings.contact_rate_limit, settings.contact_rate_window_seconds)
 
 
 def _client_key(request: Request) -> str:
@@ -29,23 +26,21 @@ def _client_key(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def enforce_rate_limit(request: Request) -> None:
-    retry_after = limiter.check(_client_key(request))
-    if retry_after:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many messages. Please try again later.",
-            headers={"Retry-After": str(int(retry_after) + 1)},
-        )
+def enforce_contact_rate_limit(request: Request) -> None:
+    enforce_rate_limit(limiter, _client_key(request), "Too many messages. Please try again later.")
 
 
 @router.post(
     "",
     response_model=schemas.ContactConfirmation,
     status_code=201,
-    dependencies=[Depends(enforce_rate_limit)],
+    dependencies=[Depends(enforce_contact_rate_limit)],
 )
-def submit_contact_message(payload: schemas.ContactCreate, background_tasks: BackgroundTasks ,db: Session = Depends(get_db)):
+def submit_contact_message(
+    payload: schemas.ContactCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     if payload.website:
         # Honeypot tripped. Answer exactly like a success so the bot has no
         # signal to adapt to, but save and notify nothing.

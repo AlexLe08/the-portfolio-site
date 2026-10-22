@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app import schemas
 from app.core.config import settings
-from app.core.rate_limit import SlidingWindowLimiter
+from app.core.rate_limit import SlidingWindowLimiter, enforce_rate_limit
 from app.core.security import create_admin_token, login_configured, verify_admin_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -17,13 +17,7 @@ def enforce_login_rate_limit() -> None:
     # Every attempt shares one key (see Settings.login_rate_limit). The cost
     # is that a flood of bad attempts locks the admin out of the UI for a
     # window too; the admin key still works from curl meanwhile.
-    retry_after = limiter.check("login")
-    if retry_after:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many login attempts. Please try again later.",
-            headers={"Retry-After": str(int(retry_after) + 1)},
-        )
+    enforce_rate_limit(limiter, "login", "Too many login attempts. Please try again later.")
 
 
 @router.post(

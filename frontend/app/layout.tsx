@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
+import { FALLBACK_CONTENT } from "@/lib/content";
 import "./globals.css";
 
 // IBM Plex isn't a variable font on Google Fonts, so weights must be
@@ -21,9 +22,12 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+// Pages set only their own title ("Contact"); the template adds the name.
+// The description is the built-in copy: the home page replaces it with the
+// stored value, but reading /content here would hold up every route.
 export const metadata: Metadata = {
-  title: "Alexander Le — Portfolio",
-  description: "Full-stack case studies and projects.",
+  title: { default: "Alexander Le — Portfolio", template: "%s — Alexander Le" },
+  description: FALLBACK_CONTENT["site.description"],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -2,10 +2,6 @@ import Link from "next/link";
 import { logout } from "./actions";
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
 
-export const metadata = {
-  title: "Admin — Alexander Le",
-};
-
 export default async function AdminPage() {
   const api = await adminApi();
   const { data: projects, response } = await api.GET("/admin/projects");
