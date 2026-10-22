@@ -103,13 +103,22 @@
   on Vercel too. A cookie only decides what to render; the backend
   checks the token on every admin request, so Vercel holds no secrets.
   Verified end to end in headless Chrome against a local backend.
+- Admin reads (admin UI, PR 3a): `GET /admin/projects` (drafts included,
+  public display order) and `GET /admin/projects/{slug}`, returning
+  `ProjectAdmin` (adds `published` and `sort_order`). The `/admin` router
+  carries `require_admin` itself, so new admin routes are protected by
+  default. Writes stay on `POST`/`PATCH /projects` and `PUT /content`.
+  No deletion: unpublishing hides a project and can be undone. Backend
+  suite is now 90 tests.
 
 ## Next up (candidates, unordered)
 
-- Admin UI, PR 3: screens for editing projects, then site content. Needs
-  an admin-only backend read that includes drafts (the public list hides
-  them), and one helper for admin backend calls that adds the Bearer
-  token and, on a `401`, deletes the cookie and redirects to login.
+- Admin UI, PR 3b: project list, edit and create screens. Needs one
+  helper for admin backend calls that adds the Bearer token and, on a
+  `401`, deletes the cookie and redirects to login.
+- Admin UI, PR 3c: site content editor (public `GET /content` plus
+  `PUT /content/{key}`).
+- Project deletion, only if unpublishing ever stops being enough.
 - Content follow-ups: the owner's own `contact.intro` (the current text
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. After any `PUT /content/{key}`, update the matching fallback

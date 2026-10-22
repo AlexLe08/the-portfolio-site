@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auth, contact, content, projects
+from app.routers import admin, auth, contact, content, projects
 
 app = FastAPI(title="Portfolio API", version="0.1.0")
 
@@ -23,6 +23,7 @@ app.include_router(projects.router)
 app.include_router(contact.router)
 app.include_router(content.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
