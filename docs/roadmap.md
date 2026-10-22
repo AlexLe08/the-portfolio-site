@@ -92,13 +92,24 @@
   script). GitHub login is a later upgrade that replaces only the
   password check.
 
+- Admin login on the frontend (admin UI, PR 2 of 3): `/admin/login` posts
+  to a `login` Server Action, which calls `POST /auth/login` from Vercel's
+  server and stores the JWT in an httpOnly, `SameSite=strict` cookie
+  scoped to `/admin` that expires with the token. `/admin` is a
+  placeholder with sign out. Admin pages are `noindex`. Vercel Hobby
+  functions run up to 300s (Fluid compute, on by default), so the action
+  waits up to 60s for a Render cold start. Decision recorded: the
+  frontend never checks the JWT signature, which would put `JWT_SECRET`
+  on Vercel too. A cookie only decides what to render; the backend
+  checks the token on every admin request, so Vercel holds no secrets.
+  Verified end to end in headless Chrome against a local backend.
+
 ## Next up (candidates, unordered)
 
-- Admin UI, PR 2: login page and Server Action on the frontend, the token
-  in an httpOnly cookie, a `verifySession()` check in every admin action.
-  Before building, check Vercel Hobby's function duration limit against a
-  30–50 second Render cold start.
-- Admin UI, PR 3: screens for editing projects, then site content.
+- Admin UI, PR 3: screens for editing projects, then site content. Needs
+  an admin-only backend read that includes drafts (the public list hides
+  them), and one helper for admin backend calls that adds the Bearer
+  token and, on a `401`, deletes the cookie and redirects to login.
 - Content follow-ups: the owner's own `contact.intro` (the current text
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. After any `PUT /content/{key}`, update the matching fallback
