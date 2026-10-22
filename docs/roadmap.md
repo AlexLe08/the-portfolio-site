@@ -110,12 +110,26 @@
   default. Writes stay on `POST`/`PATCH /projects` and `PUT /content`.
   No deletion: unpublishing hides a project and can be undone. Backend
   suite is now 90 tests.
+- Project editor (admin UI, PR 3b): `/admin` lists every project (order,
+  title, slug, draft or published); `/admin/projects/new` and
+  `/admin/projects/[slug]` share `ProjectForm`. All admin backend calls
+  go through `adminApi()` (`lib/admin-api.ts`), which checks the session
+  and adds the Bearer token. A `401` redirects to `/admin/login?expired=1`,
+  which skips the signed-in redirect, because cookies can't be deleted
+  while a page renders; the next login overwrites the cookie. The form
+  submits through `onSubmit` + `startTransition`, not the `action` prop,
+  because React resets a form after its action prop runs, even when the
+  save is rejected. `app/admin/loading.tsx` and `error.tsx` cover cold
+  starts and outages. With `loading.tsx` streaming the shell first,
+  `redirect()` and `notFound()` complete in the browser and the 404 page
+  is sent as `200`; acceptable for `noindex` admin pages. Verified end to
+  end in headless Chrome against a seeded local backend.
 
 ## Next up (candidates, unordered)
 
-- Admin UI, PR 3b: project list, edit and create screens. Needs one
-  helper for admin backend calls that adds the Bearer token and, on a
-  `401`, deletes the cookie and redirects to login.
+- Validate slugs on the backend too (`ProjectCreate` accepts any
+  string). The admin form already enforces lowercase words joined by
+  hyphens, but curl and `/docs` bypass it.
 - Admin UI, PR 3c: site content editor (public `GET /content` plus
   `PUT /content/{key}`).
 - Project deletion, only if unpublishing ever stops being enough.

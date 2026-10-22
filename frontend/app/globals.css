@@ -508,3 +508,88 @@ button:focus-visible {
   background: var(--signal-soft);
   border-color: color-mix(in srgb, var(--signal) 45%, transparent);
 }
+/* ---------------------------------------------------------------------
+   Admin
+   Same document language as the public pages: ruled table, muted
+   labels, signal blue only for links and focus. Nothing new to learn.
+   ------------------------------------------------------------------ */
+.form-help {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.form-input--short {
+  max-width: 8rem;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-check input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--signal);
+}
+
+.form-check input:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-heading {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.admin-table th {
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 0.5rem 0.75rem 0.5rem 0;
+}
+
+.admin-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.75rem 0.75rem 0.75rem 0;
+  vertical-align: top;
+}
+
+.admin-table__order {
+  font-family: var(--font-technical);
+  color: var(--muted);
+  width: 4rem;
+}
+
+.admin-table__slug {
+  font-family: var(--font-technical);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-table__draft {
+  color: var(--muted);
+  font-style: italic;
+}

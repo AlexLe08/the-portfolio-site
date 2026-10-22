@@ -67,11 +67,15 @@ them. Imports only point downward.
 
 Frontend:
 - Server Components by default. Use `"use client"` only for real
-  interactivity (currently `components/ContactForm.tsx` and
-  `components/LoginForm.tsx`).
+  interactivity (currently `components/ContactForm.tsx`,
+  `components/LoginForm.tsx`, `components/ProjectForm.tsx`, and the
+  required `app/admin/error.tsx`).
 - Admin pages (`app/admin/`) and admin Server Actions each call
-  `verifySession()` from `lib/session.ts` first. Never rely on a layout
-  for auth, and never send the admin key or the session token to the browser.
+  `verifySession()` from `lib/session.ts` first, directly or through
+  `adminApi()` in `lib/admin-api.ts`, which every admin backend call uses.
+  Never rely on a layout for auth, and never send the admin key or the
+  session token to the browser. Admin pages read the session cookie,
+  which already makes them dynamic, so they don't set `force-dynamic`.
 - Pages that fetch backend data set `export const dynamic = "force-dynamic"`,
   because project data can change at any time via the admin API.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
