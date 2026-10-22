@@ -22,6 +22,14 @@ class ProjectDetail(ProjectSummary):
     created_at: datetime
 
 
+class ProjectAdmin(ProjectDetail):
+    """What the admin editor needs: everything, including drafts' state.
+    Only returned from admin routes; the public schemas above stay lean."""
+
+    published: bool
+    sort_order: int
+
+
 class ProjectCreate(BaseModel):
     slug: str
     title: str
