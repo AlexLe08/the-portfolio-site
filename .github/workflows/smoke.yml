@@ -1,0 +1,85 @@
+name: Smoke tests
+
+# Runs Playwright against the deployed site (frontend/e2e). Not a required
+# check: it tests production after a merge, so it can't gate the PR.
+#
+# Triggers:
+# - deployment_status: Vercel reports each production deploy to GitHub as
+#   a deployment. Its success means the new frontend is live. Render
+#   reports its deploys too; the job's `if` skips those (and previews).
+# - schedule: daily, so breakage with no deploy (expired env var, Neon or
+#   Render trouble) still shows up.
+# - workflow_dispatch: run by hand from the Actions tab.
+on:
+  deployment_status:
+  schedule:
+    - cron: "17 13 * * *" # 13:17 UTC; off the hour, when GitHub's queue is busiest
+  workflow_dispatch:
+
+concurrency:
+  group: smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment.environment == 'Production' &&
+       github.event.deployment_status.state == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_URL: https://the-portfolio-site-flax.vercel.app
+      API_URL: https://portfolio-backend-leto.onrender.com
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The wait step diffs the deployed backend commit against this one.
+          fetch-depth: 0
+
+      # Vercel can finish before Render. Render also skips deploys that
+      # don't touch backend/ (rootDir), so /health may keep reporting an
+      # older commit. Either way, the backend is ready once the commit it
+      # serves has the same backend/ as this one.
+      - name: Wait for the backend to match this commit
+        if: github.event_name == 'deployment_status'
+        run: |
+          for attempt in $(seq 1 40); do
+            deployed=$(curl -s --max-time 60 "$API_URL/health" | jq -r '.commit // empty' || true)
+            if [ -n "$deployed" ] && git cat-file -e "$deployed^{commit}" 2>/dev/null \
+              && git diff --quiet "$deployed" "$GITHUB_SHA" -- ../backend; then
+              echo "Backend at $deployed serves the same backend/ as $GITHUB_SHA"
+              exit 0
+            fi
+            echo "Backend at ${deployed:-unknown}, waiting for $GITHUB_SHA"
+            sleep 15
+          done
+          echo "::error::Backend never caught up with $GITHUB_SHA"
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
