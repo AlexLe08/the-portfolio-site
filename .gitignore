@@ -4,3 +4,6 @@
 CLAUDE.local.md
 .claude/settings.local.json
 .claude/worktrees/
+
+# Script logs (scripts/check.sh, scripts/local-stack.sh)
+.logs/

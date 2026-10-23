@@ -26,16 +26,11 @@ http://localhost:3000
 Run this any time the backend's routes or Pydantic schemas change:
 
 ```bash
-cd ../backend
-./.venv/bin/python -c "
-import json
-from app.main import app
-with open('openapi.json', 'w') as f:
-    json.dump(app.openapi(), f, indent=2)
-"
-cd ../frontend
-npm run generate:types
+../scripts/gen-types.sh
 ```
+
+It exports `backend/openapi.json` from the app, runs `npm run generate:types`
+to rewrite `lib/api-types.ts`, and lists whichever of the two changed.
 
 If a field the frontend expects was removed or renamed on the backend,
 this is what makes that show up as a TypeScript error at build time
