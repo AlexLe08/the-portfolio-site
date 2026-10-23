@@ -35,3 +35,5 @@ services:
         sync: false
       - key: CLIENT_IP_HEADER # names the visitor for the /contact rate limit; see docs/render-runbook.md
         value: CF-Connecting-IP
+      - key: SENTRY_DSN # set manually: the Sentry project's DSN; optional, error reporting is off when empty
+        sync: false

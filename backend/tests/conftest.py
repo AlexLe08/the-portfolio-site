@@ -1,3 +1,10 @@
+import os
+
+# app.main starts Sentry when it's imported, below, which is too early for
+# a monkeypatch fixture. An environment variable outranks .env, so this
+# keeps a real SENTRY_DSN from reporting test crashes.
+os.environ["SENTRY_DSN"] = ""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

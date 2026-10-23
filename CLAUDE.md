@@ -65,7 +65,7 @@ retyping the commands they wrap; each explains itself in its header:
 ## Architecture rules
 
 Backend layering: routers → schemas → models/database. `app/core/`
-(config, security) is imported by other layers and imports nothing from
+(config, security, monitoring) is imported by other layers and imports nothing from
 them. Imports only point downward.
 - `schemas.py` (API contract) stays separate from `models.py` (storage).
   One model can back several schemas; `ProjectSummary` deliberately omits
