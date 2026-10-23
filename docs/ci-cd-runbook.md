@@ -2,7 +2,9 @@
 
 Two independent GitHub Actions workflows, plus a branch ruleset on `main`
 that requires both to pass before merging — the same "CI enforced
-structurally" pattern used on the Discord bot project.
+structurally" pattern used on the Discord bot project. A third workflow,
+`smoke.yml`, tests the deployed site after merges and is deliberately not
+required (see "Smoke tests against production" below).
 
 ## Workflows
 
@@ -43,6 +45,50 @@ fix at larger scale — a `dorny/paths-filter`-style action that makes the
 *job* always run and report a status, while conditionally skipping the
 expensive *steps* inside it based on what changed. Worth revisiting if
 either job's runtime grows enough to matter.
+
+## Smoke tests against production (`smoke.yml`)
+
+Playwright tests in `frontend/e2e/` that load the live site: backend
+`/health`, the home page's project list, the first project's case study,
+a real 404 for an unknown slug, a contact submission with the honeypot
+filled (checks the cross-origin POST and that `Retry-After` is exposed;
+the backend counts it toward the rate limit but saves and sends nothing),
+and `/admin` redirecting to a `noindex` sign-in page. Assertions avoid
+specific titles and copy, so editing content never breaks them.
+
+When it runs:
+- **After every production deploy**, on the `deployment_status` event.
+  Vercel's GitHub integration reports each production deploy as a GitHub
+  deployment (environment `Production`); its `success` means the new
+  frontend is live. Render reports its deploys too (environment
+  `main - portfolio-backend`), and Vercel previews report as `Preview`;
+  the job's `if` skips both, so those show as skipped runs in the Actions
+  tab.
+- **Daily** at 13:17 UTC, to catch breakage that comes without a deploy.
+  GitHub disables scheduled workflows after 60 days with no repository
+  activity; re-enable it from the Actions tab if that happens.
+- **By hand**: Actions → Smoke tests → Run workflow, or locally from
+  `frontend/`: `npx playwright install chromium` once, then
+  `npm run test:smoke`. `BASE_URL` and `API_URL` point it somewhere other
+  than production.
+
+Before a post-deploy run, the workflow waits for the backend. Vercel
+usually finishes first, and Render only deploys when a commit touches
+`backend/` (its `rootDir`), so `/health`'s `commit` can legitimately stay
+on an older commit. The wait ends once the deployed commit has the same
+`backend/` as the commit under test (`git diff --quiet`), checking every
+15 seconds for up to about 10 minutes. A timeout there means the Render
+deploy failed or is stuck: check the Render dashboard's deploy logs.
+
+It isn't a required check because it runs after merge, against
+production; there is no PR left to block. A failure is a signal to look
+at production, not a broken branch. The HTML report and traces are
+uploaded as the `playwright-report` artifact on failure.
+
+`deployment_status` runs the workflow file as it is at the deployed
+commit, so a branch's Vercel preview deploys also start it (and the job
+skips them). `schedule` and the Run workflow button only use the copy on
+`main`.
 
 ## Branch ruleset (`main`)
 

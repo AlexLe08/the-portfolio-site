@@ -160,6 +160,11 @@
   the limiter on every request, and a window of 0 turned it off, so
   either now fails at startup. Backend suite is now 109 tests. Verified in headless Chrome against a local backend
   with a limit of 1 and a 600-second window ("in 10 minutes").
+- Smoke tests against production: `/health` reports the running deploy's
+  `commit` (`RENDER_GIT_COMMIT`), and Playwright tests in `frontend/e2e/`
+  run from `smoke.yml` after each Vercel production deploy (waiting for
+  the backend to match first), daily, and by hand. Not a required check.
+  Details in `docs/ci-cd-runbook.md`.
 
 ## Next up (candidates, unordered)
 
@@ -176,8 +181,7 @@
   as markdown `![alt](url)` inside content values. Before choosing a
   storage provider, confirm its free tier needs no payment method; check
   `next/image` remote-image config in the bundled Next docs.
-- Playwright smoke tests against the deployed site; Sentry on both
-  services.
+- Sentry on both services.
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.
