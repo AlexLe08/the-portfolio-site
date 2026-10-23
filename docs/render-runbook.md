@@ -6,6 +6,10 @@ idea as the GitHub Actions workflows).
 
 The deployed service is at https://portfolio-backend-leto.onrender.com
 (`/health` for a liveness check, `/docs` for the interactive API docs).
+`/health` also returns `commit`, the Git SHA of the running deploy, read
+from `RENDER_GIT_COMMIT`, which Render sets on every deploy (it is not in
+`render.yaml`). It is `null` outside Render. Compare it with the merge
+commit to tell whether a deploy has gone live.
 
 ## Why Render, specifically
 

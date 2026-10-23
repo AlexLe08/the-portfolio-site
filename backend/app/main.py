@@ -32,4 +32,8 @@ app.include_router(admin.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "environment": settings.environment}
+    return {
+        "status": "ok",
+        "environment": settings.environment,
+        "commit": settings.render_git_commit or None,
+    }
