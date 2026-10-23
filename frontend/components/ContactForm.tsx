@@ -46,6 +46,20 @@ function describeValidationError(
   return GENERIC_ERROR;
 }
 
+// Turns a 429's Retry-After (seconds, see backend core/rate_limit.py) into
+// "in 12 minutes", so the text follows CONTACT_RATE_WINDOW_SECONDS. The
+// header could also be an HTTP date, which ours never sends; that, a
+// missing header, or one CORS didn't expose all fall back to "later".
+function describeRetryAfter(header: string | null): string {
+  const seconds = Number(header);
+  if (!header || !Number.isFinite(seconds) || seconds <= 0) return "later";
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes <= 1) return "in a minute";
+  if (minutes < 60) return `in ${minutes} minutes`;
+  const hours = Math.round(minutes / 60);
+  return hours === 1 ? "in about an hour" : `in about ${hours} hours`;
+}
+
 export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,7 +82,8 @@ export function ContactForm() {
         // Rate limited (see backend routers/contact.py). Not in the OpenAPI
         // error shapes, so it is detected by status rather than by `error`.
         setStatus("error");
-        setErrorMessage("Too many messages from your connection. Please try again in an hour.");
+        const wait = describeRetryAfter(response.headers.get("Retry-After"));
+        setErrorMessage(`Too many messages from your connection. Please try again ${wait}.`);
         return;
       }
       if (error) {

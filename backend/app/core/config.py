@@ -1,4 +1,4 @@
-from pydantic import field_validator
+from pydantic import PositiveInt, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,9 +36,12 @@ class Settings(BaseSettings):
     # the proxy's, so production must set this or all visitors share one
     # limit. Only name a header the platform overwrites: a header a caller can
     # forge lets them dodge the limit. See docs/render-runbook.md.
+    # The rate-limit numbers here and below must be positive: a limit of 0
+    # would crash the limiter on every request, and a window of 0 would
+    # quietly turn it off, so either fails at startup instead.
     client_ip_header: str = ""
-    contact_rate_limit: int = 5
-    contact_rate_window_seconds: int = 3600
+    contact_rate_limit: PositiveInt = 5
+    contact_rate_window_seconds: PositiveInt = 3600
 
     # Shared-secret auth for the single-admin write endpoints, sent as the
     # X-Admin-Key header from curl or /docs. See core/security.py.
@@ -53,8 +56,8 @@ class Settings(BaseSettings):
     admin_session_minutes: int = 480
     # One shared limit on all login attempts, not per visitor: logins arrive
     # through the frontend's server, so every attempt has the same address.
-    login_rate_limit: int = 5
-    login_rate_window_seconds: int = 900
+    login_rate_limit: PositiveInt = 5
+    login_rate_window_seconds: PositiveInt = 900
 
     environment: str = "development"
 
