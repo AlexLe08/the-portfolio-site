@@ -165,6 +165,14 @@
   run from `smoke.yml` after each Vercel production deploy (waiting for
   the backend to match first), daily, and by hand. Not a required check.
   Details in `docs/ci-cd-runbook.md`.
+- Dev scripts in `scripts/` for commands that were retyped every session:
+  `setup-worktree.sh`, `check.sh` (pre-PR checks, one line per step),
+  `gen-types.sh`, `local-stack.sh` (whole site on a throwaway seeded
+  SQLite database, isolated from production whatever `.env` says), and
+  `wait-for-backend.sh` (also used by `smoke.yml`). Listed in `CLAUDE.md`.
+  Running the smoke tests against `local-stack.sh` caught one
+  content-dependent assertion (a case study's own `#` heading made two
+  `h1`s); the project test now reads the page header only.
 
 ## Next up (candidates, unordered)
 

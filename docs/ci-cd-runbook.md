@@ -77,7 +77,9 @@ usually finishes first, and Render only deploys when a commit touches
 `backend/` (its `rootDir`), so `/health`'s `commit` can legitimately stay
 on an older commit. The wait ends once the deployed commit has the same
 `backend/` as the commit under test (`git diff --quiet`), checking every
-15 seconds for up to about 10 minutes. A timeout there means the Render
+15 seconds for up to about 10 minutes. The logic lives in
+`scripts/wait-for-backend.sh`, which also works by hand after a merge
+(no arguments: waits for `origin/main`). A timeout there means the Render
 deploy failed or is stuck: check the Render dashboard's deploy logs.
 
 It isn't a required check because it runs after merge, against

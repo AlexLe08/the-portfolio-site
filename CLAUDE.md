@@ -48,6 +48,20 @@ Frontend (run from `frontend/`; expects the backend at
 Before opening a PR, run backend `pytest` and frontend `lint` + `build`.
 These are exactly what CI runs.
 
+Scripts (`scripts/`, run from anywhere in the checkout). Prefer these to
+retyping the commands they wrap; each explains itself in its header:
+- `scripts/setup-worktree.sh`: venv, `npm ci`, and `.env` copies from the
+  main checkout. Run first in every new worktree.
+- `scripts/check.sh [backend|frontend]`: the pre-PR checks above, one line
+  per step; full logs in `.logs/`.
+- `scripts/gen-types.sh`: export `openapi.json` and regenerate
+  `lib/api-types.ts`; prints the files that changed.
+- `scripts/local-stack.sh`: backend :8000 + frontend :3000 on a throwaway
+  seeded SQLite database, notifications off, prints `ready`. Env vars pass
+  through (`CONTACT_RATE_LIMIT=1 scripts/local-stack.sh`).
+- `scripts/wait-for-backend.sh [sha]`: after a merge, waits until
+  production's backend matches (default: `origin/main`).
+
 ## Architecture rules
 
 Backend layering: routers → schemas → models/database. `app/core/`

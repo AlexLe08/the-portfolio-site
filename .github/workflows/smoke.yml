@@ -41,25 +41,12 @@ jobs:
           # The wait step diffs the deployed backend commit against this one.
           fetch-depth: 0
 
-      # Vercel can finish before Render. Render also skips deploys that
-      # don't touch backend/ (rootDir), so /health may keep reporting an
-      # older commit. Either way, the backend is ready once the commit it
-      # serves has the same backend/ as this one.
+      # Vercel can finish before Render, and Render skips deploys that don't
+      # touch backend/. The script explains both; it's also run by hand.
       - name: Wait for the backend to match this commit
         if: github.event_name == 'deployment_status'
-        run: |
-          for attempt in $(seq 1 40); do
-            deployed=$(curl -s --max-time 60 "$API_URL/health" | jq -r '.commit // empty' || true)
-            if [ -n "$deployed" ] && git cat-file -e "$deployed^{commit}" 2>/dev/null \
-              && git diff --quiet "$deployed" "$GITHUB_SHA" -- ../backend; then
-              echo "Backend at $deployed serves the same backend/ as $GITHUB_SHA"
-              exit 0
-            fi
-            echo "Backend at ${deployed:-unknown}, waiting for $GITHUB_SHA"
-            sleep 15
-          done
-          echo "::error::Backend never caught up with $GITHUB_SHA"
-          exit 1
+        working-directory: .
+        run: scripts/wait-for-backend.sh "$GITHUB_SHA" "$API_URL"
 
       - uses: actions/setup-node@v4
         with:

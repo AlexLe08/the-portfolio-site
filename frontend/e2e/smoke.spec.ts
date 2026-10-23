@@ -26,7 +26,8 @@ test("project page renders its case study", async ({ page }) => {
   const title = (await link.locator(".project-card__title").textContent())?.trim();
   await link.click();
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(title ?? "");
+  // Scoped to the page header: a case study can have its own `#` heading.
+  await expect(page.locator(".detail-header h1")).toHaveText(title ?? "");
   await expect(page).toHaveTitle(`${title} — Alexander Le`);
   await expect(page.locator("article.case-study")).not.toBeEmpty();
 });
