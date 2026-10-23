@@ -93,7 +93,8 @@ Frontend:
 - Server Components by default. Use `"use client"` only for real
   interactivity (currently `components/ContactForm.tsx`,
   `components/LoginForm.tsx`, `components/ProjectForm.tsx`,
-  `components/ContentField.tsx`, and the required `app/admin/error.tsx`).
+  `components/ContentField.tsx`, and the required error boundaries
+  `app/admin/error.tsx` and `app/global-error.tsx`).
 - A new site-content key goes in `FALLBACK_CONTENT` (`lib/content.ts`)
   and in `DESCRIPTIONS` (`app/admin/content/page.tsx`); the build fails
   until both have it. Admin code never reads content through

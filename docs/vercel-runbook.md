@@ -26,6 +26,49 @@ static/dynamic rendering) are first-class here without extra config.
 | Variable | Value | Notes |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | the Render backend's URL | The `NEXT_PUBLIC_` prefix is a Next.js convention — it makes the variable available in browser-side JavaScript, not just server-side code. Not a secret, so this is fine. |
+| `NEXT_PUBLIC_SENTRY_DSN` | the `portfolio-frontend` Sentry project's DSN | Optional: error reporting is off when empty. Not a secret (a DSN can only submit events). See "Error reporting (Sentry)" below |
+
+## Error reporting (Sentry)
+
+Unhandled errors are reported from both sides: the browser
+(`instrumentation-client.ts`) and the server, through Next's
+`onRequestError` hook (`instrumentation.ts`), which covers Server
+Components, Route Handlers, and Server Actions. Errors only: no tracing,
+no Session Replay. The shared options and privacy rules are in
+`frontend/lib/sentry.ts`, mirroring the backend: request bodies (contact
+messages, the login password), cookies (`admin_session` holds the admin
+JWT), headers other than User-Agent, IP addresses, and stack frame
+variables are never sent. The browser drops its copy of a server error
+(it has only a digest), so each server error counts once.
+
+Environment and release are set by the SDK: the environment from
+Vercel's `VERCEL_ENV` (`production` or `preview`), the release from the
+deploy's commit SHA.
+
+The free Developer plan (see `docs/render-runbook.md`) covers both
+projects; the 5k errors a month are shared.
+
+Setup:
+1. sentry.io: create a second project with the Next.js platform, named
+   `portfolio-frontend`. Copy its DSN (Settings > Projects > Client Keys).
+2. Vercel: Settings > Environment Variables, add `NEXT_PUBLIC_SENTRY_DSN`
+   for Production (and Preview if you want preview errors too). Don't
+   use the Sentry integration from the Vercel Marketplace; a plain
+   variable is all this needs. `NEXT_PUBLIC_` values are inlined at
+   build time, so redeploy after adding or changing it.
+3. Check it: in the browser console on the production site, run
+   `setTimeout(() => { throw new Error("Sentry setup check") })`. It
+   shows up under Issues within a minute, with environment `production`.
+
+Not set up yet (both optional):
+- Source maps. Without them, browser stack traces are minified. Uploading
+  them needs a Sentry auth token as `SENTRY_AUTH_TOKEN`, plus
+  `SENTRY_ORG` and `SENTRY_PROJECT`, on Vercel. `next.config.ts` already
+  passes them to `withSentryConfig`; without a token the build skips the
+  upload and still succeeds.
+- `tunnelRoute`. Ad blockers drop some browser reports sent straight to
+  sentry.io. A tunnel sends them through this site instead, at the cost
+  of one Vercel function call per report.
 
 ## Production URL vs. preview URLs
 
