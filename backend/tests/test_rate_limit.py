@@ -1,5 +1,6 @@
 import pytest
 
+from app.core.config import settings
 from app.core.rate_limit import SlidingWindowLimiter
 from app.routers import contact
 
@@ -65,6 +66,20 @@ def test_contact_route_returns_429_after_the_limit(client, monkeypatch):
     assert statuses == [201, 201, 429]
     assert int(blocked.headers["Retry-After"]) > 0
     assert "Too many" in blocked.json()["detail"]
+
+
+def test_retry_after_is_readable_cross_origin(client, monkeypatch):
+    # The middleware reads ALLOWED_ORIGINS once at import, so use whichever
+    # origin is configured rather than assuming localhost.
+    origin = settings.allowed_origins_list[0]
+    monkeypatch.setattr(contact.limiter, "limit", 1)
+
+    client.post("/contact", json=_payload())
+    blocked = client.post("/contact", json=_payload(), headers={"Origin": origin})
+
+    assert blocked.status_code == 429
+    assert blocked.headers["Access-Control-Allow-Origin"] == origin
+    assert "retry-after" in blocked.headers["Access-Control-Expose-Headers"].lower()
 
 
 def test_rate_limited_submission_is_not_saved(client, db_session, monkeypatch):

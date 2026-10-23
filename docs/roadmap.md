@@ -150,6 +150,14 @@
   `title` and `repo_url` had no `max_length` (same Postgres-only failure
   as the slug). Backend suite is now 104 tests. Verified in headless
   Chrome against a seeded local backend (titles, saves, rejected saves).
+- ContactForm's 429 message follows the backend's `Retry-After` header
+  ("try again in 12 minutes"), so it tracks `CONTACT_RATE_WINDOW_SECONDS`
+  instead of hard-coding "in an hour". The form's fetch is cross-origin,
+  and browsers hide non-safelisted response headers from JavaScript, so
+  CORS now sets `expose_headers=["Retry-After"]`. Without it the header
+  reads as `null` and the text falls back to "later". Backend suite is
+  now 105 tests. Verified in headless Chrome against a local backend
+  with a limit of 1 and a 600-second window ("in 10 minutes").
 
 ## Next up (candidates, unordered)
 
@@ -171,10 +179,8 @@
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.
-- Contact rate limiter follow-ups: it is in-memory, so it resets on restart
+- Contact rate limiter follow-up: it is in-memory, so it resets on restart
   or cold start and isn't shared across instances (move to the database or
-  Redis only if the service ever scales out). `ContactForm`'s 429 message
-  hard-codes "in an hour" and won't follow `CONTACT_RATE_WINDOW_SECONDS`;
-  the backend's `Retry-After` header could drive the text instead.
+  Redis only if the service ever scales out).
 - Verify a domain in Resend to email anyone other than yourself, and
   switch `EMAIL_FROM` to it.

@@ -17,6 +17,10 @@ app.add_middleware(
     allow_origins=settings.allowed_origins_list,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
+    # Browser JavaScript can only read a few "safelisted" response headers
+    # cross-origin. ContactForm reads Retry-After on a 429 to say how long
+    # to wait, so it has to be exposed explicitly.
+    expose_headers=["Retry-After"],
 )
 
 app.include_router(projects.router)
