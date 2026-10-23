@@ -85,9 +85,10 @@ production; there is no PR left to block. A failure is a signal to look
 at production, not a broken branch. The HTML report and traces are
 uploaded as the `playwright-report` artifact on failure.
 
-The workflow only exists for GitHub once it is on `main`: neither
-`deployment_status`, `schedule` nor the Run workflow button picks up a
-workflow file that is only on a branch.
+`deployment_status` runs the workflow file as it is at the deployed
+commit, so a branch's Vercel preview deploys also start it (and the job
+skips them). `schedule` and the Run workflow button only use the copy on
+`main`.
 
 ## Branch ruleset (`main`)
 
