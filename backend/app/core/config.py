@@ -61,6 +61,11 @@ class Settings(BaseSettings):
 
     environment: str = "development"
 
+    # Set by Render on every deploy (it's not in render.yaml). /health
+    # reports it so the smoke-test workflow can wait until the commit it
+    # tests is the one actually serving. Empty when running locally.
+    render_git_commit: str = ""
+
     # Comma-separated list, e.g. "https://your-site.vercel.app,https://yourdomain.com"
     # Kept as a single string (not a list) because env vars are always
     # strings -- pydantic-settings would need a custom parser to accept a
