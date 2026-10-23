@@ -155,8 +155,10 @@
   instead of hard-coding "in an hour". The form's fetch is cross-origin,
   and browsers hide non-safelisted response headers from JavaScript, so
   CORS now sets `expose_headers=["Retry-After"]`. Without it the header
-  reads as `null` and the text falls back to "later". Backend suite is
-  now 105 tests. Verified in headless Chrome against a local backend
+  reads as `null` and the text falls back to "later". The four
+  rate-limit settings are now `PositiveInt`: a limit of 0 used to crash
+  the limiter on every request, and a window of 0 turned it off, so
+  either now fails at startup. Backend suite is now 109 tests. Verified in headless Chrome against a local backend
   with a limit of 1 and a 600-second window ("in 10 minutes").
 
 ## Next up (candidates, unordered)

@@ -1,6 +1,8 @@
 import pytest
 
-from app.core.config import settings
+from pydantic import ValidationError
+
+from app.core.config import Settings, settings
 from app.core.rate_limit import SlidingWindowLimiter
 from app.routers import contact
 
@@ -80,6 +82,15 @@ def test_retry_after_is_readable_cross_origin(client, monkeypatch):
     assert blocked.status_code == 429
     assert blocked.headers["Access-Control-Allow-Origin"] == origin
     assert "retry-after" in blocked.headers["Access-Control-Expose-Headers"].lower()
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["contact_rate_limit", "contact_rate_window_seconds", "login_rate_limit", "login_rate_window_seconds"],
+)
+def test_zero_rate_settings_fail_at_startup(field):
+    with pytest.raises(ValidationError, match="greater than 0"):
+        Settings(**{field: 0})
 
 
 def test_rate_limited_submission_is_not_saved(client, db_session, monkeypatch):
