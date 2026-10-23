@@ -181,6 +181,17 @@
   in-memory transport and assert none of it, nor the admin key or a
   Bearer token, gets out. Errors only, no tracing yet. Backend suite is
   now 115 tests. Setup in `docs/render-runbook.md`.
+- Sentry on the frontend (step 2 of 2): `@sentry/nextjs` reports browser
+  errors and server errors (`onRequestError`) when
+  `NEXT_PUBLIC_SENTRY_DSN` is set, in a separate `portfolio-frontend`
+  project. Same privacy rules as the backend, in `lib/sentry.ts`: no
+  bodies, cookies, IPs, frame variables, or headers besides User-Agent.
+  The browser drops its digest-only copy of each server error, which
+  would otherwise count twice. Verified locally against a fake Sentry
+  server: a render crash, a Server Action crash with a password field,
+  and a browser crash, each sent with an `admin_session` cookie, an
+  admin key, and a forged IP; none of those values got out. No source
+  maps or tunnel yet. Setup in `docs/vercel-runbook.md`.
 
 ## Next up (candidates, unordered)
 
@@ -197,10 +208,9 @@
   as markdown `![alt](url)` inside content values. Before choosing a
   storage provider, confirm its free tier needs no payment method; check
   `next/image` remote-image config in the bundled Next docs.
-- Sentry on the frontend (step 2): `@sentry/nextjs`, same privacy rules
-  as the backend. Check the current Next.js setup in Sentry's docs first
-  (instrumentation files change between versions). Tracing on either
-  service only if errors alone stop being enough.
+- Sentry follow-ups: frontend source maps (needs `SENTRY_AUTH_TOKEN` on
+  Vercel) once a minified browser stack trace gets in the way. Tracing
+  on either service only if errors alone stop being enough.
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.

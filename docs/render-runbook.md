@@ -78,6 +78,39 @@ Setup:
    prompt for it, because it was added after the Blueprint was created.
    Saving it redeploys the service.
 
+Linking stack traces to GitHub (a code mapping): the container runs the
+code from `/app`, so a frame's path starts with `app/` (for example
+`app/routers/contact.py`), while in the repo the same file is under
+`backend/app/`. A code mapping tells Sentry to swap that prefix, so each
+frame links to its line on GitHub. Suspect commits need it too.
+1. Check for an existing mapping first. With the GitHub integration
+   installed, Sentry tries to create mappings for Python projects
+   automatically. In Sentry, open Settings > Projects >
+   `portfolio-backend` > General Settings and look under Connected
+   Repositories.
+2. If there's none: click Connect repository there (the project is
+   preselected) and pick `AlexLe08/the-portfolio-site`. If the repo
+   isn't listed, give the Sentry app access to it on GitHub first:
+   Settings > Integrations > GitHub > Configure.
+3. Fill in:
+   - Branch: `main`. Sentry uses it when an event's release isn't linked
+     to a commit, which is the case here: the release is set to the
+     commit SHA, but no commits are uploaded to Sentry.
+   - Stack trace prefix: `app/`
+   - Repository prefix: `backend/app/`
+   The form's example preview should rewrite `app/main.py` to
+   `backend/app/main.py`. An empty stack trace prefix matches every
+   file, so don't leave it empty.
+4. Check it on the first real error: an in-app frame should link to the
+   file on GitHub. If it doesn't, open the event's JSON (the `{}`
+   button) and compare a frame's `filename` with the prefix. The
+   `capture_message` test above has no stack trace, so it can't test
+   the mapping.
+
+Suspect commits only appear for issues created after the integration
+was set up, and only for commits less than a year old. Sentry's code
+mappings docs: https://docs.sentry.io/integrations/source-code-mgmt/code-mappings/
+
 ## Verifying the rate limit
 
 Run this after changing `CLIENT_IP_HEADER` or anything about the limiter.
