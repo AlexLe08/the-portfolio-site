@@ -17,7 +17,7 @@ def init_sentry() -> bool:
     - http_bodies: the default keeps request bodies, so a crash in /contact
       would send the visitor's name, email, and message.
     - stack_frame_variables: the default captures each frame's local
-variables. Starlette's ASGI scope is one of them and holds the raw
+      variables. Starlette's ASGI scope is one of them and holds the raw
       request headers, so this alone would leak X-Admin-Key even with
       header filtering. A Settings object's repr also lists every secret.
     - user_info, cookies: visitor IP addresses and cookie values.
