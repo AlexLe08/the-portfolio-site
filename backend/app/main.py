@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.monitoring import init_sentry
 from app.routers import admin, auth, contact, content, projects
+
+init_sentry()
 
 app = FastAPI(title="Portfolio API", version="0.1.0")
 

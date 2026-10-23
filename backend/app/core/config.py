@@ -61,6 +61,11 @@ class Settings(BaseSettings):
 
     environment: str = "development"
 
+    # Error reporting (see core/monitoring.py). Off when empty. A DSN only
+    # lets someone send events to the project, not read them, but keep it
+    # out of git anyway so nobody can fill the free quota with junk.
+    sentry_dsn: str = ""
+
     # Set by Render on every deploy (it's not in render.yaml). /health
     # reports it so the smoke-test workflow can wait until the commit it
     # tests is the one actually serving. Empty when running locally.

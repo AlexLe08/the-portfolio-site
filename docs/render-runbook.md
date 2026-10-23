@@ -48,6 +48,35 @@ which variables exist.
 | `RESEND_API_KEY` | Resend API key, pasted manually | `sync: false` in render.yaml. Create it in the Resend dashboard under API Keys. Optional: email is skipped unless both this and `NOTIFY_EMAIL_TO` are set. Email goes through Resend's HTTP API because Render's free tier blocks outbound SMTP (ports 25, 465, 587). Failures are logged as `Email notification failed: HTTP <status> <Resend's response>` and never fail the request |
 | `NOTIFY_EMAIL_TO` | the address that receives contact messages | `sync: false`. Without a verified Resend domain, this must be the email on your Resend account (the `onboarding@resend.dev` test sender can't send anywhere else; a `403` "You can only send testing emails to your own email address" means they differ). Each email sets `reply_to` to the visitor, so replying goes straight to them. `EMAIL_FROM` (default `Portfolio Contact <onboarding@resend.dev>`) is optional; set it only after verifying a domain in Resend |
 | `CLIENT_IP_HEADER` | request header naming the visitor, e.g. `CF-Connecting-IP` | Optional but needed in production. `POST /contact` allows 5 messages per hour per visitor (`CONTACT_RATE_LIMIT`, `CONTACT_RATE_WINDOW_SECONDS`). These and the `LOGIN_RATE_*` values must be at least 1, or the service fails at startup. Behind Render's proxy the socket address is the proxy's, so without this every visitor shares one limit. Only name a header the platform overwrites, because a caller can forge any other and dodge the limit. Cloudflare rejects client-supplied copies of `CF-Connecting-IP`, so for this header the condition holds. Verify the limiter after changing it; see "Verifying the rate limit" below. The limiter is in-memory: it resets on restart and isn't shared across instances |
+| `SENTRY_DSN` | Sentry project DSN, pasted manually | `sync: false`. Optional: error reporting is off when empty. See "Error reporting (Sentry)" below |
+
+## Error reporting (Sentry)
+
+Unhandled errors (500s) are reported to Sentry, tagged with
+`ENVIRONMENT` and the deploy's commit (`RENDER_GIT_COMMIT`) as the
+release. 4xx responses are not reported. Setup and the privacy settings
+are in `backend/app/core/monitoring.py`: request bodies, local
+variables, IP addresses, and cookies are never sent, and headers whose
+name contains `auth` or `key` are filtered.
+
+Free tier: the Developer plan (1 user, 5k errors a month, 30-day
+history). Sentry's pricing page says data over the quota is dropped and
+not billed. Signing up asked for no payment method (2026-10-23). If
+Sentry ever asks for one to stay on the free plan, stop and find another
+option.
+
+Setup:
+1. sentry.io: sign up on the Developer plan, then create a project with
+   the FastAPI platform. Copy its DSN (Settings > Projects > Client Keys).
+2. Check the DSN from your machine: put `SENTRY_DSN=...` in
+   `backend/.env`, then from `backend/` run
+   `./.venv/bin/python -c "import sentry_sdk; from app.core.monitoring import init_sentry; init_sentry(); sentry_sdk.capture_message('Sentry setup check'); sentry_sdk.flush()"`.
+   The message shows up under Issues within a minute, with environment
+   `development`. Remove the line from `.env` afterwards unless you want
+   local errors reported too.
+3. Render dashboard: set `SENTRY_DSN` on the service. Render won't
+   prompt for it, because it was added after the Blueprint was created.
+   Saving it redeploys the service.
 
 ## Verifying the rate limit
 

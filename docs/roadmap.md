@@ -173,6 +173,14 @@
   Running the smoke tests against `local-stack.sh` caught one
   content-dependent assertion (a case study's own `#` heading made two
   `h1`s); the project test now reads the page header only.
+- Sentry on the backend (step 1 of 2): unhandled errors are reported when
+  `SENTRY_DSN` is set, tagged with the environment and deploy commit.
+  The SDK's defaults would send request bodies (contact messages), stack
+  frame locals (a `Settings` repr holds every secret), IPs, and cookies,
+  so `data_collection` turns those off; tests send a crash through an
+  in-memory transport and assert none of it, nor the admin key or a
+  Bearer token, gets out. Errors only, no tracing yet. Backend suite is
+  now 115 tests. Setup in `docs/render-runbook.md`.
 
 ## Next up (candidates, unordered)
 
@@ -189,7 +197,10 @@
   as markdown `![alt](url)` inside content values. Before choosing a
   storage provider, confirm its free tier needs no payment method; check
   `next/image` remote-image config in the bundled Next docs.
-- Sentry on both services.
+- Sentry on the frontend (step 2): `@sentry/nextjs`, same privacy rules
+  as the backend. Check the current Next.js setup in Sentry's docs first
+  (instrumentation files change between versions). Tracing on either
+  service only if errors alone stop being enough.
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
 - Switch to ISR (`revalidate`) if per-request rendering becomes costly.
