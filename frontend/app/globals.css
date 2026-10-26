@@ -224,6 +224,7 @@ button:focus-visible {
    blue on hover/focus -- the one piece of non-decorative motion.
    ------------------------------------------------------------------ */
 .project-list {
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -235,6 +236,7 @@ button:focus-visible {
   background: var(--paper-raised);
   padding: 1.25rem 1.5rem;
   transition: border-color 0.15s ease;
+  text-decoration: none;
 }
 
 .project-card:hover,
@@ -245,7 +247,6 @@ button:focus-visible {
 .project-card__title {
   font-size: 1.125rem;
   font-weight: 600;
-  text-decoration: none;
   color: var(--ink);
 }
 
@@ -469,6 +470,9 @@ button:focus-visible {
   border: 1px solid var(--ink);
   padding: 0.65rem 1.25rem;
   cursor: pointer;
+  /* Also used on links (home page's "Try again"). */
+  display: inline-block;
+  text-decoration: none;
 }
 
 .form-button:hover:not(:disabled) {
