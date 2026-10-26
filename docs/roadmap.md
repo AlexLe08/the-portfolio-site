@@ -235,7 +235,13 @@
   projects do arrive. The degraded page is sent as `200`. Verified locally
   in headless Chrome against a fake backend (healthy, 500, connection
   dropped, then recovery via "Try again"), with a fake Sentry endpoint
-  receiving both errors and none of the filtered data.
+  receiving both errors and none of the filtered data. Same PR (#38):
+  project cards lost their underline and bullets. The card is the `<a>`,
+  and a link's underline paints through all its text, so
+  `text-decoration: none` has to sit on `.project-card`, not its children.
+  Deployed 2026-10-26 (`ed01003`); smoke tests passed and the live home
+  page lists projects. The degraded page only shows during an outage, so
+  it has only been exercised locally.
 
 ## Next up (candidates, unordered)
 
