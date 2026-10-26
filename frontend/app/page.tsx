@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -22,6 +23,22 @@ const FACTS: { label: string; key: ContentKey }[] = [
   { label: "status", key: "home.fact.status" },
 ];
 
+// null when the backend is down or returns an error, so the page can still
+// render its copy (which has fallbacks) instead of the whole-page
+// app/error.tsx. Catching here means onRequestError never sees the failure,
+// so it's reported to Sentry by hand.
+async function loadProjects() {
+  try {
+    const { data, error } = await api.GET("/projects");
+    if (data) return data;
+    Sentry.captureException(new Error("Failed to load projects"), { extra: { error } });
+  } catch (error) {
+    // openapi-fetch throws when the backend is unreachable.
+    Sentry.captureException(error);
+  }
+  return null;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getContent();
   return { description: content["site.description"] };
@@ -36,17 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // not a blank page that then fires off a client-side request.
 export default async function HomePage() {
   // Started together so the content request adds no wait of its own.
-  const [{ data, error }, content] = await Promise.all([
-    api.GET("/projects"),
-    getContent(),
-  ]);
-
-  if (error) {
-    // `error` is typed from the OpenAPI spec's error responses -- this
-    // isn't a generic catch-all, TypeScript knows what shape a failure
-    // here can take.
-    throw new Error("Failed to load projects");
-  }
+  const [projects, content] = await Promise.all([loadProjects(), getContent()]);
 
   return (
     <main className="sheet">
@@ -74,20 +81,35 @@ export default async function HomePage() {
           <h2 className="section-rule__label">Projects</h2>
         </div>
 
-        <ul className="project-list">
-          {data.map((project) => (
-            <li key={project.slug}>
-              <Link
-                href={`/projects/${project.slug}`}
-                className="project-card"
-              >
-                <div className="project-card__title">{project.title}</div>
-                <p className="project-card__summary">{project.summary}</p>
-                <StackTags stack={project.stack} className="project-card__stack" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {projects === null ? (
+          <>
+            <div className="form-status form-status--error" role="alert">
+              Couldn&rsquo;t load projects. The server may be waking up, so try again in a minute.
+            </div>
+            {/* A full reload, not next/link: <Link> to the current URL may
+                be served from the client router cache, while a reload
+                always fetches again. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/" className="form-button">
+              Try again
+            </a>
+          </>
+        ) : (
+          <ul className="project-list">
+            {projects.map((project) => (
+              <li key={project.slug}>
+                <Link
+                  href={`/projects/${project.slug}`}
+                  className="project-card"
+                >
+                  <div className="project-card__title">{project.title}</div>
+                  <p className="project-card__summary">{project.summary}</p>
+                  <StackTags stack={project.stack} className="project-card__stack" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </main>
   );

@@ -470,6 +470,9 @@ button:focus-visible {
   border: 1px solid var(--ink);
   padding: 0.65rem 1.25rem;
   cursor: pointer;
+  /* Also used on links (home page's "Try again"). */
+  display: inline-block;
+  text-decoration: none;
 }
 
 .form-button:hover:not(:disabled) {

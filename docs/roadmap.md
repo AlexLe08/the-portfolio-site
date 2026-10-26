@@ -217,20 +217,27 @@
   into a 404, so during an outage real projects looked deleted; now only
   a real 404 calls `notFound()` and anything else throws to the
   boundary. `/contact` can't fail on the backend (`getContent()` falls
-  back). Chose an error page over degrading the home page in place
-  (follow-up in Next up). Deployed 2026-10-26 (`41feae9`); the live
+  back). The home page has since been changed to degrade in place
+  (next entry). Deployed 2026-10-26 (`41feae9`); the live
   pages return the expected codes (home and projects 200, unknown slug
   404). The error page itself was only exercised locally, against a
   stopped backend and one returning 500.
 
-## Next up (candidates, unordered)
+- Home page degrades in place when `/projects` fails (a 500 or an
+  unreachable backend): the title block and intro still render, with a
+  "Couldn't load projects" notice and a "Try again" link where the list
+  goes, instead of the whole-page `app/error.tsx`. Because the failure is
+  caught, `onRequestError` never sees it, so `loadProjects()` reports it
+  to Sentry itself. The retry is a plain `<a href="/">` (full reload), not
+  `<Link>`, whose same-URL behavior depends on the client router cache;
+  that needs one `eslint-disable` for `no-html-link-for-pages`. No timeout
+  on `/projects`: during a cold start the page still waits, because the
+  projects do arrive. The degraded page is sent as `200`. Verified locally
+  in headless Chrome against a fake backend (healthy, 500, connection
+  dropped, then recovery via "Try again"), with a fake Sentry endpoint
+  receiving both errors and none of the filtered data.
 
-- Degrade the home page in place when `/projects` fails: render the
-  title block and intro (content already falls back) with a "projects
-  unavailable" note, instead of the whole-page `app/error.tsx`. Only
-  worth it if Sentry shows backend outages are more than rare; it needs
-  its own retry (a client island or a reload link), since `retry()` only
-  exists in error boundaries.
+## Next up (candidates, unordered)
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
