@@ -7,7 +7,7 @@ import "./globals.css";
 // Shown when the root layout itself fails, so it replaces the whole page
 // and needs its own <html>, <body>, styles, and <title> (no metadata
 // exports here). Other errors are caught closer to where they happen
-// (app/admin/error.tsx) or by Next's default page. Server errors are
+// (app/error.tsx, app/admin/error.tsx). Server errors are
 // already reported by onRequestError in instrumentation.ts; this reports
 // errors thrown in the browser.
 export default function GlobalError({

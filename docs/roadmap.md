@@ -202,9 +202,39 @@
   The engine now sets `pool_pre_ping=True` (one tiny query per request).
   The new test closes a pooled connection the way Neon does, and fails
   without pre-ping. Backend suite is now 116 tests. Details in
-  `docs/neon-runbook.md`.
+  `docs/neon-runbook.md`. Deployed 2026-10-26 (`bc17818`); the home page
+  loaded with no new Sentry errors. The real test is the first request
+  after more than 5 idle minutes, so it's confirmed once a day of normal
+  quiet spells passes with no new `OperationalError` in
+  `portfolio-backend`.
+
+- Public error boundary: `app/error.tsx` catches failures on the public
+  pages (`/`, `/projects/[slug]`), which used to show Next's bare
+  default error page. It mirrors `app/admin/error.tsx` (message plus a
+  `retry()` button) and sits inside the root layout, so the site header
+  stays. It doesn't report to Sentry: `onRequestError` already sends
+  server errors. Also fixed: the project page turned any backend failure
+  into a 404, so during an outage real projects looked deleted; now only
+  a real 404 calls `notFound()` and anything else throws to the
+  boundary. `/contact` can't fail on the backend (`getContent()` falls
+  back). Chose an error page over degrading the home page in place
+  (follow-up in Next up). Not yet merged.
 
 ## Next up (candidates, unordered)
+
+- Degrade the home page in place when `/projects` fails: render the
+  title block and intro (content already falls back) with a "projects
+  unavailable" note, instead of the whole-page `app/error.tsx`. Only
+  worth it if Sentry shows backend outages are more than rare; it needs
+  its own retry (a client island or a reload link), since `retry()` only
+  exists in error boundaries.
+
+- Shared error UI, only when a third segment boundary appears or the
+  error UI grows past a message and a "Try again" button (a back link, a
+  reference ID): extract `components/ErrorNotice.tsx` (`message`,
+  `retry`) from `app/error.tsx` and `app/admin/error.tsx`, which
+  currently differ only in their sentence. `app/global-error.tsx` stays
+  separate (own `<html>`, styles, Sentry).
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-ups, now doable at `/admin/content` and

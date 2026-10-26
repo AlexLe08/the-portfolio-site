@@ -37,8 +37,13 @@ export default async function ProjectDetailPage({ params }: Props) {
   // way of saying "render this route's not-found.tsx / the default 404
   // page" -- it's the frontend honoring the same "doesn't exist" signal
   // the backend already decided on, rather than re-deciding it here.
-  if (response.status === 404 || !data) {
+  if (response.status === 404) {
     notFound();
+  }
+  // Any other failure (a 500 during an outage) is an error, not a missing
+  // page: app/error.tsx shows it with a retry button.
+  if (!data) {
+    throw new Error("Failed to load project");
   }
 
   return (
