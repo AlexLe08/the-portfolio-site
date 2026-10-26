@@ -202,9 +202,29 @@
   The engine now sets `pool_pre_ping=True` (one tiny query per request).
   The new test closes a pooled connection the way Neon does, and fails
   without pre-ping. Backend suite is now 116 tests. Details in
-  `docs/neon-runbook.md`.
+  `docs/neon-runbook.md`. Deployed 2026-10-26 (`bc17818`); the home page
+  loaded with no new Sentry errors. The real test is the first request
+  after more than 5 idle minutes, so it's confirmed once a day of normal
+  quiet spells passes with no new `OperationalError` in
+  `portfolio-backend`.
 
 ## Next up (candidates, unordered)
+
+- Public error boundary (in progress on `feat/public-error-boundary`).
+  When the backend fails, the public pages (`/`, `/projects/[slug]`,
+  `/contact`) show Next's bare default error page, because there's no
+  `app/error.tsx`. Found during the stale-connection incident above.
+  `app/admin/error.tsx` is the precedent: a `form-status--error` message
+  ("may be waking up") and a `retry()` button. Notes for the change:
+  - `app/error.tsx` doesn't wrap the root layout (`app/global-error.tsx`
+    does), so the site header stays visible.
+  - It doesn't need to report to Sentry: `onRequestError` already sends
+    server errors, and the browser drops its digest-only copy.
+  - Decide first between an error page and degrading in place: the home
+    page could render its copy (which already falls back) with a
+    "projects unavailable" note instead of failing the whole page.
+  - Check `error.tsx` props and behaviour in the bundled Next docs
+    (`node_modules/next/dist/docs/`) before writing it.
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-ups, now doable at `/admin/content` and
