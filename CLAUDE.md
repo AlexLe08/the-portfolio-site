@@ -61,6 +61,17 @@ retyping the commands they wrap; each explains itself in its header:
   through (`CONTACT_RATE_LIMIT=1 scripts/local-stack.sh`).
 - `scripts/wait-for-backend.sh [sha]`: after a merge, waits until
   production's backend matches (default: `origin/main`).
+- `scripts/cleanup-merged.sh [--apply]`: after a merge, removes local
+  branches and worktrees whose remote is gone and that are merged. Dry
+  run by default.
+- `scripts/new-worktree.sh <branch>`: next task's worktree from
+  `origin/main`, with no upstream (so a bare `git push` can't hit `main`),
+  then `setup-worktree.sh`.
+- `scripts/fake-backend.py [port]`: fake API (`/__mode/ok|500|down`,
+  optionally `?path=`) plus a fake Sentry endpoint that logs envelopes,
+  for testing outage handling and what gets reported.
+- `frontend/demo/stack.mjs`: helpers for PR demo videos (seeded backend,
+  production build, stoppable backend, captions, `.webm` in `.logs/`).
 
 ## Architecture rules
 
