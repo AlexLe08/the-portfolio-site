@@ -191,7 +191,18 @@
   server: a render crash, a Server Action crash with a password field,
   and a browser crash, each sent with an `admin_session` cookie, an
   admin key, and a forged IP; none of those values got out. No source
-  maps or tunnel yet. Setup in `docs/vercel-runbook.md`.
+  maps or tunnel yet. Setup in `docs/vercel-runbook.md`. Verified in
+  production on 2026-10-23: a test error from the live site reached
+  Sentry.
+- Stale database connections: Neon's free plan scales to zero after 5
+  idle minutes (fixed) and closes open connections, so the first request
+  after a quiet spell reused a dead pooled connection and returned 500.
+  Sentry caught it on its first day (home page "Failed to load
+  projects", backend `SSL connection has been closed unexpectedly`).
+  The engine now sets `pool_pre_ping=True` (one tiny query per request).
+  The new test closes a pooled connection the way Neon does, and fails
+  without pre-ping. Backend suite is now 116 tests. Details in
+  `docs/neon-runbook.md`.
 
 ## Next up (candidates, unordered)
 

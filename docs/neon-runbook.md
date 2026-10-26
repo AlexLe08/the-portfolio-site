@@ -62,6 +62,25 @@ committed to the repo. For local development against a real Postgres
 instance instead of SQLite, see the "Develop against Postgres" section of
 `backend/README.md` (uses a local Docker Postgres, not Neon).
 
+## Scale to zero and pooled connections
+
+On the Free plan, Neon scales the compute to zero after 5 minutes of
+inactivity, and that can't be changed or turned off. The next query wakes
+it within a few hundred milliseconds, but connections that were open when
+it scaled down are closed.
+
+The backend keeps a pool of open connections between requests, so
+without a check, the first request after a quiet spell got a closed one
+and failed with a 500: `psycopg.OperationalError ... SSL connection has
+been closed unexpectedly`. Found through Sentry on 2026-10-23, as a
+`/projects` failure behind "Failed to load projects" on the home page.
+`make_engine()` in `backend/app/database.py` sets `pool_pre_ping=True`:
+each request's connection is checked with a tiny query first and
+replaced if it's dead (`tests/test_database.py`).
+
+If that error shows up in Sentry again, the connection was dropped in the
+middle of a query, which pre-ping doesn't cover.
+
 ## Running migrations and seeding
 
 Render's free tier has no shell access, so both of these are run from a
