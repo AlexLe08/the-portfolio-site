@@ -1,4 +1,6 @@
-from pydantic import PositiveInt, field_validator
+import re
+
+from pydantic import PositiveInt, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -66,6 +68,13 @@ class Settings(BaseSettings):
     # out of git anyway so nobody can fill the free quota with junk.
     sentry_dsn: str = ""
 
+    # Media uploads go to Cloudinary (see docs/roadmap.md). Copy the "API
+    # environment variable" from the Cloudinary Console's API Keys page:
+    # cloudinary://<api_key>:<api_secret>@<cloud_name>. Uploads are off when
+    # empty. SecretStr keeps the API secret out of reprs, logs, and
+    # validation errors; read it with .get_secret_value().
+    cloudinary_url: SecretStr = SecretStr("")
+
     # Set by Render on every deploy (it's not in render.yaml). /health
     # reports it so the smoke-test workflow can wait until the commit it
     # tests is the one actually serving. Empty when running locally.
@@ -86,6 +95,18 @@ class Settings(BaseSettings):
         # rather than sign tokens with a weak key.
         if value and len(value.encode()) < 32:
             raise ValueError("JWT_SECRET must be at least 32 bytes (try `openssl rand -hex 32`)")
+        return value
+
+    @field_validator("cloudinary_url")
+    @classmethod
+    def cloudinary_url_well_formed(cls, value: SecretStr) -> SecretStr:
+        # A mangled paste (e.g. "CLOUDINARY_URL=" pasted twice) would
+        # otherwise only show up as a failed upload much later.
+        url = value.get_secret_value()
+        if url and not re.fullmatch(r"cloudinary://[^:@\s]+:[^@\s]+@[^@\s/]+", url):
+            raise ValueError(
+                "CLOUDINARY_URL must look like cloudinary://<api_key>:<api_secret>@<cloud_name>"
+            )
         return value
 
     @property

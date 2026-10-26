@@ -7,6 +7,7 @@ os.environ["SENTRY_DSN"] = ""
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -26,6 +27,13 @@ def no_real_notifications(monkeypatch):
     monkeypatch.setattr(settings, "discord_webhook_url", "")
     monkeypatch.setattr(settings, "resend_api_key", "")
     monkeypatch.setattr(settings, "notify_email_to", "")
+
+
+@pytest.fixture(autouse=True)
+def no_real_uploads(monkeypatch):
+    """Same idea for Cloudinary: a real CLOUDINARY_URL in .env must never
+    let a test upload to the live account."""
+    monkeypatch.setattr(settings, "cloudinary_url", SecretStr(""))
 
 
 @pytest.fixture(autouse=True)
