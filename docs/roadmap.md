@@ -208,23 +208,33 @@
   quiet spells passes with no new `OperationalError` in
   `portfolio-backend`.
 
+- Public error boundary: `app/error.tsx` catches failures on the public
+  pages (`/`, `/projects/[slug]`), which used to show Next's bare
+  default error page. It mirrors `app/admin/error.tsx` (message plus a
+  `retry()` button) and sits inside the root layout, so the site header
+  stays. It doesn't report to Sentry: `onRequestError` already sends
+  server errors. Also fixed: the project page turned any backend failure
+  into a 404, so during an outage real projects looked deleted; now only
+  a real 404 calls `notFound()` and anything else throws to the
+  boundary. `/contact` can't fail on the backend (`getContent()` falls
+  back). Chose an error page over degrading the home page in place
+  (follow-up in Next up). Not yet merged.
+
 ## Next up (candidates, unordered)
 
-- Public error boundary (in progress on `feat/public-error-boundary`).
-  When the backend fails, the public pages (`/`, `/projects/[slug]`,
-  `/contact`) show Next's bare default error page, because there's no
-  `app/error.tsx`. Found during the stale-connection incident above.
-  `app/admin/error.tsx` is the precedent: a `form-status--error` message
-  ("may be waking up") and a `retry()` button. Notes for the change:
-  - `app/error.tsx` doesn't wrap the root layout (`app/global-error.tsx`
-    does), so the site header stays visible.
-  - It doesn't need to report to Sentry: `onRequestError` already sends
-    server errors, and the browser drops its digest-only copy.
-  - Decide first between an error page and degrading in place: the home
-    page could render its copy (which already falls back) with a
-    "projects unavailable" note instead of failing the whole page.
-  - Check `error.tsx` props and behaviour in the bundled Next docs
-    (`node_modules/next/dist/docs/`) before writing it.
+- Degrade the home page in place when `/projects` fails: render the
+  title block and intro (content already falls back) with a "projects
+  unavailable" note, instead of the whole-page `app/error.tsx`. Only
+  worth it if Sentry shows backend outages are more than rare; it needs
+  its own retry (a client island or a reload link), since `retry()` only
+  exists in error boundaries.
+
+- Shared error UI, only when a third segment boundary appears or the
+  error UI grows past a message and a "Try again" button (a back link, a
+  reference ID): extract `components/ErrorNotice.tsx` (`message`,
+  `retry`) from `app/error.tsx` and `app/admin/error.tsx`, which
+  currently differ only in their sentence. `app/global-error.tsx` stays
+  separate (own `<html>`, styles, Sentry).
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-ups, now doable at `/admin/content` and
