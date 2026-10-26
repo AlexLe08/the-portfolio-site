@@ -236,6 +236,7 @@ button:focus-visible {
   background: var(--paper-raised);
   padding: 1.25rem 1.5rem;
   transition: border-color 0.15s ease;
+  text-decoration: none;
 }
 
 .project-card:hover,
@@ -246,7 +247,6 @@ button:focus-visible {
 .project-card__title {
   font-size: 1.125rem;
   font-weight: 600;
-  text-decoration: none;
   color: var(--ink);
 }
 
