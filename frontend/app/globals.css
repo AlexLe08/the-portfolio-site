@@ -224,6 +224,7 @@ button:focus-visible {
    blue on hover/focus -- the one piece of non-decorative motion.
    ------------------------------------------------------------------ */
 .project-list {
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 1rem;

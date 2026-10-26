@@ -218,7 +218,10 @@
   a real 404 calls `notFound()` and anything else throws to the
   boundary. `/contact` can't fail on the backend (`getContent()` falls
   back). Chose an error page over degrading the home page in place
-  (follow-up in Next up). Not yet merged.
+  (follow-up in Next up). Deployed 2026-10-26 (`41feae9`); the live
+  pages return the expected codes (home and projects 200, unknown slug
+  404). The error page itself was only exercised locally, against a
+  stopped backend and one returning 500.
 
 ## Next up (candidates, unordered)
 
