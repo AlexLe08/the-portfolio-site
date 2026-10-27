@@ -95,7 +95,8 @@ them. Imports only point downward.
   that write it: SQLite ignores the limit, so only Postgres would fail.
 - `app/services/` holds logic that isn't HTTP handling (currently
   `notifications.py`: Discord and email; `projects.py`: project queries
-  shared by the public and admin routers, including the one list order).
+  shared by the public and admin routers, including the one list order;
+  `media.py`: image upload checks, Cloudinary calls, and the `media` row).
   Routers call services and turn results into HTTP (404, 409); services
   import from `core` but never from routers. Move logic there when a route
   handler starts doing more than HTTP handling plus a simple query.
@@ -104,7 +105,9 @@ Frontend:
 - Server Components by default. Use `"use client"` only for real
   interactivity (currently `components/ContactForm.tsx`,
   `components/LoginForm.tsx`, `components/ProjectForm.tsx`,
-  `components/ContentField.tsx`, and the required error boundaries
+  `components/ContentField.tsx`, `components/MediaUploadForm.tsx`,
+  `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
+  and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
 - A new site-content key goes in `FALLBACK_CONTENT` (`lib/content.ts`)
   and in `DESCRIPTIONS` (`app/admin/content/page.tsx`); the build fails

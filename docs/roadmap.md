@@ -262,9 +262,44 @@
   as URLs, never as bytes in Postgres. A `media` table (url, required alt
   text, width, height, content type), an admin upload endpoint to object
   storage, and an upload screen in the admin UI. Until then, images work
-  as markdown `![alt](url)` inside content values. Before choosing a
-  storage provider, confirm its free tier needs no payment method; check
-  `next/image` remote-image config in the bundled Next docs.
+  as markdown `![alt](url)` inside content values.
+  Provider: Cloudinary (decided 2026-10-26; sign-up asked for no card,
+  confirmed by the owner). Free plan is 25 credits a month (1 credit = 1 GB
+  stored, 1 GB delivered, or 1,000 transformations). The official Python SDK
+  uploads from the backend, and the upload response gives width, height,
+  and format for the `media` row. Store Cloudinary's `public_id` next to
+  the URL so a later move is a re-upload plus URL rewrite. What happens
+  when credits run out isn't documented; check usage before it matters.
+  Credentials: one `CLOUDINARY_URL` setting (backend `.env`, Render env).
+  Runner-up: Vercel Blob (Hobby blocks Blob for 30 days at its 1 GB
+  limit). Ruled out: Supabase (free projects pause after a week idle),
+  Cloudflare R2 (checkout flow; `r2.dev` is dev-only, needs a Cloudflare
+  domain), UploadThing (JS-only), S3 (card).
+  Upload path (decided 2026-10-27): browser → Server Action → `POST /media`
+  → Cloudinary SDK, capped at 4 MB because Vercel Functions reject request
+  bodies over 4.5 MB. Cloudinary's response supplies width, height, and
+  format, so the browser never vouches for them. Future path if larger
+  files or video are ever needed: signed direct upload (the backend signs,
+  the browser uploads straight to Cloudinary, then the backend records the
+  row after re-checking the asset through Cloudinary's API, and orphaned
+  files from an abandoned second step need cleaning up).
+  Frontend: allow the host in
+  `images.remotePatterns` with an exact hostname and `/<cloud-name>/**`
+  path, or use a Cloudinary `loaderFile`.
+- Media library follow-ups: delete an upload (backend route that
+  destroys the Cloudinary file, then the row) and edit alt text after
+  upload. Neither has a route yet. The admin screen (`/admin/media`)
+  only uploads and lists for now.
+- Settings validation (own small PR, after the media library): startup
+  checks, like the `JWT_SECRET` and `CLOUDINARY_URL` ones, for settings
+  that otherwise fail silently or far from the cause. `ALLOWED_ORIGINS`:
+  each entry is just `scheme://host[:port]` (a trailing slash silently
+  breaks CORS for the contact form). `ADMIN_PASSWORD_HASH`: starts with
+  `$argon2` (a `$`-expanded or quoted paste is otherwise a 500 at login;
+  update the comment in `core/security.py`). `ADMIN_API_KEY`: refuse the
+  `dev-only-change-me` default when `ENVIRONMENT=production`. The rest
+  already fail at startup (`DATABASE_URL`, `SENTRY_DSN`), are logged
+  clearly at use (Discord, Resend), or accept any value.
 - Sentry follow-ups: frontend source maps (needs `SENTRY_AUTH_TOKEN` on
   Vercel) once a minified browser stack trace gets in the way. Tracing
   on either service only if errors alone stop being enough.

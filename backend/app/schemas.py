@@ -136,3 +136,28 @@ class ContactConfirmation(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MediaCreate(BaseModel):
+    """The form fields sent alongside the file in POST /media."""
+
+    # Whitespace is stripped first, so "   " fails min_length instead of
+    # passing as alt text a screen reader would read as nothing. No
+    # extra="forbid": FastAPI validates this model against the whole form,
+    # and the file part would count as an extra field.
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    alt_text: str = Field(min_length=1, max_length=300)
+
+
+class MediaRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    url: str
+    alt_text: str
+    width: int
+    height: int
+    content_type: str
+    size_bytes: int
+    created_at: datetime

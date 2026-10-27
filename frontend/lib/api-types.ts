@@ -142,6 +142,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Media */
+        get: operations["list_media_admin_media_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Media */
+        post: operations["upload_media_media_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -183,6 +217,14 @@ export interface components {
              */
             expires_at: string;
         };
+        /** Body_upload_media_media_post */
+        Body_upload_media_media_post: {
+            /**
+             * File
+             * @description JPEG, PNG, WebP, GIF, or AVIF, at most 4 MB
+             */
+            file: string;
+        } & components["schemas"]["MediaCreate"];
         /** ContactConfirmation */
         ContactConfirmation: {
             /** Id */
@@ -231,6 +273,36 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MediaCreate
+         * @description The form fields sent alongside the file in POST /media.
+         */
+        MediaCreate: {
+            /** Alt Text */
+            alt_text: string;
+        };
+        /** MediaRead */
+        MediaRead: {
+            /** Id */
+            id: number;
+            /** Url */
+            url: string;
+            /** Alt Text */
+            alt_text: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /**
          * ProjectAdmin
@@ -648,6 +720,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectAdmin"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_media_admin_media_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaRead"][];
+                };
+            };
+        };
+    };
+    upload_media_media_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_media_media_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaRead"];
                 };
             };
             /** @description Validation Error */

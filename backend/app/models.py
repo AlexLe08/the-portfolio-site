@@ -41,6 +41,31 @@ class SiteContent(Base):
     )
 
 
+class Media(Base):
+    """An uploaded image. The file itself lives on Cloudinary; this row is
+    what the site needs to render it.
+
+    public_id is Cloudinary's name for the file, kept so it can be deleted
+    or replaced there, and so a later provider move only rewrites public_id
+    and url. Images only for now, so width and height are always known
+    (next/image needs both for remote images).
+    """
+
+    __tablename__ = "media"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    url: Mapped[str] = mapped_column(String(500))
+    public_id: Mapped[str] = mapped_column(String(255), unique=True)
+    alt_text: Mapped[str] = mapped_column(String(300))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    content_type: Mapped[str] = mapped_column(String(100))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class ContactMessage(Base):
     __tablename__ = "contact_messages"
 

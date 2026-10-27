@@ -37,3 +37,5 @@ services:
         value: CF-Connecting-IP
       - key: SENTRY_DSN # set manually: the Sentry project's DSN; optional, error reporting is off when empty
         sync: false
+      - key: CLOUDINARY_URL # set manually: Cloudinary API environment variable; optional, uploads are off when empty
+        sync: false
