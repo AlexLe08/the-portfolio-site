@@ -1,5 +1,5 @@
 import re
-from typing import Self
+from typing import Literal, Self
 from urllib.parse import urlsplit
 
 from argon2 import extract_parameters
@@ -68,7 +68,10 @@ class Settings(BaseSettings):
     login_rate_limit: PositiveInt = 5
     login_rate_window_seconds: PositiveInt = 900
 
-    environment: str = "development"
+    # A fixed set, so a typo like "prod" fails at startup instead of quietly
+    # skipping the production-only checks below and tagging Sentry events
+    # with a stray environment. A new environment is a one-word change here.
+    environment: Literal["development", "production"] = "development"
 
     # Error reporting (see core/monitoring.py). Off when empty. A DSN only
     # lets someone send events to the project, not read them, but keep it

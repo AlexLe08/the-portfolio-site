@@ -66,6 +66,20 @@ def test_malformed_password_hash_fails_at_startup(value):
         Settings(admin_password_hash=value)
 
 
+@pytest.mark.parametrize("environment", ["development", "production"])
+def test_known_environments_are_accepted(environment):
+    settings = Settings(environment=environment, admin_api_key="generated-by-render")
+
+    assert settings.environment == environment
+
+
+@pytest.mark.parametrize("environment", ["prod", "Production", "staging", ""])
+def test_unknown_environment_fails_at_startup(environment):
+    # A free string would let "prod" skip the production-only checks.
+    with pytest.raises(ValidationError, match="'development' or 'production'"):
+        Settings(environment=environment)
+
+
 @pytest.mark.parametrize("key", [DEFAULT_ADMIN_API_KEY, ""])
 def test_production_refuses_default_or_empty_admin_key(key):
     with pytest.raises(ValidationError, match="ADMIN_API_KEY must be set"):
