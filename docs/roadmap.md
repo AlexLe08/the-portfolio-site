@@ -286,6 +286,10 @@
   Frontend: allow the host in
   `images.remotePatterns` with an exact hostname and `/<cloud-name>/**`
   path, or use a Cloudinary `loaderFile`.
+- Media library follow-ups: delete an upload (backend route that
+  destroys the Cloudinary file, then the row) and edit alt text after
+  upload. Neither has a route yet. The admin screen (`/admin/media`)
+  only uploads and lists for now.
 - Settings validation (own small PR, after the media library): startup
   checks, like the `JWT_SECRET` and `CLOUDINARY_URL` ones, for settings
   that otherwise fail silently or far from the cause. `ALLOWED_ORIGINS`:

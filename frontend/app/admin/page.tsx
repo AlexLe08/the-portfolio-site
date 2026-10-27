@@ -50,6 +50,11 @@ export default async function AdminPage() {
           <Link href="/admin/content">Edit site content</Link>
         </div>
 
+        <div className="admin-toolbar admin-toolbar--section">
+          <h2 className="admin-heading">Media</h2>
+          <Link href="/admin/media">Upload images</Link>
+        </div>
+
         <form action={logout} className="form-actions">
           <button type="submit" className="form-button">
             Sign out

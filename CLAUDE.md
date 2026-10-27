@@ -105,7 +105,9 @@ Frontend:
 - Server Components by default. Use `"use client"` only for real
   interactivity (currently `components/ContactForm.tsx`,
   `components/LoginForm.tsx`, `components/ProjectForm.tsx`,
-  `components/ContentField.tsx`, and the required error boundaries
+  `components/ContentField.tsx`, `components/MediaUploadForm.tsx`,
+  `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
+  and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
 - A new site-content key goes in `FALLBACK_CONTENT` (`lib/content.ts`)
   and in `DESCRIPTIONS` (`app/admin/content/page.tsx`); the build fails

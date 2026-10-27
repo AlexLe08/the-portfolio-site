@@ -8,13 +8,14 @@
 // A per-PR script only needs this file (it re-exports chromium), so it can
 // live outside the repo:
 //
-//   import { chromium, startStack, recordingContext, caption, pause, saveVideo }
+//   import { chromium, startStack, login, recordingContext, caption, pause, saveVideo }
 //     from "<repo>/frontend/demo/stack.mjs";
 //   const stack = await startStack();
 //   const browser = await chromium.launch();
 //   const context = await recordingContext(browser);
 //   const page = await context.newPage();
 //   try {
+//     await login(page, stack);          // only for admin pages
 //     await page.goto(stack.baseUrl);
 //     await caption(page, "1. Projects listed");
 //     await pause(3000);
@@ -28,7 +29,8 @@
 //
 // Assert each state before captioning it, so a broken flow fails instead
 // of recording. Videos don't show the cursor; hover before a click.
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdtempSync, renameSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -86,14 +88,29 @@ function stopProcess(child) {
   return exited;
 }
 
+// A random admin password for one run, hashed the way the backend checks
+// it, so login() never needs (or touches) the real ADMIN_PASSWORD_HASH.
+function throwawayLogin() {
+  const password = randomBytes(12).toString("hex");
+  const hasher = spawnSync(
+    "./.venv/bin/python",
+    ["-c", "import sys; from argon2 import PasswordHasher; print(PasswordHasher().hash(sys.argv[1]))", password],
+    { cwd: BACKEND, encoding: "utf8" },
+  );
+  if (hasher.status !== 0) throw new Error(`hashing the demo password failed:\n${hasher.stderr}`);
+  return { password, hash: hasher.stdout.trim() };
+}
+
 // Seeds a throwaway database, builds the frontend (skip with build: false
 // when .next already holds a build pointed at localhost:8000), and starts
-// both apps. Returns { baseUrl, apiUrl, backend: { start, stop }, stop }.
+// both apps. Returns { baseUrl, apiUrl, adminPassword, backend: { start,
+// stop }, stop }.
 export async function startStack({ build = true } = {}) {
   await assertPortFree(8000);
   await assertPortFree(3000);
 
   const dbDir = mkdtempSync(path.join(tmpdir(), "demo-db-"));
+  const admin = throwawayLogin();
   const backendEnv = {
     DATABASE_URL: `sqlite:///${dbDir}/demo.db`,
     ALLOWED_ORIGINS: BASE_URL,
@@ -101,6 +118,9 @@ export async function startStack({ build = true } = {}) {
     RESEND_API_KEY: "",
     NOTIFY_EMAIL_TO: "",
     CLIENT_IP_HEADER: "",
+    SENTRY_DSN: "",
+    ADMIN_PASSWORD_HASH: admin.hash,
+    JWT_SECRET: randomBytes(32).toString("hex"),
   };
   const frontendEnv = { NEXT_PUBLIC_API_URL: API_URL, NEXT_PUBLIC_SENTRY_DSN: "" };
 
@@ -132,12 +152,22 @@ export async function startStack({ build = true } = {}) {
   return {
     baseUrl: BASE_URL,
     apiUrl: API_URL,
+    adminPassword: admin.password,
     backend,
     async stop() {
       await Promise.all([backend.stop(), stopProcess(next)]);
       rmSync(dbDir, { recursive: true, force: true });
     },
   };
+}
+
+// Signs in to the admin UI with the run's throwaway password and waits for
+// the admin home page.
+export async function login(page, stack) {
+  await page.goto(`${stack.baseUrl}/admin/login`);
+  await page.fill("#password", stack.adminPassword);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(`${stack.baseUrl}/admin`);
 }
 
 // 1280x720 context that records a video; finish with saveVideo().

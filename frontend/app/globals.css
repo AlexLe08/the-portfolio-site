@@ -602,6 +602,33 @@ button:focus-visible {
   margin-top: 2.5rem;
 }
 
+.admin-table__thumb {
+  width: 10rem;
+}
+
+.admin-table__thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+}
+
+.admin-table__thumb a:focus-visible {
+  display: block;
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.media-markdown__label {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.media-markdown {
+  font-family: var(--font-technical);
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.5rem;
+}
+
 .content-field {
   padding-bottom: 1.5rem;
   margin-bottom: 1.75rem;
