@@ -6,6 +6,8 @@ the exceptions below into HTTP status codes; nothing here knows about HTTP.
 """
 
 import logging
+import re
+import unicodedata
 import uuid
 from urllib.parse import urlparse
 
@@ -33,7 +35,15 @@ ALLOWED_CONTENT_TYPES = {
 }
 _CONTENT_TYPE_BY_FORMAT = {fmt: ctype for ctype, fmt in ALLOWED_CONTENT_TYPES.items()}
 
-PUBLIC_ID_PREFIX = "portfolio/"
+# The account uses Cloudinary's dynamic folder mode, where a slash in the
+# public_id is only part of the name: asset_folder is what puts the file in
+# a folder in the Console. Neither changes the other.
+FOLDER = "portfolio"
+
+# public_ids read as "portfolio/<alt-text-slug>-<random>". The slug is for
+# people (Console, URLs); the random suffix is what keeps names unique.
+SLUG_MAX_LENGTH = 60
+SUFFIX_LENGTH = 12
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +91,8 @@ def upload_image(db: Session, *, data: bytes, content_type: str, alt_text: str) 
     try:
         result = cloudinary.uploader.upload(
             data,
-            public_id=PUBLIC_ID_PREFIX + uuid.uuid4().hex,
+            public_id=_public_id(alt_text),
+            asset_folder=FOLDER,
             resource_type="image",
             overwrite=False,
             timeout=30,
@@ -92,6 +103,12 @@ def upload_image(db: Session, *, data: bytes, content_type: str, alt_text: str) 
         raise UnsupportedImage() from error
     except cloudinary.exceptions.Error as error:
         raise ProviderError() from error
+
+    # With overwrite=False, a public_id that's already taken gets the
+    # existing file back instead of a new upload. It belongs to another row,
+    # so fail without the cleanup below, which would delete it.
+    if result.get("existing"):
+        raise ProviderError()
 
     # The declared content type came from the browser; Cloudinary's format
     # is what the file actually is.
@@ -119,6 +136,15 @@ def upload_image(db: Session, *, data: bytes, content_type: str, alt_text: str) 
         raise
     db.refresh(media)
     return media
+
+
+def _public_id(alt_text: str) -> str:
+    # "Café diagram (v2)!" -> "cafe-diagram-v2": accents folded to ASCII,
+    # anything else that isn't a letter or digit becomes a single hyphen.
+    ascii_text = unicodedata.normalize("NFKD", alt_text).encode("ascii", "ignore").decode()
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_text.lower()).strip("-")
+    slug = slug[:SLUG_MAX_LENGTH].rstrip("-") or "image"
+    return f"{FOLDER}/{slug}-{uuid.uuid4().hex[:SUFFIX_LENGTH]}"
 
 
 def list_media(db: Session) -> list[models.Media]:

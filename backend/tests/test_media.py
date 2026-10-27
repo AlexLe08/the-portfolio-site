@@ -1,3 +1,5 @@
+import re
+
 import cloudinary.exceptions
 import pytest
 from pydantic import SecretStr, ValidationError
@@ -82,12 +84,14 @@ class FakeCloudinary:
         self.destroyed = []
         self.format = "png"
         self.upload_error = None
+        self.existing = False
 
     def upload(self, file, **options):
         self.uploads.append((file, options))
         if self.upload_error:
             raise self.upload_error
         return {
+            "existing": self.existing,
             "public_id": options["public_id"],
             "secure_url": f"https://res.cloudinary.com/demo-cloud/image/upload/v1/{options['public_id']}.{self.format}",
             "width": 1200,
@@ -135,7 +139,7 @@ def test_upload_stores_what_cloudinary_reports(client, db_session, fake_cloudina
     assert "public_id" not in body
 
     row = db_session.get(Media, body["id"])
-    assert row.public_id.startswith("portfolio/")
+    assert re.fullmatch(r"portfolio/a-diagram-[0-9a-f]{12}", row.public_id)
 
 
 def test_upload_sends_bytes_and_credentials_from_settings(client, fake_cloudinary):
@@ -148,6 +152,7 @@ def test_upload_sends_bytes_and_credentials_from_settings(client, fake_cloudinar
     assert options["api_key"] == "123456789012345"
     assert options["api_secret"] == SECRET
     assert options["resource_type"] == "image"
+    assert options["asset_folder"] == "portfolio"
 
 
 def test_upload_requires_admin(client, fake_cloudinary):
@@ -238,6 +243,31 @@ def test_alt_text_is_stored_trimmed(client, fake_cloudinary):
     response = post_image(client, alt_text="  A diagram  ")
 
     assert response.json()["alt_text"] == "A diagram"
+
+
+@pytest.mark.parametrize(
+    ("alt_text", "slug"),
+    [
+        ("Café diagram (v2)!", "cafe-diagram-v2"),
+        ("  ---Architecture: API → DB---  ", "architecture-api-db"),
+        ("日本語", "image"),
+        ("word " * 30, ("word-" * 12).rstrip("-")),
+    ],
+)
+def test_public_id_is_a_slug_of_the_alt_text(alt_text, slug):
+    public_id = media_service._public_id(alt_text)
+
+    assert re.fullmatch(rf"portfolio/{re.escape(slug)}-[0-9a-f]{{12}}", public_id)
+
+
+def test_public_id_that_already_exists_fails_without_deleting_it(client, db_session, fake_cloudinary):
+    fake_cloudinary.existing = True
+
+    response = post_image(client)
+
+    assert response.status_code == 502
+    assert fake_cloudinary.destroyed == []
+    assert db_session.query(Media).count() == 0
 
 
 def test_admin_media_lists_newest_first(client, fake_cloudinary):
