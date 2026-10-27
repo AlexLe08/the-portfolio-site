@@ -106,6 +106,7 @@ Frontend:
   interactivity (currently `components/ContactForm.tsx`,
   `components/LoginForm.tsx`, `components/ProjectForm.tsx`,
   `components/ContentField.tsx`, `components/MediaUploadForm.tsx`,
+  `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).

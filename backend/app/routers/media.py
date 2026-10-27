@@ -57,7 +57,13 @@ def update_media(media_id: int, payload: schemas.MediaUpdate, db: Session = Depe
 
 
 # Plain def for the same reason as upload_media: Cloudinary is called.
-@router.delete("/{media_id}", status_code=204, dependencies=[Depends(require_admin)])
+@router.delete(
+    "/{media_id}",
+    status_code=204,
+    dependencies=[Depends(require_admin)],
+    # The admin UI shows this detail, which names where the image is used.
+    responses={409: {"model": schemas.ErrorDetail, "description": "Still used in site text"}},
+)
 def delete_media(media_id: int, db: Session = Depends(get_db)):
     item = media.find_media(db, media_id)
     if item is None:

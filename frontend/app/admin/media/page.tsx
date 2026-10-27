@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MediaAltTextForm } from "@/components/MediaAltTextForm";
+import { MediaDeleteButton } from "@/components/MediaDeleteButton";
 import { MediaUploadForm } from "@/components/MediaUploadForm";
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { deleteMedia, updateAltText } from "./actions";
 
 export const metadata = {
   title: "Media",
@@ -59,10 +62,14 @@ export default async function AdminMediaPage() {
                     </a>
                   </td>
                   <td>
-                    {item.alt_text}
                     <div className="admin-table__slug">
                       {item.width} × {item.height}, {Math.round(item.size_bytes / 1024)} KB
                     </div>
+                    <MediaAltTextForm
+                      action={updateAltText.bind(null, item.id)}
+                      id={item.id}
+                      altText={item.alt_text}
+                    />
                     <label htmlFor={`markdown-${item.id}`} className="form-label media-markdown__label">
                       Markdown
                     </label>
@@ -71,6 +78,10 @@ export default async function AdminMediaPage() {
                       readOnly
                       value={markdownFor(item.alt_text, item.url)}
                       className="form-input media-markdown"
+                    />
+                    <MediaDeleteButton
+                      action={deleteMedia.bind(null, item.id)}
+                      altText={item.alt_text}
                     />
                   </td>
                 </tr>

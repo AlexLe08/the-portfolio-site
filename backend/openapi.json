@@ -511,6 +511,117 @@
         ]
       }
     },
+    "/media/{media_id}": {
+      "patch": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Update Media",
+        "operationId": "update_media_media__media_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "media_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Media Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Delete Media",
+        "operationId": "delete_media_media__media_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "media_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Media Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Still used in site text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -680,6 +791,20 @@
         ],
         "title": "ContentUpdate"
       },
+      "ErrorDetail": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorDetail",
+        "description": "The body FastAPI sends with an HTTPException. Declared on a route's\n`responses` only where the frontend shows the detail, so the generated\nclient types it."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -757,6 +882,23 @@
           "created_at"
         ],
         "title": "MediaRead"
+      },
+      "MediaUpdate": {
+        "properties": {
+          "alt_text": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Alt Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "alt_text"
+        ],
+        "title": "MediaUpdate",
+        "description": "PATCH /media/{id}. Only the alt text can change: the file itself is\nreplaced by uploading a new one, and the public_id stays as uploaded\nbecause renaming it would change the URL pasted into content."
       },
       "ProjectAdmin": {
         "properties": {

@@ -162,6 +162,15 @@ class MediaUpdate(BaseModel):
     alt_text: str = Field(min_length=1, max_length=300)
 
 
+class ErrorDetail(BaseModel):
+    """The body FastAPI sends with an HTTPException. Declared on a route's
+    `responses` only where the frontend shows the detail, so the generated
+    client types it.
+    """
+
+    detail: str
+
+
 class MediaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
