@@ -1,0 +1,137 @@
+"""Image uploads for the media library: checks, Cloudinary, and the row.
+
+Files travel browser -> Next.js Server Action -> POST /media -> Cloudinary
+(see docs/roadmap.md for why not a direct browser upload). The router turns
+the exceptions below into HTTP status codes; nothing here knows about HTTP.
+"""
+
+import logging
+import uuid
+from urllib.parse import urlparse
+
+import cloudinary.exceptions
+import cloudinary.uploader
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app import models
+from app.core.config import settings
+
+# Vercel rejects function request bodies over 4.5 MB, and every upload
+# passes through a Server Action there first. 4 MB leaves room for the
+# multipart overhead and the alt text.
+MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+
+# What a browser may declare, and what Cloudinary's "format" must come back
+# as. SVG is left out on purpose: it can carry scripts.
+ALLOWED_CONTENT_TYPES = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif",
+}
+_CONTENT_TYPE_BY_FORMAT = {fmt: ctype for ctype, fmt in ALLOWED_CONTENT_TYPES.items()}
+
+PUBLIC_ID_PREFIX = "portfolio/"
+
+logger = logging.getLogger(__name__)
+
+
+class UploadsDisabled(Exception):
+    """CLOUDINARY_URL isn't set."""
+
+
+class FileTooLarge(Exception):
+    pass
+
+
+class UnsupportedImage(Exception):
+    """Not one of ALLOWED_CONTENT_TYPES, or Cloudinary couldn't read it."""
+
+
+class ProviderError(Exception):
+    """Cloudinary failed for a reason that isn't the file's fault."""
+
+
+def _credentials() -> dict[str, str]:
+    # Passed on every call rather than through cloudinary.config(), which is
+    # global SDK state: config() also doesn't parse a cloudinary:// URL, and
+    # the SDK reading CLOUDINARY_URL from os.environ itself would bypass
+    # Settings. The URL's shape was already checked when Settings loaded.
+    url = settings.cloudinary_url.get_secret_value()
+    if not url:
+        raise UploadsDisabled()
+    parsed = urlparse(url)
+    return {
+        "cloud_name": parsed.hostname,
+        "api_key": parsed.username,
+        "api_secret": parsed.password,
+    }
+
+
+def upload_image(db: Session, *, data: bytes, content_type: str, alt_text: str) -> models.Media:
+    credentials = _credentials()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise FileTooLarge()
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise UnsupportedImage()
+
+    # data must stay bytes: the SDK treats a str as a file path or a URL to fetch.
+    try:
+        result = cloudinary.uploader.upload(
+            data,
+            public_id=PUBLIC_ID_PREFIX + uuid.uuid4().hex,
+            resource_type="image",
+            overwrite=False,
+            timeout=30,
+            **credentials,
+        )
+    except cloudinary.exceptions.BadRequest as error:
+        # e.g. "Invalid image file": the bytes didn't match the declared type.
+        raise UnsupportedImage() from error
+    except cloudinary.exceptions.Error as error:
+        raise ProviderError() from error
+
+    # The declared content type came from the browser; Cloudinary's format
+    # is what the file actually is.
+    actual_type = _CONTENT_TYPE_BY_FORMAT.get(result["format"])
+    if actual_type is None:
+        _delete_quietly(result["public_id"], credentials)
+        raise UnsupportedImage()
+
+    media = models.Media(
+        url=result["secure_url"],
+        public_id=result["public_id"],
+        alt_text=alt_text,
+        width=result["width"],
+        height=result["height"],
+        content_type=actual_type,
+        size_bytes=result["bytes"],
+    )
+    db.add(media)
+    try:
+        db.commit()
+    except Exception:
+        # Without the row, nothing points at the file, so don't keep it.
+        db.rollback()
+        _delete_quietly(result["public_id"], credentials)
+        raise
+    db.refresh(media)
+    return media
+
+
+def list_media(db: Session) -> list[models.Media]:
+    # Newest first; id breaks ties between uploads in the same second.
+    stmt = select(models.Media).order_by(models.Media.created_at.desc(), models.Media.id.desc())
+    return list(db.scalars(stmt))
+
+
+def _delete_quietly(public_id: str, credentials: dict[str, str]) -> None:
+    # Cleanup after another failure: that failure is the one to report, so
+    # a failed delete is only logged, naming the orphan file to remove in
+    # the Cloudinary console.
+    try:
+        cloudinary.uploader.destroy(public_id, resource_type="image", invalidate=True, **credentials)
+    except cloudinary.exceptions.Error as error:
+        logger.warning("Could not delete orphan Cloudinary file %s: %s", public_id, type(error).__name__)

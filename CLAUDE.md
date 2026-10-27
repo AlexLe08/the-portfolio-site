@@ -95,7 +95,8 @@ them. Imports only point downward.
   that write it: SQLite ignores the limit, so only Postgres would fail.
 - `app/services/` holds logic that isn't HTTP handling (currently
   `notifications.py`: Discord and email; `projects.py`: project queries
-  shared by the public and admin routers, including the one list order).
+  shared by the public and admin routers, including the one list order;
+  `media.py`: image upload checks, Cloudinary calls, and the `media` row).
   Routers call services and turn results into HTTP (404, 409); services
   import from `core` but never from routers. Move logic there when a route
   handler starts doing more than HTTP handling plus a simple query.

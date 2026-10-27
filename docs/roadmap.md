@@ -274,7 +274,16 @@
   Runner-up: Vercel Blob (Hobby blocks Blob for 30 days at its 1 GB
   limit). Ruled out: Supabase (free projects pause after a week idle),
   Cloudflare R2 (checkout flow; `r2.dev` is dev-only, needs a Cloudflare
-  domain), UploadThing (JS-only), S3 (card). Frontend: allow the host in
+  domain), UploadThing (JS-only), S3 (card).
+  Upload path (decided 2026-10-27): browser → Server Action → `POST /media`
+  → Cloudinary SDK, capped at 4 MB because Vercel Functions reject request
+  bodies over 4.5 MB. Cloudinary's response supplies width, height, and
+  format, so the browser never vouches for them. Future path if larger
+  files or video are ever needed: signed direct upload (the backend signs,
+  the browser uploads straight to Cloudinary, then the backend records the
+  row after re-checking the asset through Cloudinary's API, and orphaned
+  files from an abandoned second step need cleaning up).
+  Frontend: allow the host in
   `images.remotePatterns` with an exact hostname and `/<cloud-name>/**`
   path, or use a Cloudinary `loaderFile`.
 - Settings validation (own small PR, after the media library): startup

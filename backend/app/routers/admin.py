@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.core.security import require_admin
 from app.database import get_db
-from app.services import projects
+from app.services import media, projects
 
 # Admin-only reads for the admin UI. The dependency sits on the router, so
 # every route added here is protected without having to remember it.
@@ -26,3 +26,8 @@ def get_any_project(slug: str, db: Session = Depends(get_db)):
     if project is None:
         raise HTTPException(404, "Project not found")
     return project
+
+
+@router.get("/media", response_model=list[schemas.MediaRead])
+def list_media(db: Session = Depends(get_db)):
+    return media.list_media(db)
