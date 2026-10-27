@@ -292,6 +292,22 @@
   two PRs (#41, then #42 for `ENVIRONMENT`); deployed 2026-10-27
   (`7d90c50`), and production started with its real settings.
 
+- Media library follow-ups: `PATCH /media/{id}` edits alt text and
+  `DELETE /media/{id}` removes an upload; `/admin/media` has a form and a
+  Delete button (behind `confirm()`) per image. Alt text edits keep the
+  `public_id`, because renaming it would change the URL already pasted
+  into content; the slug in the Cloudinary name keeps the old wording.
+  Delete refuses with 409 while project text (drafts included) or site
+  content still contains the image's `public_id`, naming each place; the
+  `public_id` rather than the URL, so resized Cloudinary URLs match too.
+  The Cloudinary file goes before the row, so a Cloudinary failure (502)
+  keeps the row for a retry; "not found" from Cloudinary counts as
+  deleted, whether it arrives as a body or a `NotFound` error (the docs
+  don't say which). The 409 is declared on the route (`ErrorDetail`) so
+  the typed client knows its `detail`. Backend suite is now 191 tests.
+  Edit, the 409, and the 503 were exercised in a browser on the local
+  stack; a real Cloudinary delete is checked in production after merge.
+
 ## Next up (candidates, unordered)
 
 - Shared error UI, only when a third segment boundary appears or the
@@ -307,10 +323,6 @@
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. Then sync the fallbacks in `lib/content.ts`; the editor
   flags every key whose stored value differs.
-- Media library follow-ups: delete an upload (backend route that
-  destroys the Cloudinary file, then the row) and edit alt text after
-  upload. Neither has a route yet. The admin screen (`/admin/media`)
-  only uploads and lists for now.
 - `ADMIN_PASSWORD_HASH` as `SecretStr`, like `CLOUDINARY_URL`: Pydantic
   puts `input_value=...` in every validation error, so a malformed hash
   shows in Render's startup logs (in part, since long values are

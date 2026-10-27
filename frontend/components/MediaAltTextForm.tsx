@@ -36,9 +36,11 @@ export function MediaAltTextForm({ action, id, altText }: Props) {
 
       <SaveStatus state={state} pending={pending} />
 
-      <button type="submit" className="form-button" disabled={pending}>
-        {pending ? "Saving…" : "Save alt text"}
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="form-button" disabled={pending}>
+          {pending ? "Saving…" : "Save alt text"}
+        </button>
+      </div>
     </form>
   );
 }
