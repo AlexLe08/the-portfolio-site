@@ -27,8 +27,9 @@ def login_configured() -> bool:
 
 
 def verify_admin_password(password: str) -> bool:
-    # A malformed ADMIN_PASSWORD_HASH raises InvalidHashError, which is left
-    # to surface as a 500: it's a deployment mistake, not a wrong password.
+    # Settings already refuses a malformed ADMIN_PASSWORD_HASH at startup. Any
+    # InvalidHashError that still gets here is left to surface as a 500: it's
+    # a deployment mistake, not a wrong password.
     try:
         return _password_hasher.verify(settings.admin_password_hash, password)
     except VerifyMismatchError:
