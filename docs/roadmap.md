@@ -282,11 +282,13 @@
   an empty key or the public `dev-only-change-me` default is refused (a
   `model_validator`, since it reads two fields). Decision recorded:
   reject a trailing slash instead of stripping it, so there is one rule
-  and the typo gets noticed. Not done: `ENVIRONMENT` stays a free string,
-  so a typo like `prod` skips the admin-key check (it's hard-coded in
-  `render.yaml`). The other settings already fail at startup
+  and the typo gets noticed. `ENVIRONMENT` is now
+  `Literal["development", "production"]`, so a typo like `prod` fails at
+  startup instead of skipping the admin-key check; this beat flipping the
+  check to fail closed, which would still leave a typo unreported and
+  stray Sentry environment tags. The other settings already fail at startup
   (`DATABASE_URL`, `SENTRY_DSN`), are logged clearly at use (Discord,
-  Resend), or accept any value. Backend suite is now 168 tests.
+  Resend), or accept any value. Backend suite is now 174 tests.
 
 ## Next up (candidates, unordered)
 
