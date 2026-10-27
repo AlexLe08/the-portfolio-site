@@ -203,9 +203,8 @@
   The new test closes a pooled connection the way Neon does, and fails
   without pre-ping. Backend suite is now 116 tests. Details in
   `docs/neon-runbook.md`. Deployed 2026-10-26 (`bc17818`); the home page
-  loaded with no new Sentry errors. The real test is the first request
-  after more than 5 idle minutes, so it's confirmed once a day of normal
-  quiet spells passes with no new `OperationalError` in
+  loaded with no new Sentry errors. Confirmed 2026-10-27: a day of normal
+  quiet spells passed with no new `OperationalError` in
   `portfolio-backend`.
 
 - Public error boundary: `app/error.tsx` catches failures on the public
@@ -243,6 +242,52 @@
   page lists projects. The degraded page only shows during an outage, so
   it has only been exercised locally.
 
+- Media library (PR #40): `POST /media` (admin) uploads an image to
+  Cloudinary and records a `media` row (url, `public_id`, required alt
+  text, width, height, content type); `/admin/media` uploads and lists.
+  Images are stored as URLs, never as bytes in Postgres. JPEG, PNG, WebP,
+  GIF, and AVIF only (SVG can carry scripts), checked against the format
+  Cloudinary reports, not just what the browser declares; width and
+  height also come from Cloudinary. `public_id`s read as
+  `portfolio/<alt-text-slug>-<random>`. `next/image` uses a Cloudinary
+  `loaderFile` (`lib/cloudinary-loader.ts`), so Cloudinary resizes
+  instead of Vercel's optimizer, whose Hobby quota is smaller.
+  Provider decision (2026-10-26): Cloudinary, whose sign-up asked for no
+  card. Free plan is 25 credits a month (1 credit = 1 GB stored, 1 GB
+  delivered, or 1,000 transformations); what happens when credits run
+  out isn't documented, so check usage before it matters. Storing
+  `public_id` next to the URL makes a later move a re-upload plus URL
+  rewrite. Runner-up: Vercel Blob (Hobby blocks Blob for 30 days at its
+  1 GB limit). Ruled out: Supabase (free projects pause after a week
+  idle), Cloudflare R2 (checkout flow; `r2.dev` is dev-only, needs a
+  Cloudflare domain), UploadThing (JS-only), S3 (card).
+  Upload path decision (2026-10-27): browser → Server Action →
+  `POST /media` → Cloudinary SDK, capped at 4 MB because Vercel Functions
+  reject request bodies over 4.5 MB. If larger files or video are ever
+  needed: signed direct upload (the backend signs, the browser uploads
+  straight to Cloudinary, then the backend records the row after
+  re-checking the asset through Cloudinary's API; orphaned files from an
+  abandoned second step need cleaning up). Deployed 2026-10-27
+  (`845044a`); an upload verified in production by the owner.
+
+- Settings validation: three more startup checks, next to the
+  `JWT_SECRET` and `CLOUDINARY_URL` ones, for settings that used to fail
+  silently or far from the cause. `ALLOWED_ORIGINS`: each entry must be
+  exactly `scheme://host[:port]` (checked with `urlsplit`), because CORS
+  compares origins exactly and a trailing slash silently blocked the
+  contact form. `ADMIN_PASSWORD_HASH`: must parse with argon2's
+  `extract_parameters()`, which catches quoted, `$`-expanded, and
+  truncated pastes that a `$argon2` prefix check would miss; these used
+  to be a 500 at login. `ADMIN_API_KEY`: with `ENVIRONMENT=production`,
+  an empty key or the public `dev-only-change-me` default is refused (a
+  `model_validator`, since it reads two fields). Decision recorded:
+  reject a trailing slash instead of stripping it, so there is one rule
+  and the typo gets noticed. Not done: `ENVIRONMENT` stays a free string,
+  so a typo like `prod` skips the admin-key check (it's hard-coded in
+  `render.yaml`). The other settings already fail at startup
+  (`DATABASE_URL`, `SENTRY_DSN`), are logged clearly at use (Discord,
+  Resend), or accept any value. Backend suite is now 168 tests.
+
 ## Next up (candidates, unordered)
 
 - Shared error UI, only when a third segment boundary appears or the
@@ -258,48 +303,16 @@
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. Then sync the fallbacks in `lib/content.ts`; the editor
   flags every key whose stored value differs.
-- Media library: images and other media stored
-  as URLs, never as bytes in Postgres. A `media` table (url, required alt
-  text, width, height, content type), an admin upload endpoint to object
-  storage, and an upload screen in the admin UI. Until then, images work
-  as markdown `![alt](url)` inside content values.
-  Provider: Cloudinary (decided 2026-10-26; sign-up asked for no card,
-  confirmed by the owner). Free plan is 25 credits a month (1 credit = 1 GB
-  stored, 1 GB delivered, or 1,000 transformations). The official Python SDK
-  uploads from the backend, and the upload response gives width, height,
-  and format for the `media` row. Store Cloudinary's `public_id` next to
-  the URL so a later move is a re-upload plus URL rewrite. What happens
-  when credits run out isn't documented; check usage before it matters.
-  Credentials: one `CLOUDINARY_URL` setting (backend `.env`, Render env).
-  Runner-up: Vercel Blob (Hobby blocks Blob for 30 days at its 1 GB
-  limit). Ruled out: Supabase (free projects pause after a week idle),
-  Cloudflare R2 (checkout flow; `r2.dev` is dev-only, needs a Cloudflare
-  domain), UploadThing (JS-only), S3 (card).
-  Upload path (decided 2026-10-27): browser → Server Action → `POST /media`
-  → Cloudinary SDK, capped at 4 MB because Vercel Functions reject request
-  bodies over 4.5 MB. Cloudinary's response supplies width, height, and
-  format, so the browser never vouches for them. Future path if larger
-  files or video are ever needed: signed direct upload (the backend signs,
-  the browser uploads straight to Cloudinary, then the backend records the
-  row after re-checking the asset through Cloudinary's API, and orphaned
-  files from an abandoned second step need cleaning up).
-  Frontend: allow the host in
-  `images.remotePatterns` with an exact hostname and `/<cloud-name>/**`
-  path, or use a Cloudinary `loaderFile`.
 - Media library follow-ups: delete an upload (backend route that
   destroys the Cloudinary file, then the row) and edit alt text after
   upload. Neither has a route yet. The admin screen (`/admin/media`)
   only uploads and lists for now.
-- Settings validation (own small PR, after the media library): startup
-  checks, like the `JWT_SECRET` and `CLOUDINARY_URL` ones, for settings
-  that otherwise fail silently or far from the cause. `ALLOWED_ORIGINS`:
-  each entry is just `scheme://host[:port]` (a trailing slash silently
-  breaks CORS for the contact form). `ADMIN_PASSWORD_HASH`: starts with
-  `$argon2` (a `$`-expanded or quoted paste is otherwise a 500 at login;
-  update the comment in `core/security.py`). `ADMIN_API_KEY`: refuse the
-  `dev-only-change-me` default when `ENVIRONMENT=production`. The rest
-  already fail at startup (`DATABASE_URL`, `SENTRY_DSN`), are logged
-  clearly at use (Discord, Resend), or accept any value.
+- `ADMIN_PASSWORD_HASH` as `SecretStr`, like `CLOUDINARY_URL`: Pydantic
+  puts `input_value=...` in every validation error, so a malformed hash
+  shows in Render's startup logs (in part, since long values are
+  truncated). A hash isn't the password and the logs are private, so it
+  waits. Touches `core/security.py` (`.get_secret_value()`) and the auth
+  tests that set the hash.
 - Sentry follow-ups: frontend source maps (needs `SENTRY_AUTH_TOKEN` on
   Vercel) once a minified browser stack trace gets in the way. Tracing
   on either service only if errors alone stop being enough.

@@ -1,7 +1,13 @@
 import re
+from typing import Self
+from urllib.parse import urlsplit
 
-from pydantic import PositiveInt, SecretStr, field_validator
+from argon2 import extract_parameters
+from argon2.exceptions import InvalidHashError
+from pydantic import PositiveInt, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_ADMIN_API_KEY = "dev-only-change-me"
 
 
 class Settings(BaseSettings):
@@ -46,8 +52,9 @@ class Settings(BaseSettings):
     contact_rate_window_seconds: PositiveInt = 3600
 
     # Shared-secret auth for the single-admin write endpoints, sent as the
-    # X-Admin-Key header from curl or /docs. See core/security.py.
-    admin_api_key: str = "dev-only-change-me"
+    # X-Admin-Key header from curl or /docs. See core/security.py. Production
+    # refuses the default and an empty key (see admin_api_key_set_in_production).
+    admin_api_key: str = DEFAULT_ADMIN_API_KEY
 
     # Browser login for the admin UI (POST /auth/login). The password is
     # stored only as an argon2 hash (make one with `python hash_password.py`),
@@ -108,6 +115,48 @@ class Settings(BaseSettings):
                 "CLOUDINARY_URL must look like cloudinary://<api_key>:<api_secret>@<cloud_name>"
             )
         return value
+
+    @field_validator("admin_password_hash")
+    @classmethod
+    def admin_password_hash_is_argon2(cls, value: str) -> str:
+        # A hash pasted with its quotes, or with its `$` segments eaten by a
+        # shell, would otherwise only show up as a 500 at login.
+        if value:
+            try:
+                extract_parameters(value)
+            except InvalidHashError:
+                raise ValueError(
+                    "ADMIN_PASSWORD_HASH must be an argon2 hash starting with $argon2 "
+                    "(output of hash_password.py, without quotes on Render)"
+                ) from None
+        return value
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def allowed_origins_are_bare_origins(cls, value: str) -> str:
+        # Browsers send Origin as scheme://host[:port] and CORS compares it
+        # exactly, so a trailing slash or path never matches and the contact
+        # form fails with a CORS error instead of a startup error.
+        for origin in (entry.strip() for entry in value.split(",")):
+            if not origin:
+                continue
+            parts = urlsplit(origin)
+            if parts.scheme not in ("http", "https") or not parts.hostname:
+                raise ValueError(f"ALLOWED_ORIGINS entry {origin!r} must be http(s)://host[:port]")
+            if parts.path or parts.query or parts.fragment or "@" in parts.netloc:
+                raise ValueError(
+                    f"ALLOWED_ORIGINS entry {origin!r} must be just scheme://host[:port], "
+                    "with no trailing slash or path"
+                )
+        return value
+
+    @model_validator(mode="after")
+    def admin_api_key_set_in_production(self) -> Self:
+        # Runs after every field is parsed, because it needs two of them.
+        # The default key is in the public repo, so it must never guard prod.
+        if self.environment == "production" and self.admin_api_key in ("", DEFAULT_ADMIN_API_KEY):
+            raise ValueError("ADMIN_API_KEY must be set to a real secret when ENVIRONMENT=production")
+        return self
 
     @property
     def allowed_origins_list(self) -> list[str]:
