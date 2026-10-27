@@ -39,3 +39,34 @@ def upload_media(
         raise HTTPException(415, "Upload a JPEG, PNG, WebP, GIF, or AVIF image")
     except media.ProviderError:
         raise HTTPException(502, "The image host failed; try again")
+
+
+@router.patch(
+    "/{media_id}",
+    response_model=schemas.MediaRead,
+    dependencies=[Depends(require_admin)],
+)
+def update_media(media_id: int, payload: schemas.MediaUpdate, db: Session = Depends(get_db)):
+    item = media.find_media(db, media_id)
+    if item is None:
+        raise HTTPException(404, "Media not found")
+    item.alt_text = payload.alt_text
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+# Plain def for the same reason as upload_media: Cloudinary is called.
+@router.delete("/{media_id}", status_code=204, dependencies=[Depends(require_admin)])
+def delete_media(media_id: int, db: Session = Depends(get_db)):
+    item = media.find_media(db, media_id)
+    if item is None:
+        raise HTTPException(404, "Media not found")
+    try:
+        media.delete_media(db, item)
+    except media.InUse as error:
+        raise HTTPException(409, f"Still used in {', '.join(error.usages)}; remove it there first")
+    except media.UploadsDisabled:
+        raise HTTPException(503, "Uploads are not configured (CLOUDINARY_URL is empty)")
+    except media.ProviderError:
+        raise HTTPException(502, "The image host failed; try again")

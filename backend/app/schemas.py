@@ -150,6 +150,18 @@ class MediaCreate(BaseModel):
     alt_text: str = Field(min_length=1, max_length=300)
 
 
+class MediaUpdate(BaseModel):
+    """PATCH /media/{id}. Only the alt text can change: the file itself is
+    replaced by uploading a new one, and the public_id stays as uploaded
+    because renaming it would change the URL pasted into content.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    # Same limit as MediaCreate and the String(300) column.
+    alt_text: str = Field(min_length=1, max_length=300)
+
+
 class MediaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

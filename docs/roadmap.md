@@ -288,7 +288,9 @@
   check to fail closed, which would still leave a typo unreported and
   stray Sentry environment tags. The other settings already fail at startup
   (`DATABASE_URL`, `SENTRY_DSN`), are logged clearly at use (Discord,
-  Resend), or accept any value. Backend suite is now 174 tests.
+  Resend), or accept any value. Backend suite is now 174 tests. Merged in
+  two PRs (#41, then #42 for `ENVIRONMENT`); deployed 2026-10-27
+  (`7d90c50`), and production started with its real settings.
 
 ## Next up (candidates, unordered)
 

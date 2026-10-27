@@ -6,9 +6,9 @@ from pydantic import SecretStr, ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import Settings, settings
-from app.models import Media
+from app.models import Media, SiteContent
 from app.services import media as media_service
-from tests.helpers import ADMIN_HEADERS
+from tests.helpers import ADMIN_HEADERS, make_project
 
 SECRET = "not-a-real-secret-abc123"
 
@@ -85,6 +85,8 @@ class FakeCloudinary:
         self.format = "png"
         self.upload_error = None
         self.existing = False
+        self.destroy_result = "ok"
+        self.destroy_error = None
 
     def upload(self, file, **options):
         self.uploads.append((file, options))
@@ -103,7 +105,9 @@ class FakeCloudinary:
 
     def destroy(self, public_id, **options):
         self.destroyed.append(public_id)
-        return {"result": "ok"}
+        if self.destroy_error:
+            raise self.destroy_error
+        return {"result": self.destroy_result}
 
 
 @pytest.fixture()
@@ -282,3 +286,154 @@ def test_admin_media_lists_newest_first(client, fake_cloudinary):
 
 def test_admin_media_requires_admin(client):
     assert client.get("/admin/media").status_code == 401
+
+
+# --- PATCH /media/{id} ---
+
+
+def test_alt_text_can_be_edited_without_touching_the_file(client, fake_cloudinary):
+    uploaded = post_image(client, alt_text="Old text").json()
+
+    response = client.patch(f"/media/{uploaded['id']}", json={"alt_text": "  New text "}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json()["alt_text"] == "New text"
+    # Same file and URL: content that already embeds the image keeps working.
+    assert response.json()["url"] == uploaded["url"]
+    assert len(fake_cloudinary.uploads) == 1
+    assert fake_cloudinary.destroyed == []
+    listed = client.get("/admin/media", headers=ADMIN_HEADERS).json()
+    assert listed[0]["alt_text"] == "New text"
+
+
+def test_editing_alt_text_requires_admin(client, fake_cloudinary):
+    uploaded = post_image(client).json()
+
+    assert client.patch(f"/media/{uploaded['id']}", json={"alt_text": "New"}).status_code == 401
+
+
+def test_editing_missing_media_is_404(client):
+    assert client.patch("/media/999", json={"alt_text": "New"}, headers=ADMIN_HEADERS).status_code == 404
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"alt_text": "   "},
+        {"alt_text": "x" * 301},
+        {},
+        # Only alt text is editable; anything else is refused, not ignored.
+        {"alt_text": "New", "public_id": "portfolio/other"},
+    ],
+)
+def test_bad_media_update_is_422(client, fake_cloudinary, body):
+    uploaded = post_image(client).json()
+
+    response = client.patch(f"/media/{uploaded['id']}", json=body, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
+
+
+# --- DELETE /media/{id} ---
+
+
+def delete_image(client, media_id, headers=ADMIN_HEADERS):
+    return client.delete(f"/media/{media_id}", headers=headers)
+
+
+def test_delete_removes_the_file_then_the_row(client, db_session, fake_cloudinary):
+    uploaded = post_image(client).json()
+    public_id = db_session.get(Media, uploaded["id"]).public_id
+
+    response = delete_image(client, uploaded["id"])
+
+    assert response.status_code == 204
+    assert fake_cloudinary.destroyed == [public_id]
+    assert db_session.query(Media).count() == 0
+
+
+def test_delete_requires_admin(client, db_session, fake_cloudinary):
+    uploaded = post_image(client).json()
+
+    assert delete_image(client, uploaded["id"], headers={}).status_code == 401
+    assert fake_cloudinary.destroyed == []
+    assert db_session.query(Media).count() == 1
+
+
+def test_deleting_missing_media_is_404(client, fake_cloudinary):
+    assert delete_image(client, 999).status_code == 404
+    assert fake_cloudinary.destroyed == []
+
+
+@pytest.mark.parametrize(
+    "fake_setup",
+    [
+        {"destroy_result": "not found"},
+        {"destroy_error": cloudinary.exceptions.NotFound("Resource not found")},
+    ],
+)
+def test_file_already_gone_from_cloudinary_still_deletes_the_row(client, db_session, fake_cloudinary, fake_setup):
+    # e.g. removed in the Cloudinary console, or a retry after a failed commit.
+    uploaded = post_image(client).json()
+    for name, value in fake_setup.items():
+        setattr(fake_cloudinary, name, value)
+
+    assert delete_image(client, uploaded["id"]).status_code == 204
+    assert db_session.query(Media).count() == 0
+
+
+@pytest.mark.parametrize(
+    "fake_setup",
+    [
+        {"destroy_error": cloudinary.exceptions.GeneralError("Server error")},
+        {"destroy_result": "error"},
+    ],
+)
+def test_cloudinary_failure_on_delete_is_502_and_keeps_the_row(client, db_session, fake_cloudinary, fake_setup):
+    # The row stays so the delete can be retried; nothing points at the file otherwise.
+    uploaded = post_image(client).json()
+    for name, value in fake_setup.items():
+        setattr(fake_cloudinary, name, value)
+
+    assert delete_image(client, uploaded["id"]).status_code == 502
+    assert db_session.query(Media).count() == 1
+
+
+def test_delete_is_503_when_cloudinary_is_not_configured(client, db_session, fake_cloudinary, monkeypatch):
+    uploaded = post_image(client).json()
+    monkeypatch.setattr(settings, "cloudinary_url", SecretStr(""))
+
+    assert delete_image(client, uploaded["id"]).status_code == 503
+    assert db_session.query(Media).count() == 1
+
+
+def test_image_used_in_site_text_is_409_and_kept(client, db_session, fake_cloudinary):
+    uploaded = post_image(client).json()
+    item = db_session.get(Media, uploaded["id"])
+    markdown = f"![{item.alt_text}]({item.url})"
+    # A resized URL still names the same file.
+    resized = item.url.replace("/upload/", "/upload/w_400/")
+    make_project(db_session, slug="beta", case_study_md=f"Intro\n\n{markdown}")
+    make_project(db_session, slug="alpha", summary=f"![x]({resized})", published=False)
+    make_project(db_session, slug="unrelated")
+    db_session.add(SiteContent(key="home.intro", value=markdown))
+    db_session.commit()
+
+    response = delete_image(client, item.id)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Still used in project alpha, project beta, content home.intro; remove it there first"
+    )
+    assert fake_cloudinary.destroyed == []
+    assert db_session.query(Media).count() == 1
+
+
+def test_usage_search_treats_like_wildcards_literally(db_session):
+    # "_" would match any one character in LIKE if it weren't escaped.
+    item = make_media("portfolio/a_b")
+    db_session.add(item)
+    make_project(db_session, slug="near-miss", case_study_md="portfolio/aXb")
+    db_session.commit()
+
+    assert media_service.find_usages(db_session, item) == []
