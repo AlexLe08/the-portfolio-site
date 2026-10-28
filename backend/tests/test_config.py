@@ -94,3 +94,31 @@ def test_development_allows_the_default_admin_key():
     settings = Settings(environment="development", admin_api_key=DEFAULT_ADMIN_API_KEY)
 
     assert settings.admin_api_key == DEFAULT_ADMIN_API_KEY
+
+
+LEAK = "s3cr3t"
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"jwt_secret": f"too-short-{LEAK}"},
+        {"cloudinary_url": f"cloudinary://1:{LEAK}@"},
+        {"admin_password_hash": f"'$argon2id${LEAK}'"},
+        # A model-level check sees every setting at once; the secrets of
+        # settings that are fine must stay out of its error too.
+        {
+            "environment": "production",
+            "admin_api_key": "",
+            "database_url": f"postgresql+psycopg://user:{LEAK}@host/db",
+        },
+    ],
+)
+def test_startup_errors_never_print_secrets(values):
+    # Short values on purpose: Pydantic shortens long ones to their first
+    # and last 25 characters, which can hide a leak from a test.
+    with pytest.raises(ValidationError) as error:
+        Settings(_env_file=None, **values)
+
+    assert LEAK not in str(error.value)
+    assert "input_value" not in str(error.value)

@@ -19,7 +19,12 @@ class Settings(BaseSettings):
     instead of causing a confusing 500 later.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # hide_input_in_errors: a startup error lands in Render's logs, and
+    # Pydantic would print the rejected value as input_value=..., whatever
+    # the field's type (SecretStr included). A model-level check, such as
+    # admin_api_key_set_in_production, would print the whole settings dict,
+    # every secret in it. The messages below name the setting instead.
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
 
     # Defaults to a local SQLite file so `uvicorn app.main:app` just works
     # with zero setup. Production sets DATABASE_URL to a Postgres URL.
@@ -81,8 +86,9 @@ class Settings(BaseSettings):
     # Media uploads go to Cloudinary (see docs/roadmap.md). Copy the "API
     # environment variable" from the Cloudinary Console's API Keys page:
     # cloudinary://<api_key>:<api_secret>@<cloud_name>. Uploads are off when
-    # empty. SecretStr keeps the API secret out of reprs, logs, and
-    # validation errors; read it with .get_secret_value().
+    # empty. SecretStr keeps the API secret out of reprs and logs (errors
+    # are covered by hide_input_in_errors above); read it with
+    # .get_secret_value().
     cloudinary_url: SecretStr = SecretStr("")
 
     # Set by Render on every deploy (it's not in render.yaml). /health

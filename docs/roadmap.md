@@ -311,6 +311,18 @@
   falling back to selecting the text), and a "Deleted" notice above the
   list, which takes focus because the deleted row takes its button with it.
 
+- Startup errors no longer print setting values: `Settings` sets
+  `hide_input_in_errors=True`. Pydantic's `input_value=...` printed the
+  rejected value whatever its type (`SecretStr` too), shortened only to
+  its first and last 25 characters. So a malformed `CLOUDINARY_URL` would
+  have logged most of its API secret, a short `JWT_SECRET` all of it, and
+  a missing production `ADMIN_API_KEY` (a model-level check) the ends of
+  the whole settings dict, wherever other secrets fell. The earlier
+  `CLOUDINARY_URL` test only passed because shortening happened to cut its
+  secret out; the new test uses short secrets so that can't happen.
+  This replaced the planned `ADMIN_PASSWORD_HASH` as `SecretStr`, which
+  wouldn't have fixed the logs. Backend suite is now 195 tests.
+
 ## Next up (candidates, unordered)
 
 - Shared error UI, only when a third segment boundary appears or the
@@ -326,12 +338,29 @@
   was drafted by Claude), and `repo_url`s for other repositories as they
   go public. Then sync the fallbacks in `lib/content.ts`; the editor
   flags every key whose stored value differs.
-- `ADMIN_PASSWORD_HASH` as `SecretStr`, like `CLOUDINARY_URL`: Pydantic
-  puts `input_value=...` in every validation error, so a malformed hash
-  shows in Render's startup logs (in part, since long values are
-  truncated). A hash isn't the password and the logs are private, so it
-  waits. Touches `core/security.py` (`.get_secret_value()`) and the auth
-  tests that set the hash.
+- Every secret setting as `SecretStr` (`JWT_SECRET`, `ADMIN_API_KEY`,
+  `ADMIN_PASSWORD_HASH`, `DATABASE_URL`, `RESEND_API_KEY`,
+  `DISCORD_WEBHOOK_URL`), only if settings ever get printed: `SecretStr`
+  masks `repr()` (e.g. a frame's locals in a Sentry event) but not
+  validation errors, which `hide_input_in_errors` already covers. Each
+  read becomes `.get_secret_value()`.
+- Accessibility pass on control names. Repeated buttons in a list or
+  table, all with the same visible text, give a screen reader's list of
+  buttons nothing to tell them apart. WCAG most likely doesn't require
+  unique names (2.4.6 asks for descriptive labels, and 2.4.4 counts table
+  context, but for links only), so this is a usability fix, not a
+  compliance one. Fix with hidden text after the visible word ("Delete"
+  becomes "Delete Team photo"), which Label in Name (2.5.3) allows as
+  long as the visible text comes first. Found so far:
+  - `/admin/media`: "Save alt text", "Copy", and "Delete" on every row;
+    the thumbnail link is named by the alt text but opens the full-size
+    image.
+  - `/admin/content`: a plain "Save" for every key.
+  - Home page project list: the whole card is one link, so its name is
+    the title, summary, and every stack tag read together. Link the title
+    and stretch its click area over the card with CSS instead.
+  Probably wants a shared visually-hidden utility class (there isn't
+  one yet; the contact form's honeypot class is for a different job).
 - Sentry follow-ups: frontend source maps (needs `SENTRY_AUTH_TOKEN` on
   Vercel) once a minified browser stack trace gets in the way. Tracing
   on either service only if errors alone stop being enough.
