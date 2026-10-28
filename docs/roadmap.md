@@ -306,7 +306,10 @@
   don't say which). The 409 is declared on the route (`ErrorDetail`) so
   the typed client knows its `detail`. Backend suite is now 191 tests.
   Edit, the 409, and the 503 were exercised in a browser on the local
-  stack; a real Cloudinary delete is checked in production after merge.
+  stack; a real Cloudinary delete verified in production by the owner
+  (#43). Then: a Copy button beside each markdown line (Clipboard API,
+  falling back to selecting the text), and a "Deleted" notice above the
+  list, which takes focus because the deleted row takes its button with it.
 
 ## Next up (candidates, unordered)
 
