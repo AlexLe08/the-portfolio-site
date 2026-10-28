@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CopyButton } from "@/components/CopyButton";
 import { MediaAltTextForm } from "@/components/MediaAltTextForm";
 import { MediaDeleteButton } from "@/components/MediaDeleteButton";
+import { MediaDeleteNotice } from "@/components/MediaDeleteNotice";
 import { MediaUploadForm } from "@/components/MediaUploadForm";
 import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
 import { deleteMedia, updateAltText } from "./actions";
@@ -37,58 +39,67 @@ export default async function AdminMediaPage() {
         <MediaUploadForm />
 
         <h2 className="admin-heading admin-toolbar--section">Uploads</h2>
-        {media.length === 0 ? (
-          <p className="form-help">Nothing uploaded yet.</p>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th scope="col">Image</th>
-                <th scope="col">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {media.map((item) => (
-                <tr key={item.id}>
-                  <td className="admin-table__thumb">
-                    <a href={item.url}>
-                      <Image
-                        src={item.url}
-                        alt={item.alt_text}
-                        width={item.width}
-                        height={item.height}
-                        sizes="10rem"
-                      />
-                    </a>
-                  </td>
-                  <td>
-                    <div className="admin-table__slug">
-                      {item.width} × {item.height}, {Math.round(item.size_bytes / 1024)} KB
-                    </div>
-                    <MediaAltTextForm
-                      action={updateAltText.bind(null, item.id)}
-                      id={item.id}
-                      altText={item.alt_text}
-                    />
-                    <label htmlFor={`markdown-${item.id}`} className="form-label media-markdown__label">
-                      Markdown
-                    </label>
-                    <input
-                      id={`markdown-${item.id}`}
-                      readOnly
-                      value={markdownFor(item.alt_text, item.url)}
-                      className="form-input media-markdown"
-                    />
-                    <MediaDeleteButton
-                      action={deleteMedia.bind(null, item.id)}
-                      altText={item.alt_text}
-                    />
-                  </td>
+        <MediaDeleteNotice>
+          {media.length === 0 ? (
+            <p className="form-help">Nothing uploaded yet.</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th scope="col">Image</th>
+                  <th scope="col">Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {media.map((item) => (
+                  <tr key={item.id}>
+                    <td className="admin-table__thumb">
+                      <a href={item.url}>
+                        <Image
+                          src={item.url}
+                          alt={item.alt_text}
+                          width={item.width}
+                          height={item.height}
+                          sizes="10rem"
+                        />
+                      </a>
+                    </td>
+                    <td>
+                      <div className="admin-table__slug">
+                        {item.width} × {item.height}, {Math.round(item.size_bytes / 1024)} KB
+                      </div>
+                      <MediaAltTextForm
+                        action={updateAltText.bind(null, item.id)}
+                        id={item.id}
+                        altText={item.alt_text}
+                      />
+                      <label htmlFor={`markdown-${item.id}`} className="form-label media-markdown__label">
+                        Markdown
+                      </label>
+                      <div className="media-markdown__row">
+                        <input
+                          id={`markdown-${item.id}`}
+                          readOnly
+                          value={markdownFor(item.alt_text, item.url)}
+                          className="form-input media-markdown"
+                        />
+                        <CopyButton
+                          text={markdownFor(item.alt_text, item.url)}
+                          inputId={`markdown-${item.id}`}
+                          label="Copy"
+                        />
+                      </div>
+                      <MediaDeleteButton
+                        action={deleteMedia.bind(null, item.id)}
+                        altText={item.alt_text}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </MediaDeleteNotice>
       </div>
     </main>
   );

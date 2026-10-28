@@ -629,6 +629,39 @@ button:focus-visible {
   padding: 0.4rem 0.5rem;
 }
 
+/* The markdown line and its Copy button. min-width: 0 lets the input
+   shrink instead of pushing the button out of the cell. */
+.media-markdown__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.media-markdown__row .media-markdown {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sized to sit beside a compact input, like the markdown line. */
+.form-button--small {
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Under the row, in the gap above the Delete button, so the message
+   appearing doesn't shrink the input. */
+.copy-status {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .content-field {
   padding-bottom: 1.5rem;
   margin-bottom: 1.75rem;

@@ -94,10 +94,10 @@ export async function updateAltText(
   return { saved: data };
 }
 
-export type DeleteMediaState = { error: string } | null;
+export type DeleteMediaState = { error: string } | { deleted: true } | null;
 
 // Bound to one image's id by the media page. On success the page
-// re-renders without the image, so there's nothing to return.
+// re-renders without the image.
 export async function deleteMedia(id: number): Promise<DeleteMediaState> {
   const api = await adminApi();
   let result;
@@ -111,7 +111,7 @@ export async function deleteMedia(id: number): Promise<DeleteMediaState> {
   // 404: already deleted (another tab, or a retry), which is what was asked for.
   if (response.ok || response.status === 404) {
     revalidatePath("/admin/media");
-    return null;
+    return { deleted: true };
   }
   // 409 names where the image is still used, written for people.
   if (response.status === 409 && error && "detail" in error && typeof error.detail === "string") {
