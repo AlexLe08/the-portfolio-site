@@ -7,7 +7,10 @@
 #
 # Deletes only safely: `git worktree remove` without --force (refuses
 # uncommitted or untracked files; ignored ones like .venv and .logs go with
-# the worktree) and `git branch -d` (refuses unmerged commits). Never
+# the worktree) and `git branch -D` only after the check above has proved
+# the branch is in origin/main. Plain -d would compare against HEAD instead
+# (the upstream is gone), so a main checkout that hasn't been pulled yet
+# made it refuse branches that were already merged. Never
 # touches main, the main checkout, or the worktree it runs from; to clean
 # up the current one, run scripts/new-worktree.sh and rerun from there.
 # Detects merge commits, which is how PRs merge here; a squash-merged
@@ -55,7 +58,8 @@ while read -r branch; do
   [[ "$branch" == "$current_branch" ]] && continue
   found=1
   if ((apply)); then
-    git branch -d "$branch"
+    # finished() just checked it against origin/main; see the header.
+    git branch -D "$branch"
   else
     echo "would delete branch $branch"
   fi

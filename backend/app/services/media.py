@@ -64,6 +64,14 @@ class ProviderError(Exception):
     """Cloudinary failed for a reason that isn't the file's fault."""
 
 
+class InUse(Exception):
+    """Site text still embeds the image, so deleting it would break a page."""
+
+    def __init__(self, usages: list[str]):
+        super().__init__(usages)
+        self.usages = usages
+
+
 def _credentials() -> dict[str, str]:
     # Passed on every call rather than through cloudinary.config(), which is
     # global SDK state: config() also doesn't parse a cloudinary:// URL, and
@@ -147,10 +155,66 @@ def _public_id(alt_text: str) -> str:
     return f"{FOLDER}/{slug}-{uuid.uuid4().hex[:SUFFIX_LENGTH]}"
 
 
+def find_media(db: Session, media_id: int) -> models.Media | None:
+    return db.get(models.Media, media_id)
+
+
 def list_media(db: Session) -> list[models.Media]:
     # Newest first; id breaks ties between uploads in the same second.
     stmt = select(models.Media).order_by(models.Media.created_at.desc(), models.Media.id.desc())
     return list(db.scalars(stmt))
+
+
+def find_usages(db: Session, media: models.Media) -> list[str]:
+    """Where site text embeds the image, e.g. ["project my-app", "content home.intro"].
+
+    Images are only ever pasted in as markdown, so this is a text search.
+    It looks for the public_id rather than the stored URL: the random suffix
+    makes it just as unique, and it also matches resized Cloudinary URLs
+    (".../upload/w_400/portfolio/..."). Drafts count, since publishing one
+    would show the broken image.
+    """
+    # autoescape: "%" and "_" in the search text are literal, not LIKE wildcards.
+    projects = db.scalars(
+        select(models.Project.slug)
+        .where(
+            models.Project.summary.contains(media.public_id, autoescape=True)
+            | models.Project.case_study_md.contains(media.public_id, autoescape=True)
+        )
+        .order_by(models.Project.slug)
+    )
+    content = db.scalars(
+        select(models.SiteContent.key)
+        .where(models.SiteContent.value.contains(media.public_id, autoescape=True))
+        .order_by(models.SiteContent.key)
+    )
+    return [f"project {slug}" for slug in projects] + [f"content {key}" for key in content]
+
+
+def delete_media(db: Session, media: models.Media) -> None:
+    # The Cloudinary file goes first. If that fails, the row stays and the
+    # delete can be retried; the other order would leave an orphan file that
+    # nothing points at. A file that's already gone counts as deleted, so a
+    # retry after a failed commit below still finishes.
+    usages = find_usages(db, media)
+    if usages:
+        raise InUse(usages)
+    credentials = _credentials()
+    try:
+        result = cloudinary.uploader.destroy(
+            media.public_id, resource_type="image", invalidate=True, timeout=30, **credentials
+        )
+    except cloudinary.exceptions.NotFound:
+        # Cloudinary's docs don't say whether a missing file is this
+        # exception or a {"result": "not found"} body, so both are handled.
+        result = {"result": "not found"}
+    except cloudinary.exceptions.Error as error:
+        raise ProviderError() from error
+    if result.get("result") not in ("ok", "not found"):
+        raise ProviderError()
+
+    db.delete(media)
+    db.commit()
 
 
 def _delete_quietly(public_id: str, credentials: dict[str, str]) -> None:
