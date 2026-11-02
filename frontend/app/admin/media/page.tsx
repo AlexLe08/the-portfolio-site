@@ -62,6 +62,7 @@ export default async function AdminMediaPage() {
                           height={item.height}
                           sizes="10rem"
                         />
+                        <span className="visually-hidden"> (full size)</span>
                       </a>
                     </td>
                     <td>
@@ -86,7 +87,11 @@ export default async function AdminMediaPage() {
                         <CopyButton
                           text={markdownFor(item.alt_text, item.url)}
                           inputId={`markdown-${item.id}`}
-                          label="Copy"
+                          label={
+                            <>
+                              Copy<span className="visually-hidden"> markdown for {item.alt_text}</span>
+                            </>
+                          }
                         />
                       </div>
                       <MediaDeleteButton

@@ -44,6 +44,7 @@ export function MediaDeleteButton({ action, altText }: Props) {
       )}
       <button type="button" className="form-button" disabled={pending} onClick={onClick}>
         {pending ? "Deleting…" : "Delete"}
+        <span className="visually-hidden"> {altText}</span>
       </button>
     </div>
   );
