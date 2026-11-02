@@ -71,6 +71,7 @@ export function ContentField({ action, contentKey, description, value, fallback,
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>
           {pending ? "Saving…" : "Save"}
+          <span className="visually-hidden"> {contentKey}</span>
         </button>
       </div>
     </form>

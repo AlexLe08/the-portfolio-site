@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 type Props = {
   text: string;
   // The id of the input holding the same text, selected if copying fails
   // so the browser's own copy shortcut still works.
   inputId: string;
-  label: string;
+  // A node so a repeated button can add visually hidden context.
+  label: ReactNode;
 };
 
 // navigator.clipboard needs a secure context (HTTPS or localhost) and can

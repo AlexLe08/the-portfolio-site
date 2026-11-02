@@ -39,6 +39,7 @@ export function MediaAltTextForm({ action, id, altText }: Props) {
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>
           {pending ? "Saving…" : "Save alt text"}
+          <span className="visually-hidden"> for {altText}</span>
         </button>
       </div>
     </form>

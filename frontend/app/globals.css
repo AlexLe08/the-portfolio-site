@@ -230,24 +230,48 @@ button:focus-visible {
   gap: 1rem;
 }
 
+/* Only the title is a link, so a screen reader names it by the title
+   alone; its ::after stretches the click area over the whole card. */
 .project-card {
-  display: block;
+  position: relative;
   border: 1px solid var(--rule-strong);
   background: var(--paper-raised);
   padding: 1.25rem 1.5rem;
   transition: border-color 0.15s ease;
-  text-decoration: none;
 }
 
 .project-card:hover,
-.project-card:focus-visible {
+.project-card:has(.project-card__link:focus-visible) {
   border-color: var(--signal);
+}
+
+/* The ring goes around the card, not just the title. */
+.project-card:has(.project-card__link:focus-visible) {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
 }
 
 .project-card__title {
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.project-card__link {
   color: var(--ink);
+  text-decoration: none;
+}
+
+.project-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Without :has() the title keeps its own ring instead. */
+@supports selector(:has(*)) {
+  .project-card__link:focus-visible {
+    outline: none;
+  }
 }
 
 .project-card__summary {
@@ -455,6 +479,18 @@ button:focus-visible {
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+/* Read by screen readers, not shown. Used to tell repeated controls
+   apart ("Delete" + " Team photo"); visible text comes first, as WCAG
+   2.5.3 Label in Name expects. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .form-actions {

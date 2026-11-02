@@ -97,15 +97,14 @@ export default async function HomePage() {
         ) : (
           <ul className="project-list">
             {projects.map((project) => (
-              <li key={project.slug}>
-                <Link
-                  href={`/projects/${project.slug}`}
-                  className="project-card"
-                >
-                  <div className="project-card__title">{project.title}</div>
-                  <p className="project-card__summary">{project.summary}</p>
-                  <StackTags stack={project.stack} className="project-card__stack" />
-                </Link>
+              <li key={project.slug} className="project-card">
+                <h3 className="project-card__title">
+                  <Link href={`/projects/${project.slug}`} className="project-card__link">
+                    {project.title}
+                  </Link>
+                </h3>
+                <p className="project-card__summary">{project.summary}</p>
+                <StackTags stack={project.stack} className="project-card__stack" />
               </li>
             ))}
           </ul>

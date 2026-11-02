@@ -323,6 +323,24 @@
   This replaced the planned `ADMIN_PASSWORD_HASH` as `SecretStr`, which
   wouldn't have fixed the logs. Backend suite is now 195 tests.
 
+- Distinct names for repeated controls. Buttons repeated on every row
+  all read the same in a screen reader's list of buttons ("Delete,
+  Delete, Delete"). WCAG most likely doesn't require unique names, so
+  this is a usability fix. Each keeps its visible word and adds hidden
+  text after it (allowed by 2.5.3 Label in Name, visible text first),
+  through a new `.visually-hidden` class: "Save alt text for Team
+  photo", "Copy markdown for Team photo", "Delete Team photo", the
+  thumbnail link "Team photo (full size)", and "Save home.intro" on
+  `/admin/content`. Hidden text beat `aria-label`, which replaces the
+  visible text and is often skipped by auto-translation. Home page
+  project cards were one link named by the title, summary, and every
+  tag; now only the title (an `<h3>`, so heading navigation works) is a
+  link, its `::after` stretches the click area over the card, and the
+  focus ring moves to the card through `:has()` (the title keeps its own
+  ring where `:has()` isn't supported). The cost: the summary can't be
+  selected with the mouse. Names checked with Playwright accessibility
+  snapshots on the demo stack.
+
 ## Next up (candidates, unordered)
 
 - Shared error UI, only when a third segment boundary appears or the
@@ -344,23 +362,6 @@
   masks `repr()` (e.g. a frame's locals in a Sentry event) but not
   validation errors, which `hide_input_in_errors` already covers. Each
   read becomes `.get_secret_value()`.
-- Accessibility pass on control names. Repeated buttons in a list or
-  table, all with the same visible text, give a screen reader's list of
-  buttons nothing to tell them apart. WCAG most likely doesn't require
-  unique names (2.4.6 asks for descriptive labels, and 2.4.4 counts table
-  context, but for links only), so this is a usability fix, not a
-  compliance one. Fix with hidden text after the visible word ("Delete"
-  becomes "Delete Team photo"), which Label in Name (2.5.3) allows as
-  long as the visible text comes first. Found so far:
-  - `/admin/media`: "Save alt text", "Copy", and "Delete" on every row;
-    the thumbnail link is named by the alt text but opens the full-size
-    image.
-  - `/admin/content`: a plain "Save" for every key.
-  - Home page project list: the whole card is one link, so its name is
-    the title, summary, and every stack tag read together. Link the title
-    and stretch its click area over the card with CSS instead.
-  Probably wants a shared visually-hidden utility class (there isn't
-  one yet; the contact form's honeypot class is for a different job).
 - Sentry follow-ups: frontend source maps (needs `SENTRY_AUTH_TOKEN` on
   Vercel) once a minified browser stack trace gets in the way. Tracing
   on either service only if errors alone stop being enough.
