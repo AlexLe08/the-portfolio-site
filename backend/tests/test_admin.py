@@ -1,12 +1,4 @@
-import pytest
-
 from tests.helpers import ADMIN_HEADERS, make_project
-
-
-@pytest.mark.parametrize("path", ["/admin/projects", "/admin/projects/anything"])
-def test_admin_reads_require_auth(client, path):
-    assert client.get(path).status_code == 401
-    assert client.get(path, headers={"x-admin-key": "wrong"}).status_code == 401
 
 
 def test_admin_list_includes_drafts_in_display_order(client, db_session):

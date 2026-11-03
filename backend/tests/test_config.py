@@ -1,10 +1,8 @@
 import pytest
-from argon2 import PasswordHasher
 from pydantic import ValidationError
 
 from app.core.config import DEFAULT_ADMIN_API_KEY, Settings
-
-PASSWORD_HASH = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1).hash("password")
+from tests.helpers import PASSWORD_HASH
 
 
 @pytest.mark.parametrize(

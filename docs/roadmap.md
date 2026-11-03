@@ -341,6 +341,22 @@
   selected with the mouse. Names checked with Playwright accessibility
   snapshots on the demo stack.
 
+- Backend test refactor (second refactor pass, step 2; tests only). The
+  admin routes are now found through the OpenAPI schema:
+  `require_admin` declares the Bearer and `X-Admin-Key` schemes, so every
+  operation that depends on it lists `security`. A guard test fails when
+  an operation outside `PUBLIC_OPERATIONS` (`tests/test_auth.py`) has
+  none, and one parametrized test sends every admin operation no
+  credentials, a wrong key, and a bad token, expecting 401 (a new admin
+  route is covered automatically). This replaced 13 per-route tests.
+  Rejected: walking `app.routes` for the dependency, because FastAPI
+  0.162 keeps included routers in a private `_IncludedRouter`. Also:
+  `contact_payload()`, `project_payload()`, and a fast argon2
+  `PASSWORD_HASH` in `tests/helpers.py`; one `FakePost` for
+  `httpx2.post` in `test_contact.py`; the settings-pinning fixtures
+  merged into `pinned_settings`, the limiter resets into
+  `fresh_rate_limits`. Backend suite is now 210 tests.
+
 ## Next up (candidates, unordered)
 
 - Second refactor pass (planned 2026-11-03, four PRs, in order; no
@@ -354,7 +370,7 @@
      for both notifiers; one `_destroy` for Cloudinary (fixes
      `_delete_quietly` having no timeout); one origin splitter in
      `config.py`. `openapi.json` must not change.
-  2. Backend tests: `contact_payload`, `project_payload`, and a fast
+  2. (Done.) Backend tests: `contact_payload`, `project_payload`, and a fast
      argon2 hash in `tests/helpers.py`; one parametrized credentials test
      over every admin route, plus a guard test that fails when a route
      outside a public allowlist lacks `require_admin`; one fake

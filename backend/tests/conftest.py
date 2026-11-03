@@ -18,71 +18,46 @@ from app.main import app
 
 
 @pytest.fixture(autouse=True)
-def no_real_notifications(monkeypatch):
+def pinned_settings(monkeypatch):
     """
     Settings are read from the developer's real .env, which may hold a live
-    Discord webhook or Resend key. Blank them for every test so nothing can
-    send a real notification; tests that need one set it explicitly.
+    Discord webhook, Resend key, or Cloudinary URL, a real admin key, or a
+    login. Pin every one of them so nothing can send a real notification or
+    upload to the live account; tests that need one set it explicitly.
     """
+    from tests.helpers import ADMIN_KEY
+
     monkeypatch.setattr(settings, "discord_webhook_url", "")
     monkeypatch.setattr(settings, "resend_api_key", "")
     monkeypatch.setattr(settings, "notify_email_to", "")
-
-
-@pytest.fixture(autouse=True)
-def no_real_uploads(monkeypatch):
-    """Same idea for Cloudinary: a real CLOUDINARY_URL in .env must never
-    let a test upload to the live account."""
     monkeypatch.setattr(settings, "cloudinary_url", SecretStr(""))
-
-
-@pytest.fixture(autouse=True)
-def known_admin_key(monkeypatch):
-    """A real .env may set ADMIN_API_KEY; tests send tests.helpers.ADMIN_KEY."""
-    from tests.helpers import ADMIN_KEY
-
+    # Tests send tests.helpers.ADMIN_KEY.
     monkeypatch.setattr(settings, "admin_api_key", ADMIN_KEY)
-
-
-@pytest.fixture(autouse=True)
-def fresh_contact_rate_limit(monkeypatch):
-    """The contact limiter is module-level state; don't let tests share it."""
-    from app.routers import contact
-
-    monkeypatch.setattr(settings, "client_ip_header", "")
-    contact.limiter.reset()
-    yield
-    contact.limiter.reset()
-
-
-@pytest.fixture(autouse=True)
-def no_admin_login(monkeypatch):
-    """Like the notification settings: a real .env may set these. Login is
-    off unless a test turns it on (see tests/test_auth.py)."""
-    from app.routers import auth
-
+    # Login is off unless a test turns it on (see tests/test_auth.py).
     monkeypatch.setattr(settings, "admin_password_hash", "")
     monkeypatch.setattr(settings, "jwt_secret", "")
-    auth.limiter.reset()
+    monkeypatch.setattr(settings, "client_ip_header", "")
+
+
+@pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    """The limiters are module-level state; don't let tests share it."""
+    from app.routers import auth, contact
+
+    for limiter in (contact.limiter, auth.limiter):
+        limiter.reset()
     yield
-    auth.limiter.reset()
+    for limiter in (contact.limiter, auth.limiter):
+        limiter.reset()
 
 
 @pytest.fixture()
 def db_session():
-    """
-    A fresh, in-memory SQLite database, created and torn down per test.
-    This is the isolation your Discord bot's persistence layer eventually
-    got, applied from day one here: tests can never leak state into each
-    other, and never touch dev.db, because each test gets an engine that
-    exists only in this process's memory and disappears when the test
-    function returns.
-    """
-    # StaticPool matters here: SQLite's `:memory:` DB is per-connection by
-    # default, so SQLAlchemy's normal pooling would hand create_all() one
-    # in-memory database and each query a *different* one -- "table
-    # doesn't exist" errors that have nothing to do with your actual code.
-    # StaticPool forces every checkout to reuse the same connection.
+    """A fresh in-memory SQLite database per test, so tests never share
+    state or touch dev.db."""
+    # SQLite's :memory: database is per connection; StaticPool makes every
+    # checkout reuse one connection, so create_all() and the queries see the
+    # same database.
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -99,13 +74,7 @@ def db_session():
 
 @pytest.fixture()
 def client(db_session):
-    """
-    FastAPI lets you swap out a dependency for the lifetime of a test via
-    `dependency_overrides`. Here we replace the real get_db (which reads
-    DATABASE_URL and would hit dev.db / production) with one that always
-    hands back this test's isolated in-memory session -- so route code
-    under test doesn't need to know it's being tested at all.
-    """
+    """The app with get_db swapped for this test's in-memory session."""
     def _override_get_db():
         yield db_session
 

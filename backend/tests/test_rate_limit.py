@@ -1,14 +1,10 @@
 import pytest
-
 from pydantic import ValidationError
 
 from app.core.config import Settings, settings
 from app.core.rate_limit import SlidingWindowLimiter
 from app.routers import contact
-
-
-def _payload(**overrides):
-    return {"name": "Jamie", "email": "jamie@example.com", "message": "Hi", **overrides}
+from tests.helpers import contact_payload
 
 
 def test_allows_up_to_the_limit_then_reports_the_wait():
@@ -62,8 +58,8 @@ def test_expired_keys_are_pruned_before_live_ones_are_evicted():
 def test_contact_route_returns_429_after_the_limit(client, monkeypatch):
     monkeypatch.setattr(contact.limiter, "limit", 2)
 
-    statuses = [client.post("/contact", json=_payload()).status_code for _ in range(3)]
-    blocked = client.post("/contact", json=_payload())
+    statuses = [client.post("/contact", json=contact_payload()).status_code for _ in range(3)]
+    blocked = client.post("/contact", json=contact_payload())
 
     assert statuses == [201, 201, 429]
     assert int(blocked.headers["Retry-After"]) > 0
@@ -76,8 +72,8 @@ def test_retry_after_is_readable_cross_origin(client, monkeypatch):
     origin = settings.allowed_origins_list[0]
     monkeypatch.setattr(contact.limiter, "limit", 1)
 
-    client.post("/contact", json=_payload())
-    blocked = client.post("/contact", json=_payload(), headers={"Origin": origin})
+    client.post("/contact", json=contact_payload())
+    blocked = client.post("/contact", json=contact_payload(), headers={"Origin": origin})
 
     assert blocked.status_code == 429
     assert blocked.headers["Access-Control-Allow-Origin"] == origin
@@ -95,17 +91,17 @@ def test_zero_rate_settings_fail_at_startup(field):
 
 def test_rate_limited_submission_is_not_saved(client, db_session, monkeypatch):
     monkeypatch.setattr(contact.limiter, "limit", 1)
-    client.post("/contact", json=_payload())
-    client.post("/contact", json=_payload())
+    client.post("/contact", json=contact_payload())
+    client.post("/contact", json=contact_payload())
 
     assert db_session.query(contact.models.ContactMessage).count() == 1
 
 
 def test_honeypot_submissions_count_toward_the_limit(client, monkeypatch):
     monkeypatch.setattr(contact.limiter, "limit", 1)
-    client.post("/contact", json=_payload(website="x"))
+    client.post("/contact", json=contact_payload(website="x"))
 
-    assert client.post("/contact", json=_payload()).status_code == 429
+    assert client.post("/contact", json=contact_payload()).status_code == 429
 
 
 def test_visitors_are_told_apart_by_the_configured_header(client, monkeypatch):
@@ -113,7 +109,7 @@ def test_visitors_are_told_apart_by_the_configured_header(client, monkeypatch):
     monkeypatch.setattr(contact.limiter, "limit", 1)
 
     def post(ip):
-        return client.post("/contact", json=_payload(), headers={"CF-Connecting-IP": ip})
+        return client.post("/contact", json=contact_payload(), headers={"CF-Connecting-IP": ip})
 
     assert post("1.1.1.1").status_code == 201
     assert post("2.2.2.2").status_code == 201
@@ -124,7 +120,7 @@ def test_without_the_header_setting_forged_headers_are_ignored(client, monkeypat
     monkeypatch.setattr(contact.limiter, "limit", 1)
 
     def post(ip):
-        return client.post("/contact", json=_payload(), headers={"CF-Connecting-IP": ip})
+        return client.post("/contact", json=contact_payload(), headers={"CF-Connecting-IP": ip})
 
     assert post("1.1.1.1").status_code == 201
     assert post("2.2.2.2").status_code == 429
@@ -134,5 +130,5 @@ def test_missing_configured_header_falls_back_to_the_peer_address(client, monkey
     monkeypatch.setattr(contact.settings, "client_ip_header", "CF-Connecting-IP")
     monkeypatch.setattr(contact.limiter, "limit", 1)
 
-    assert client.post("/contact", json=_payload()).status_code == 201
-    assert client.post("/contact", json=_payload()).status_code == 429
+    assert client.post("/contact", json=contact_payload()).status_code == 201
+    assert client.post("/contact", json=contact_payload()).status_code == 429
