@@ -3,7 +3,12 @@
 import { useEffect, useRef, type ChangeEvent } from "react";
 import { uploadMedia } from "@/app/admin/media/actions";
 import { SaveStatus } from "@/components/SaveStatus";
-import { ALLOWED_TYPES, ALT_TEXT_MAX_LENGTH, checkImageFile } from "@/lib/media-rules";
+import {
+  ALLOWED_TYPES,
+  ALT_TEXT_MAX_LENGTH,
+  checkImageFile,
+  UPLOAD_LIMIT_TEXT,
+} from "@/lib/media-rules";
 import { useSaveAction } from "@/lib/use-save-action";
 
 export function MediaUploadForm() {
@@ -43,7 +48,7 @@ export function MediaUploadForm() {
           className="form-input"
         />
         <p id="file-help" className="form-help">
-          JPEG, PNG, WebP, GIF, or AVIF, up to 4 MB.
+          {UPLOAD_LIMIT_TEXT}
         </p>
       </div>
 

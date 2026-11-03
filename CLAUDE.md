@@ -120,7 +120,8 @@ Frontend:
   `getContent()`, which silently falls back.
 - Admin pages (`app/admin/`) and admin Server Actions each call
   `verifySession()` from `lib/session.ts` first, directly or through
-  `adminApi()` in `lib/admin-api.ts`, which every admin backend call uses.
+  `lib/admin-api.ts`, which every admin backend call uses: `adminLoad()`
+  in pages, `adminRequest()` in actions (both redirect on a 401).
   Never rely on a layout for auth, and never send the admin key or the
   session token to the browser. Admin pages read the session cookie,
   which already makes them dynamic, so they don't set `force-dynamic`.

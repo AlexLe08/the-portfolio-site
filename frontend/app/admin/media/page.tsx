@@ -5,7 +5,7 @@ import { MediaAltTextForm } from "@/components/MediaAltTextForm";
 import { MediaDeleteButton } from "@/components/MediaDeleteButton";
 import { MediaDeleteNotice } from "@/components/MediaDeleteNotice";
 import { MediaUploadForm } from "@/components/MediaUploadForm";
-import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { adminLoad } from "@/lib/admin-api";
 import { deleteMedia, updateAltText } from "./actions";
 
 export const metadata = {
@@ -19,11 +19,7 @@ function markdownFor(altText: string, url: string) {
 }
 
 export default async function AdminMediaPage() {
-  const api = await adminApi();
-  const { data: media, response } = await api.GET("/admin/media");
-  redirectIfUnauthorized(response);
-  // Shown by app/admin/error.tsx. A network failure throws on its own.
-  if (!media) throw new Error(`Loading media failed (HTTP ${response.status})`);
+  const media = await adminLoad("media", (api) => api.GET("/admin/media"));
 
   return (
     <main className="sheet">

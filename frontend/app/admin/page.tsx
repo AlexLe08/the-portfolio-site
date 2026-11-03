@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { logout } from "./actions";
-import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { adminLoad } from "@/lib/admin-api";
 
 export default async function AdminPage() {
-  const api = await adminApi();
-  const { data: projects, response } = await api.GET("/admin/projects");
-  redirectIfUnauthorized(response);
-  // Shown by app/admin/error.tsx. A network failure throws on its own.
-  if (!projects) throw new Error(`Loading projects failed (HTTP ${response.status})`);
+  const projects = await adminLoad("projects", (api) => api.GET("/admin/projects"));
 
   return (
     <main className="sheet">

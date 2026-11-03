@@ -2,14 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { api } from "@/lib/api";
-import { SERVER_UNREACHABLE } from "@/lib/messages";
+import { describeRetryAfter, SERVER_UNREACHABLE } from "@/lib/messages";
 import { createSession, deleteSession } from "@/lib/session";
 
-// Server Actions: these run only on the server, though LoginForm calls
-// them like local functions. The password goes browser -> Vercel ->
-// Render and is never stored or logged here. Anyone can POST to an action
-// directly, so each one must check its own input (and, for admin actions,
-// call verifySession()) rather than trust the page that renders the form.
+// The password goes browser -> Vercel -> Render and is never stored or
+// logged here. Anyone can POST to an action directly, so each one checks
+// its own input rather than trusting the page that renders the form.
 
 export type LoginState = { error: string } | null;
 
@@ -52,13 +50,8 @@ function describeLoginFailure(response: Response): string {
   switch (response.status) {
     case 401:
       return "Wrong password.";
-    case 429: {
-      const seconds = Number(response.headers.get("Retry-After"));
-      const minutes = Math.max(1, Math.ceil(seconds / 60));
-      return Number.isFinite(seconds) && seconds > 0
-        ? `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`
-        : "Too many attempts. Try again later.";
-    }
+    case 429:
+      return `Too many attempts. Try again ${describeRetryAfter(response.headers.get("Retry-After"))}.`;
     case 503:
       return "Login isn't set up on the server yet (ADMIN_PASSWORD_HASH).";
     default:

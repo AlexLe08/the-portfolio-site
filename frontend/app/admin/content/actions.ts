@@ -1,10 +1,8 @@
 "use server";
 
-import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
-import { SERVER_UNREACHABLE } from "@/lib/messages";
-
-// adminApi() calls verifySession() first: Server Actions can be POSTed to
-// directly, so this one checks the session itself.
+import { adminRequest } from "@/lib/admin-api";
+import { formText } from "@/lib/form-data";
+import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 
 // A save returns the value it stored, so the form can update its notes
 // without re-fetching the page.
@@ -15,23 +13,18 @@ export async function updateContent(
   _previous: ContentFormState,
   formData: FormData,
 ): Promise<ContentFormState> {
-  const value = String(formData.get("value") ?? "").trim();
+  const value = formText(formData, "value");
   // There's no way to delete a key, so an empty value would render as a
   // blank spot on the page instead of falling back to the built-in text.
   if (!value) return { error: "This can't be empty." };
 
-  const api = await adminApi();
-  let result;
-  try {
-    result = await api.PUT("/content/{key}", {
-      params: { path: { key } },
-      body: { value },
-    });
-  } catch {
-    return { error: SERVER_UNREACHABLE };
-  }
+  // adminRequest() checks the session: Server Actions can be POSTed to
+  // directly, without the page that renders the form.
+  const result = await adminRequest((api) =>
+    api.PUT("/content/{key}", { params: { path: { key } }, body: { value } }),
+  );
+  if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
-  redirectIfUnauthorized(response);
-  if (error) return { error: `Saving failed (HTTP ${response.status}).` };
+  if (error) return { error: describeSaveFailure(response, error) };
   return { saved: value };
 }

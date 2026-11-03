@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { updateContent } from "./actions";
 import { ContentField } from "@/components/ContentField";
-import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { adminLoad } from "@/lib/admin-api";
 import { FALLBACK_CONTENT, type ContentKey } from "@/lib/content";
 
 export const metadata = {
@@ -24,10 +24,7 @@ export default async function AdminContentPage() {
   // Not getContent(): it falls back to built-in text after 5 seconds, and
   // saving a fallback shown during a cold start would overwrite real copy.
   // Here a slow or failed load waits or shows app/admin/error.tsx instead.
-  const api = await adminApi();
-  const { data: stored, response } = await api.GET("/content");
-  redirectIfUnauthorized(response);
-  if (!stored) throw new Error(`Loading content failed (HTTP ${response.status})`);
+  const stored = await adminLoad("content", (api) => api.GET("/content"));
 
   // Only keys the site reads: editing any other key would change nothing.
   const keys = Object.keys(FALLBACK_CONTENT) as ContentKey[];
