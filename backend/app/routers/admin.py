@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app import schemas
+from app import models, schemas
 from app.core.security import require_admin
 from app.database import get_db
+from app.dependencies import existing_project
 from app.services import media, projects
 
 # Admin-only reads for the admin UI. The dependency sits on the router, so
@@ -21,10 +22,7 @@ def list_all_projects(db: Session = Depends(get_db)):
 
 
 @router.get("/projects/{slug}", response_model=schemas.ProjectAdmin)
-def get_any_project(slug: str, db: Session = Depends(get_db)):
-    project = projects.find_project(db, slug)
-    if project is None:
-        raise HTTPException(404, "Project not found")
+def get_any_project(project: models.Project = Depends(existing_project)):
     return project
 
 

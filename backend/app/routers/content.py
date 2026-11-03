@@ -23,7 +23,7 @@ def list_content(db: Session = Depends(get_db)):
 )
 def put_content(
     payload: schemas.ContentUpdate,
-    key: str = Path(max_length=100, pattern=schemas.CONTENT_KEY_PATTERN),
+    key: str = Path(max_length=models.CONTENT_KEY_LENGTH, pattern=schemas.CONTENT_KEY_PATTERN),
     db: Session = Depends(get_db),
 ):
     # PUT replaces the whole value at this key, creating it if needed, so

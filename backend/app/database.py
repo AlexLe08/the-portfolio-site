@@ -1,25 +1,19 @@
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import settings
 
 
 def make_engine(url: str) -> Engine:
-    """
-    A function, not inline, so tests/test_database.py can check these
-    settings on an engine of its own.
+    """A function so tests/test_database.py can build an engine of its own.
 
-    pool_pre_ping: the pool keeps connections open between requests, and
-    Neon's free plan scales the database to zero after 5 idle minutes
-    (fixed), closing them. Without a check, the first request after a quiet
-    spell got a dead connection and failed with a 500 ("SSL connection has
-    been closed unexpectedly"). Pre-ping runs a tiny query when a request
-    takes a connection and swaps in a fresh one if it's dead, at the cost
-    of one round trip per request.
+    pool_pre_ping: Neon's free plan scales to zero after 5 idle minutes and
+    closes pooled connections, so the first request after a quiet spell got
+    a dead one and a 500. Pre-ping swaps in a fresh connection, at one round
+    trip per request.
 
-    `connect_args` is SQLite-specific: SQLite defaults to one thread per
-    connection, which FastAPI's request handling doesn't respect. Postgres
-    doesn't need this arg at all, so we only pass it conditionally.
+    check_same_thread (SQLite only): FastAPI runs requests on several
+    threads, which SQLite refuses by default.
     """
     connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
     return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
@@ -33,17 +27,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class Base(DeclarativeBase):
     """Every model in models.py inherits from this."""
 
-    pass
-
 
 def get_db():
-    """
-    A FastAPI dependency, not a plain function. FastAPI calls this per
-    request, yields the session to the route handler, and — because this
-    is a generator — resumes execution *after* the response is sent to
-    run the `finally` block. That's what guarantees the connection is
-    always returned to the pool, even if the route handler raises.
-    """
+    """One session per request. The `finally` runs after the response, so
+    the connection goes back to the pool even when the route raises."""
     db = SessionLocal()
     try:
         yield db

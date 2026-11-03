@@ -343,6 +343,35 @@
 
 ## Next up (candidates, unordered)
 
+- Second refactor pass (planned 2026-11-03, four PRs, in order; no
+  behavior changes beyond those listed). Comments are trimmed in the PR
+  that touches each file: keep the why (platform limits, security,
+  incidents, mirrored rules), cut restated code and framework tutorials.
+  1. Backend code: 404 lookups as FastAPI dependencies
+     (`existing_project`, `existing_media`); one exception-to-HTTP
+     mapping in `routers/media.py`; `Annotated` field types in
+     `schemas.py` with lengths from constants in `models.py`; one `_post`
+     for both notifiers; one `_destroy` for Cloudinary (fixes
+     `_delete_quietly` having no timeout); one origin splitter in
+     `config.py`. `openapi.json` must not change.
+  2. Backend tests: `contact_payload`, `project_payload`, and a fast
+     argon2 hash in `tests/helpers.py`; one parametrized credentials test
+     over every admin route, plus a guard test that fails when a route
+     outside a public allowlist lacks `require_admin`; one fake
+     `httpx2.post`; the pinned-settings fixtures merged.
+  3. Frontend lib and actions: `adminRequest()` (actions) and
+     `adminLoad()` (pages) in `lib/admin-api.ts` replace the repeated
+     try/catch and 401 handling; `formText()`; `checkAltText()` and
+     upload-limit text built from `lib/media-rules.ts`; shared
+     `describeRetryAfter()`, `SERVER_UNREACHABLE` in ContactForm, and
+     `describeSaveFailure()` (content and alt-text saves gain 422 field
+     details; the login 429 text matches the contact form's).
+  4. Frontend components and CSS: `StatusMessage` (the `form-status`
+     div) and `Page` (sheet, back link, header); inline styles to
+     classes, duplicate CSS rules merged. Verified by before/after
+     screenshots. Not extracted: a `FormField` wrapper or `SubmitButton`
+     (fields differ too much), and the error boundaries (see below).
+
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
   reference ID): extract `components/ErrorNotice.tsx` (`message`,

@@ -62,54 +62,54 @@ def _log_notification_failure(channel: str, exc: httpx2.HTTPError | httpx2.Inval
         logger.warning("%s notification failed: %s", channel, type(exc).__name__)
 
 
+def _post(channel: str, url: str, **kwargs) -> None:
+    try:
+        response = httpx2.post(url, **kwargs)
+        response.raise_for_status()
+    except (httpx2.HTTPError, httpx2.InvalidURL) as exc:
+        _log_notification_failure(channel, exc)
+
+
 def notify_discord(name: str, email: str, message: str) -> None:
     if not settings.discord_webhook_url:
         return
-    try:
-        response = httpx2.post(
-            settings.discord_webhook_url,
-            json={
-                "embeds": [
-                    {
-                        "title": "New contact message",
-                        "description": message[:DISCORD_EMBED_DESCRIPTION_LIMIT],
-                        "fields": [
-                            {"name": "Name", "value": name, "inline": True},
-                            {"name": "Email", "value": email, "inline": True},
-                        ],
-                    }
-                ],
-                # Visitor-supplied text: never let it ping anyone.
-                "allowed_mentions": {"parse": []},
-            },
-            headers={"User-Agent": DISCORD_USER_AGENT},
-            timeout=5,
-        )
-        response.raise_for_status()
-    except (httpx2.HTTPError, httpx2.InvalidURL) as exc:
-        # The message is already saved; never fail the request over a
-        # notification.
-        _log_notification_failure("Discord", exc)
+    _post(
+        "Discord",
+        settings.discord_webhook_url,
+        json={
+            "embeds": [
+                {
+                    "title": "New contact message",
+                    "description": message[:DISCORD_EMBED_DESCRIPTION_LIMIT],
+                    "fields": [
+                        {"name": "Name", "value": name, "inline": True},
+                        {"name": "Email", "value": email, "inline": True},
+                    ],
+                }
+            ],
+            # Visitor-supplied text: never let it ping anyone.
+            "allowed_mentions": {"parse": []},
+        },
+        headers={"User-Agent": DISCORD_USER_AGENT},
+        timeout=5,
+    )
 
 
 def notify_email(name: str, email: str, message: str) -> None:
     if not (settings.resend_api_key and settings.notify_email_to):
         return
-    try:
-        response = httpx2.post(
-            RESEND_API_URL,
-            json={
-                "from": settings.email_from,
-                "to": [settings.notify_email_to],
-                # Replying to the notification goes straight to the visitor.
-                "reply_to": email,
-                # Collapse whitespace so a name can't inject line breaks.
-                "subject": f"New contact message from {' '.join(name.split())[:100]}",
-                "text": f"Name: {name}\nEmail: {email}\n\n{message}",
-            },
-            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
-            timeout=10,
-        )
-        response.raise_for_status()
-    except (httpx2.HTTPError, httpx2.InvalidURL) as exc:
-        _log_notification_failure("Email", exc)
+    _post(
+        "Email",
+        RESEND_API_URL,
+        json={
+            "from": settings.email_from,
+            "to": [settings.notify_email_to],
+            # Replying to the notification goes straight to the visitor.
+            "reply_to": email,
+            # Collapse whitespace so a name can't inject line breaks.
+            "subject": f"New contact message from {' '.join(name.split())[:100]}",
+            "text": f"Name: {name}\nEmail: {email}\n\n{message}",
+        },
+        headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+        timeout=10,
+    )

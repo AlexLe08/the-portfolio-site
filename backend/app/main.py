@@ -9,20 +9,17 @@ init_sentry()
 
 app = FastAPI(title="Portfolio API", version="0.1.0")
 
-# The frontend (Next.js, on a different origin) needs explicit permission
-# to call this API from a browser. allowed_origins_list comes from the
-# ALLOWED_ORIGINS env var -- localhost in dev, your real Vercel/production
-# domain in prod. An open ("*") policy on a write-capable API would let
-# any website's JavaScript submit to /projects or /contact on a visitor's
-# behalf; this keeps that door shut to everything except domains we name.
+# Only browser calls need this, and ContactForm's POST /contact is the only
+# one: pages and Server Actions call the API from the frontend's server.
+# Named origins rather than "*", so other sites can't post on a visitor's
+# behalf.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
-    # Browser JavaScript can only read a few "safelisted" response headers
-    # cross-origin. ContactForm reads Retry-After on a 429 to say how long
-    # to wait, so it has to be exposed explicitly.
+    # Cross-origin JavaScript can read only "safelisted" headers otherwise,
+    # and ContactForm reads Retry-After on a 429.
     expose_headers=["Retry-After"],
 )
 

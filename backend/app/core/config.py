@@ -10,14 +10,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DEFAULT_ADMIN_API_KEY = "dev-only-change-me"
 
 
+def _split_origins(value: str) -> list[str]:
+    return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
 class Settings(BaseSettings):
-    """
-    All environment-driven config lives here, and nowhere else.
-    Reading os.environ directly anywhere else in the app is a code smell —
-    it means config validation only happens at the moment of use, instead
-    of at startup, so a missing/misspelled env var fails loudly and early
-    instead of causing a confusing 500 later.
-    """
+    """All environment-driven config, validated at startup so a bad value
+    fails there instead of as a 500 later. Nothing else reads os.environ."""
 
     # hide_input_in_errors: a startup error lands in Render's logs, and
     # Pydantic would print the rejected value as input_value=..., whatever
@@ -30,7 +29,7 @@ class Settings(BaseSettings):
     # with zero setup. Production sets DATABASE_URL to a Postgres URL.
     database_url: str = "sqlite:///./dev.db"
 
-    # Webhook receives contact form info from database
+    # Discord channel webhook for new contact messages. Off when empty.
     discord_webhook_url: str = ""
 
     # Email notification for new contact messages, sent through Resend's HTTP
@@ -96,11 +95,8 @@ class Settings(BaseSettings):
     # tests is the one actually serving. Empty when running locally.
     render_git_commit: str = ""
 
-    # Comma-separated list, e.g. "https://your-site.vercel.app,https://yourdomain.com"
-    # Kept as a single string (not a list) because env vars are always
-    # strings -- pydantic-settings would need a custom parser to accept a
-    # list directly from an environment variable, which is unnecessary
-    # complexity for something this simple to split ourselves.
+    # Comma-separated, e.g. "https://site.vercel.app,https://example.com".
+    # A plain string: pydantic-settings would parse a list field as JSON.
     allowed_origins: str = "http://localhost:3000"
 
     @field_validator("jwt_secret")
@@ -146,9 +142,7 @@ class Settings(BaseSettings):
         # Browsers send Origin as scheme://host[:port] and CORS compares it
         # exactly, so a trailing slash or path never matches and the contact
         # form fails with a CORS error instead of a startup error.
-        for origin in (entry.strip() for entry in value.split(",")):
-            if not origin:
-                continue
+        for origin in _split_origins(value):
             parts = urlsplit(origin)
             if parts.scheme not in ("http", "https") or not parts.hostname:
                 raise ValueError(f"ALLOWED_ORIGINS entry {origin!r} must be http(s)://host[:port]")
@@ -169,7 +163,7 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        return _split_origins(self.allowed_origins)
 
 
 settings = Settings()

@@ -1,6 +1,9 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, model_validator
+
+from app import models
 
 
 class ProjectSummary(BaseModel):
@@ -36,17 +39,24 @@ class ProjectAdmin(ProjectDetail):
 # Same rule as the admin form's pattern attribute (ProjectForm.tsx).
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
+# Field types shared by the create and update schemas, sized by their
+# columns (see the constants in models.py).
+ProjectTitle = Annotated[str, Field(max_length=models.TITLE_LENGTH)]
+RepoUrl = Annotated[str, Field(max_length=models.REPO_URL_LENGTH)]
+# Stripped first, so "   " fails min_length instead of passing as alt text
+# a screen reader would read as nothing.
+AltText = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=models.ALT_TEXT_LENGTH)
+]
+
 
 class ProjectCreate(BaseModel):
-    # Each max_length matches its String(n) column in models.py. Postgres
-    # enforces those limits but SQLite doesn't, so without them tests pass
-    # and prod 500s.
-    slug: str = Field(max_length=120, pattern=SLUG_PATTERN)
-    title: str = Field(max_length=200)
+    slug: str = Field(max_length=models.SLUG_LENGTH, pattern=SLUG_PATTERN)
+    title: ProjectTitle
     summary: str
     stack: list[str]
     case_study_md: str
-    repo_url: str | None = Field(default=None, max_length=300)
+    repo_url: RepoUrl | None = None
     published: bool = False
     sort_order: int = 0
 
@@ -61,12 +71,11 @@ class ProjectUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    # Same limits as ProjectCreate.
-    title: str | None = Field(default=None, max_length=200)
+    title: ProjectTitle | None = None
     summary: str | None = None
     stack: list[str] | None = None
     case_study_md: str | None = None
-    repo_url: str | None = Field(default=None, max_length=300)
+    repo_url: RepoUrl | None = None
     published: bool | None = None
     sort_order: int | None = None
 
@@ -120,7 +129,7 @@ class AdminToken(BaseModel):
 
 
 class ContactCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=models.CONTACT_NAME_LENGTH)
     email: EmailStr
     # Capped below Discord's 4096-character embed description limit so the
     # whole message fits in one webhook notification (see services/notifications.py).
@@ -141,13 +150,9 @@ class ContactConfirmation(BaseModel):
 class MediaCreate(BaseModel):
     """The form fields sent alongside the file in POST /media."""
 
-    # Whitespace is stripped first, so "   " fails min_length instead of
-    # passing as alt text a screen reader would read as nothing. No
-    # extra="forbid": FastAPI validates this model against the whole form,
-    # and the file part would count as an extra field.
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    alt_text: str = Field(min_length=1, max_length=300)
+    # No extra="forbid": FastAPI validates this model against the whole
+    # form, and the file part would count as an extra field.
+    alt_text: AltText
 
 
 class MediaUpdate(BaseModel):
@@ -156,10 +161,9 @@ class MediaUpdate(BaseModel):
     because renaming it would change the URL pasted into content.
     """
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid")
 
-    # Same limit as MediaCreate and the String(300) column.
-    alt_text: str = Field(min_length=1, max_length=300)
+    alt_text: AltText
 
 
 class ErrorDetail(BaseModel):
