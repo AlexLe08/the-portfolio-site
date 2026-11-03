@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.core.security import require_admin
 from app.database import get_db
+from app.dependencies import existing_project
 from app.services import projects
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -44,12 +45,11 @@ def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db)
     response_model=schemas.ProjectDetail,
     dependencies=[Depends(require_admin)],
 )
-def update_project(slug: str, payload: schemas.ProjectUpdate, db: Session = Depends(get_db)):
-    # Unlike the public GET, drafts are found too: publishing one is an update.
-    project = projects.find_project(db, slug)
-    if project is None:
-        raise HTTPException(404, "Project not found")
-
+def update_project(
+    payload: schemas.ProjectUpdate,
+    project: models.Project = Depends(existing_project),
+    db: Session = Depends(get_db),
+):
     # exclude_unset: only fields the client actually sent, so omitting a
     # field leaves it alone while sending "repo_url": null clears it.
     for field, value in payload.model_dump(exclude_unset=True).items():

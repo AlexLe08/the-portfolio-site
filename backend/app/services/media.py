@@ -45,6 +45,9 @@ FOLDER = "portfolio"
 SLUG_MAX_LENGTH = 60
 SUFFIX_LENGTH = 12
 
+# Per Cloudinary call, so a hung request can't hold a worker thread forever.
+TIMEOUT_SECONDS = 30
+
 logger = logging.getLogger(__name__)
 
 
@@ -103,7 +106,7 @@ def upload_image(db: Session, *, data: bytes, content_type: str, alt_text: str) 
             asset_folder=FOLDER,
             resource_type="image",
             overwrite=False,
-            timeout=30,
+            timeout=TIMEOUT_SECONDS,
             **credentials,
         )
     except cloudinary.exceptions.BadRequest as error:
@@ -201,9 +204,7 @@ def delete_media(db: Session, media: models.Media) -> None:
         raise InUse(usages)
     credentials = _credentials()
     try:
-        result = cloudinary.uploader.destroy(
-            media.public_id, resource_type="image", invalidate=True, timeout=30, **credentials
-        )
+        result = _destroy(media.public_id, credentials)
     except cloudinary.exceptions.NotFound:
         # Cloudinary's docs don't say whether a missing file is this
         # exception or a {"result": "not found"} body, so both are handled.
@@ -217,11 +218,17 @@ def delete_media(db: Session, media: models.Media) -> None:
     db.commit()
 
 
+def _destroy(public_id: str, credentials: dict[str, str]) -> dict:
+    return cloudinary.uploader.destroy(
+        public_id, resource_type="image", invalidate=True, timeout=TIMEOUT_SECONDS, **credentials
+    )
+
+
 def _delete_quietly(public_id: str, credentials: dict[str, str]) -> None:
     # Cleanup after another failure: that failure is the one to report, so
     # a failed delete is only logged, naming the orphan file to remove in
     # the Cloudinary console.
     try:
-        cloudinary.uploader.destroy(public_id, resource_type="image", invalidate=True, **credentials)
+        _destroy(public_id, credentials)
     except cloudinary.exceptions.Error as error:
         logger.warning("Could not delete orphan Cloudinary file %s: %s", public_id, type(error).__name__)

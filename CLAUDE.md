@@ -93,6 +93,9 @@ them. Imports only point downward.
   another test module.
 - Every `String(n)` column needs a matching `max_length` on the schemas
   that write it: SQLite ignores the limit, so only Postgres would fail.
+  Use one length constant from `models.py` for both.
+- `app/dependencies.py` holds lookups routes share through `Depends()`
+  (`existing_project`, `existing_media`: the row or a 404).
 - `app/services/` holds logic that isn't HTTP handling (currently
   `notifications.py`: Discord and email; `projects.py`: project queries
   shared by the public and admin routers, including the one list order;
