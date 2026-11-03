@@ -2,8 +2,8 @@
 // build (no dev overlay in the video) against a throwaway seeded SQLite
 // database, with the backend stoppable mid-recording to stage outages.
 // Same isolation as scripts/local-stack.sh: shell variables override the
-// .env files, so nothing touches production or sends notifications, and
-// the Sentry DSN is blank.
+// .env files, so nothing touches production, sends notifications, or
+// uploads to Cloudinary, and the Sentry DSN is blank.
 //
 // A per-PR script only needs this file (it re-exports chromium), so it can
 // live outside the repo:
@@ -119,6 +119,8 @@ export async function startStack({ build = true } = {}) {
     NOTIFY_EMAIL_TO: "",
     CLIENT_IP_HEADER: "",
     SENTRY_DSN: "",
+    // Uploads get a 503 instead of reaching the real Cloudinary account.
+    CLOUDINARY_URL: "",
     ADMIN_PASSWORD_HASH: admin.hash,
     JWT_SECRET: randomBytes(32).toString("hex"),
   };

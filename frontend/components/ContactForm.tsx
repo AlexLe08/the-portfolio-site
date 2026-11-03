@@ -3,16 +3,12 @@
 import { useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { describeRetryAfter, SERVER_UNREACHABLE } from "@/lib/messages";
 
-// Everything in this file runs in the browser, not on the server -- the
-// "use client" directive above is what makes that possible: useState and a
-// submit handler both require interactivity no Server Component can provide.
-// It's also the only place a fetch from this frontend crosses the browser's
-// CORS boundary -- every other backend call runs server-to-server (pages
-// and Server Actions), where CORS doesn't apply at all. If this form fails
-// with a CORS error in the browser console, it means Render's
-// ALLOWED_ORIGINS doesn't include the origin this page is served from (see
-// docs/render-runbook.md).
+// The only backend call made from the browser, so the only one CORS
+// applies to: every other call runs on the server (pages and Server
+// Actions). A CORS error in the console means Render's ALLOWED_ORIGINS
+// lacks this page's origin (see docs/render-runbook.md).
 type Status = "idle" | "submitting" | "success" | "error";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -46,20 +42,6 @@ function describeValidationError(
   return GENERIC_ERROR;
 }
 
-// Turns a 429's Retry-After (seconds, see backend core/rate_limit.py) into
-// "in 12 minutes", so the text follows CONTACT_RATE_WINDOW_SECONDS. The
-// header could also be an HTTP date, which ours never sends; that, a
-// missing header, or one CORS didn't expose all fall back to "later".
-function describeRetryAfter(header: string | null): string {
-  const seconds = Number(header);
-  if (!header || !Number.isFinite(seconds) || seconds <= 0) return "later";
-  const minutes = Math.ceil(seconds / 60);
-  if (minutes <= 1) return "in a minute";
-  if (minutes < 60) return `in ${minutes} minutes`;
-  const hours = Math.round(minutes / 60);
-  return hours === 1 ? "in about an hour" : `in about ${hours} hours`;
-}
-
 export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -79,8 +61,8 @@ export function ContactForm() {
         body: { name, email, message, website },
       });
       if (response.status === 429) {
-        // Rate limited (see backend routers/contact.py). Not in the OpenAPI
-        // error shapes, so it is detected by status rather than by `error`.
+        // Not in the OpenAPI error shapes, so matched by status. Reading
+        // Retry-After needs CORS expose_headers on the backend.
         setStatus("error");
         const wait = describeRetryAfter(response.headers.get("Retry-After"));
         setErrorMessage(`Too many messages from your connection. Please try again ${wait}.`);
@@ -100,7 +82,7 @@ export function ContactForm() {
       setMessage("");
     } catch {
       setStatus("error");
-      setErrorMessage("Couldn't reach the server. It may be waking up, so please try again in a minute.");
+      setErrorMessage(SERVER_UNREACHABLE);
     }
   }
 

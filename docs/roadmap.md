@@ -356,6 +356,23 @@
   `httpx2.post` in `test_contact.py`; the settings-pinning fixtures
   merged into `pinned_settings`, the limiter resets into
   `fresh_rate_limits`. Backend suite is now 210 tests.
+- Frontend lib and actions refactor (second refactor pass, step 3).
+  `adminRequest()` (actions: null on a network failure, redirect on 401)
+  and `adminLoad()` (pages: the data or a thrown error, optional
+  not-found on 404) in `lib/admin-api.ts` replace the try/catch and 401
+  handling repeated in 5 actions and 4 pages, keeping `redirect()` out of
+  every `try`. `formText()` in `lib/form-data.ts`; `checkAltText()`,
+  the format list (`Intl.ListFormat`), and the 4 MB text built from
+  `lib/media-rules.ts`; `describeRetryAfter()` and
+  `describeSaveFailure()` in `lib/messages.ts`. Behavior changes: content
+  and alt-text saves show 422 field details, the login 429 reads like
+  the contact form's ("in 10 minutes", "in about an hour"), and the
+  contact form's unreachable text drops "please". Verified with
+  Playwright on the demo stack (saves, a 422, server checks, backend
+  down, stale token, both 429s). Found on the way: the demo stack and
+  `local-stack.sh` didn't blank `CLOUDINARY_URL`, so a test upload
+  reached the real Cloudinary account; both now blank it (uploads get
+  the 503 "not configured" message).
 
 ## Next up (candidates, unordered)
 
@@ -375,7 +392,7 @@
      over every admin route, plus a guard test that fails when a route
      outside a public allowlist lacks `require_admin`; one fake
      `httpx2.post`; the pinned-settings fixtures merged.
-  3. Frontend lib and actions: `adminRequest()` (actions) and
+  3. (Done.) Frontend lib and actions: `adminRequest()` (actions) and
      `adminLoad()` (pages) in `lib/admin-api.ts` replace the repeated
      try/catch and 401 handling; `formText()`; `checkAltText()` and
      upload-limit text built from `lib/media-rules.ts`; shared

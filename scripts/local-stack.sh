@@ -6,8 +6,8 @@
 #
 # Always isolated from production, whatever .env says: shell variables
 # override .env files (pydantic-settings and Next.js both), so the database
-# is a temp file, notifications are off, and the frontend calls the local
-# backend. Other settings pass through, e.g.
+# is a temp file, notifications and uploads are off, and the frontend
+# calls the local backend. Other settings pass through, e.g.
 #   CONTACT_RATE_LIMIT=1 CONTACT_RATE_WINDOW_SECONDS=600 scripts/local-stack.sh
 # Smoke tests against it, from frontend/:
 #   BASE_URL=http://localhost:3000 API_URL=http://localhost:8000 npm run test:smoke
@@ -28,6 +28,8 @@ db_dir="$(mktemp -d)"
 export DATABASE_URL="sqlite:///$db_dir/local.db"
 export ALLOWED_ORIGINS="http://localhost:3000"
 export DISCORD_WEBHOOK_URL="" RESEND_API_KEY="" NOTIFY_EMAIL_TO="" CLIENT_IP_HEADER=""
+# Blank, so an upload gets a 503 instead of reaching the real Cloudinary account.
+export CLOUDINARY_URL=""
 export NEXT_PUBLIC_API_URL="http://localhost:8000"
 
 backend_pid="" frontend_pid=""

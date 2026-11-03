@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { updateProject } from "../actions";
 import { ProjectForm } from "@/components/ProjectForm";
-import { adminApi, redirectIfUnauthorized } from "@/lib/admin-api";
+import { adminLoad } from "@/lib/admin-api";
 
 export const metadata = {
   title: "Edit project",
@@ -10,13 +9,11 @@ export const metadata = {
 
 export default async function EditProjectPage({ params }: PageProps<"/admin/projects/[slug]">) {
   const { slug } = await params;
-  const api = await adminApi();
-  const { data: project, response } = await api.GET("/admin/projects/{slug}", {
-    params: { path: { slug } },
-  });
-  redirectIfUnauthorized(response);
-  if (response.status === 404) notFound();
-  if (!project) throw new Error(`Loading the project failed (HTTP ${response.status})`);
+  const project = await adminLoad(
+    "the project",
+    (api) => api.GET("/admin/projects/{slug}", { params: { path: { slug } } }),
+    { notFoundOn404: true },
+  );
 
   return (
     <main className="sheet">
