@@ -1,6 +1,6 @@
 import pytest
 
-from tests.helpers import ADMIN_HEADERS, make_project
+from tests.helpers import ADMIN_HEADERS, make_project, project_payload
 
 
 def test_list_projects_only_returns_published(client, db_session):
@@ -47,48 +47,10 @@ def test_get_missing_project_returns_404(client):
     assert response.status_code == 404
 
 
-def test_create_project_without_admin_key_is_rejected(client):
-    response = client.post(
-        "/projects",
-        json={
-            "slug": "new-project",
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-        },
-    )
-
-    assert response.status_code == 401  # no credentials at all
-
-
-def test_create_project_with_wrong_admin_key_is_rejected(client):
-    response = client.post(
-        "/projects",
-        json={
-            "slug": "new-project",
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-        },
-        headers={"x-admin-key": "wrong-key"},
-    )
-
-    assert response.status_code == 401
-
-
 def test_create_project_succeeds_with_valid_admin_key(client):
     response = client.post(
         "/projects",
-        json={
-            "slug": "new-project",
-            "title": "New",
-            "summary": "S",
-            "stack": ["Python", "FastAPI"],
-            "case_study_md": "# Body",
-            "published": True,
-        },
+        json=project_payload(stack=["Python", "FastAPI"], case_study_md="# Body", published=True),
         headers=ADMIN_HEADERS,
     )
 
@@ -101,13 +63,7 @@ def test_create_project_with_duplicate_slug_returns_409(client, db_session):
 
     response = client.post(
         "/projects",
-        json={
-            "slug": "already-exists",
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-        },
+        json=project_payload(slug="already-exists"),
         headers=ADMIN_HEADERS,
     )
 
@@ -129,17 +85,7 @@ def test_create_project_with_duplicate_slug_returns_409(client, db_session):
     ],
 )
 def test_create_project_rejects_malformed_slug(client, slug):
-    response = client.post(
-        "/projects",
-        json={
-            "slug": slug,
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-        },
-        headers=ADMIN_HEADERS,
-    )
+    response = client.post("/projects", json=project_payload(slug=slug), headers=ADMIN_HEADERS)
 
     assert response.status_code == 422
 
@@ -147,17 +93,7 @@ def test_create_project_rejects_malformed_slug(client, slug):
 def test_create_project_accepts_slug_at_max_length(client):
     slug = "a" * 120
 
-    response = client.post(
-        "/projects",
-        json={
-            "slug": slug,
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-        },
-        headers=ADMIN_HEADERS,
-    )
+    response = client.post("/projects", json=project_payload(slug=slug), headers=ADMIN_HEADERS)
 
     assert response.status_code == 201
     assert response.json()["slug"] == slug
@@ -169,18 +105,7 @@ OVER_LONG_FIELDS = [{"title": "t" * 201}, {"repo_url": "https://example.com/" + 
 
 @pytest.mark.parametrize("overrides", OVER_LONG_FIELDS)
 def test_create_project_rejects_values_longer_than_their_columns(client, overrides):
-    response = client.post(
-        "/projects",
-        json={
-            "slug": "new",
-            "title": "New",
-            "summary": "S",
-            "stack": [],
-            "case_study_md": "x",
-            **overrides,
-        },
-        headers=ADMIN_HEADERS,
-    )
+    response = client.post("/projects", json=project_payload(**overrides), headers=ADMIN_HEADERS)
 
     assert response.status_code == 422
 
@@ -192,24 +117,6 @@ def test_update_project_rejects_values_longer_than_their_columns(client, db_sess
     response = client.patch("/projects/existing", json=overrides, headers=ADMIN_HEADERS)
 
     assert response.status_code == 422
-
-
-def test_update_project_without_admin_key_is_rejected(client, db_session):
-    make_project(db_session, slug="existing")
-
-    response = client.patch("/projects/existing", json={"title": "New"})
-
-    assert response.status_code == 401  # no credentials at all
-
-
-def test_update_project_with_wrong_admin_key_is_rejected(client, db_session):
-    make_project(db_session, slug="existing")
-
-    response = client.patch(
-        "/projects/existing", json={"title": "New"}, headers={"x-admin-key": "wrong-key"}
-    )
-
-    assert response.status_code == 401
 
 
 def test_update_missing_project_returns_404(client):

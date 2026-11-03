@@ -159,13 +159,6 @@ def test_upload_sends_bytes_and_credentials_from_settings(client, fake_cloudinar
     assert options["asset_folder"] == "portfolio"
 
 
-def test_upload_requires_admin(client, fake_cloudinary):
-    response = post_image(client, headers={})
-
-    assert response.status_code == 401
-    assert fake_cloudinary.uploads == []
-
-
 def test_upload_is_503_when_cloudinary_is_not_configured(client):
     # conftest blanks CLOUDINARY_URL; no fake_cloudinary here.
     response = post_image(client)
@@ -284,10 +277,6 @@ def test_admin_media_lists_newest_first(client, fake_cloudinary):
     assert [item["id"] for item in response.json()] == [second["id"], first["id"]]
 
 
-def test_admin_media_requires_admin(client):
-    assert client.get("/admin/media").status_code == 401
-
-
 # --- PATCH /media/{id} ---
 
 
@@ -304,12 +293,6 @@ def test_alt_text_can_be_edited_without_touching_the_file(client, fake_cloudinar
     assert fake_cloudinary.destroyed == []
     listed = client.get("/admin/media", headers=ADMIN_HEADERS).json()
     assert listed[0]["alt_text"] == "New text"
-
-
-def test_editing_alt_text_requires_admin(client, fake_cloudinary):
-    uploaded = post_image(client).json()
-
-    assert client.patch(f"/media/{uploaded['id']}", json={"alt_text": "New"}).status_code == 401
 
 
 def test_editing_missing_media_is_404(client):
@@ -350,14 +333,6 @@ def test_delete_removes_the_file_then_the_row(client, db_session, fake_cloudinar
     assert response.status_code == 204
     assert fake_cloudinary.destroyed == [public_id]
     assert db_session.query(Media).count() == 0
-
-
-def test_delete_requires_admin(client, db_session, fake_cloudinary):
-    uploaded = post_image(client).json()
-
-    assert delete_image(client, uploaded["id"], headers={}).status_code == 401
-    assert fake_cloudinary.destroyed == []
-    assert db_session.query(Media).count() == 1
 
 
 def test_deleting_missing_media_is_404(client, fake_cloudinary):

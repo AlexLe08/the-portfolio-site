@@ -1,19 +1,18 @@
 from datetime import datetime, timedelta, timezone
 
+import re
+
 import jwt
 import pytest
-from argon2 import PasswordHasher
 from pydantic import ValidationError
 
 from app.core.config import Settings, settings
 from app.core.security import create_admin_token
+from app.main import app
 from app.routers import auth
+from tests.helpers import PASSWORD, PASSWORD_HASH
 
-PASSWORD = "correct horse battery staple"
 SECRET = "test-secret-that-is-at-least-32-bytes-long"
-# Minimum argon2 cost so each verify is fast; the parameters are stored in
-# the hash itself, so the app's default PasswordHasher still checks it.
-PASSWORD_HASH = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1).hash(PASSWORD)
 
 # Any admin-protected endpoint works; PUT /content needs no setup rows.
 PROTECTED = "/content/home.intro"
@@ -143,13 +142,55 @@ def test_admin_key_still_works_alongside_login(client, login_enabled):
     assert response.status_code == 200
 
 
-def test_missing_credentials_ask_for_a_bearer_token(client):
-    response = client.put(PROTECTED, json=BODY)
-
-    assert response.status_code == 401
-    assert response.headers["WWW-Authenticate"] == "Bearer"
-
-
 def test_short_jwt_secret_fails_at_startup():
     with pytest.raises(ValidationError, match="at least 32 bytes"):
         Settings(jwt_secret="too-short")
+
+
+# --- Every admin route, found through the OpenAPI schema ---
+
+# Routes anyone may call. Everything else must require admin credentials.
+PUBLIC_OPERATIONS = {
+    "GET /health",
+    "GET /projects",
+    "GET /projects/{slug}",
+    "GET /content",
+    "POST /contact",
+    "POST /auth/login",
+}
+
+# require_admin declares the Bearer and X-Admin-Key schemes, so every
+# operation that depends on it lists them under `security`.
+OPERATIONS = {
+    f"{method.upper()} {path}": operation
+    for path, methods in app.openapi()["paths"].items()
+    for method, operation in methods.items()
+}
+ADMIN_OPERATIONS = sorted(name for name, op in OPERATIONS.items() if "security" in op)
+
+
+def test_every_route_is_public_or_admin_only():
+    # A new route that forgot require_admin fails here until it is added to
+    # PUBLIC_OPERATIONS on purpose.
+    unprotected = {name for name, op in OPERATIONS.items() if "security" not in op}
+
+    assert unprotected == PUBLIC_OPERATIONS
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [{}, {"x-admin-key": "wrong"}, _bearer("not-a-token")],
+    ids=["no-credentials", "wrong-key", "bad-token"],
+)
+@pytest.mark.parametrize("operation", ADMIN_OPERATIONS)
+def test_admin_routes_reject_bad_credentials(client, operation, headers):
+    method, path = operation.split(" ")
+    # Any path value: credentials are checked before the row is looked up,
+    # so a missing row must not turn this into a 404.
+    url = re.sub(r"\{\w+\}", "1", path)
+
+    response = client.request(method, url, headers=headers)
+
+    assert response.status_code == 401
+    if not headers:
+        assert response.headers["WWW-Authenticate"] == "Bearer"
