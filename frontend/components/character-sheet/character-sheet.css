@@ -1,0 +1,456 @@
+/* ---------------------------------------------------------------------
+   Character sheet panel
+   Every color and size is a --cs-* property, so a host restyles it by
+   overriding variables rather than selectors. The "document" theme reads
+   the host's tokens when they exist (--paper, --ink, --signal...) and has
+   plain fallbacks when they don't, so it also works outside this site.
+   The "game" theme is the one place gradients, rounded frames, and
+   shadows are allowed (see CLAUDE.md), and only inside its own selector.
+   ------------------------------------------------------------------ */
+.cs {
+  --cs-panel: var(--paper-raised, #ffffff);
+  --cs-inset: var(--paper, #f6f6f3);
+  --cs-ink: var(--ink, #1c1e22);
+  --cs-muted: var(--muted, #5b616b);
+  --cs-rule: var(--rule, #c9cdd3);
+  --cs-rule-strong: var(--rule-strong, #9aa0a8);
+  --cs-accent: var(--signal, #2f5fa3);
+  --cs-accent-soft: var(--signal-soft, #eaf0f8);
+  --cs-font: var(--font-body, system-ui, sans-serif);
+  --cs-font-technical: var(--font-technical, ui-monospace, monospace);
+  --cs-radius: 0;
+  --cs-square-bg: var(--cs-inset);
+  --cs-tip-bg: var(--cs-panel);
+  --cs-tip-shadow: none;
+  --cs-panel-shadow: none;
+  --cs-slot-size: 3.5rem;
+  --cs-slot-column: 5.5rem;
+  --cs-portrait-width: 15rem;
+
+  container: cs / inline-size;
+  max-width: 40rem;
+  margin-inline: auto;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-panel);
+  box-shadow: var(--cs-panel-shadow);
+  color: var(--cs-ink);
+  font-family: var(--cs-font);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.cs *,
+.cs *::before,
+.cs *::after {
+  box-sizing: border-box;
+}
+
+.cs p,
+.cs ul {
+  margin: 0;
+  padding: 0;
+}
+
+.cs ul {
+  list-style: none;
+}
+
+.cs :focus-visible {
+  outline: 2px solid var(--cs-accent);
+  outline-offset: 2px;
+}
+
+.cs-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Header: job, level, job menu ----------------------------------------- */
+.cs__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--cs-rule-strong);
+}
+
+.cs__job-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cs__level {
+  margin-top: 0.15rem;
+  color: var(--cs-muted);
+  font-size: 0.9375rem;
+}
+
+.cs__level-label {
+  font-family: var(--cs-font-technical);
+  font-size: 0.8125rem;
+}
+
+.cs__level-value {
+  color: var(--cs-ink);
+  font-weight: 500;
+}
+
+.cs__jobs {
+  position: relative;
+}
+
+.cs__jobs-toggle {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-panel);
+  color: var(--cs-accent);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cs__jobs-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.cs__jobs-toggle:hover,
+.cs__jobs[open] .cs__jobs-toggle {
+  border-color: var(--cs-accent);
+}
+
+.cs__jobs-list {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: max-content;
+  min-width: 15rem;
+  max-width: min(22rem, 90vw);
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-tip-bg);
+  box-shadow: var(--cs-tip-shadow);
+}
+
+.cs__jobs-list li + li {
+  border-top: 1px solid var(--cs-rule);
+}
+
+.cs__jobs-link {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid transparent;
+  color: var(--cs-ink);
+  text-decoration: none;
+}
+
+.cs__jobs-link:hover {
+  background: var(--cs-accent-soft);
+}
+
+.cs__jobs-link[aria-current="true"] {
+  border-left-color: var(--cs-accent);
+  background: var(--cs-accent-soft);
+  font-weight: 600;
+}
+
+.cs__jobs-name {
+  white-space: nowrap;
+}
+
+.cs__jobs-level {
+  color: var(--cs-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Body: slot columns around the portrait ------------------------------- */
+.cs__body {
+  display: grid;
+  grid-template-columns: var(--cs-slot-column) minmax(0, var(--cs-portrait-width)) var(--cs-slot-column);
+  justify-content: center;
+  align-items: start;
+  gap: 1.5rem;
+  padding: 1.5rem 1.25rem;
+}
+
+.cs__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cs__portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--cs-rule);
+  border-radius: var(--cs-radius);
+  background: var(--cs-inset);
+  aspect-ratio: 4 / 5;
+}
+
+.cs__portrait--full {
+  aspect-ratio: 1 / 2;
+}
+
+.cs__portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs__placeholder {
+  width: 55%;
+  fill: var(--cs-rule);
+}
+
+/* Slots ---------------------------------------------------------------- */
+.cs-slot__hover {
+  position: relative;
+}
+
+.cs-slot__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--cs-ink);
+  text-decoration: none;
+}
+
+.cs-slot__square {
+  display: grid;
+  place-items: center;
+  width: var(--cs-slot-size);
+  height: var(--cs-slot-size);
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-square-bg);
+  color: var(--cs-accent);
+  font-family: var(--cs-font-technical);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.cs-slot__label {
+  font-size: 0.8125rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+a.cs-slot__face:hover .cs-slot__square,
+.cs-slot__face:focus-visible .cs-slot__square {
+  border-color: var(--cs-accent);
+  background: var(--cs-accent-soft);
+}
+
+a.cs-slot__face:hover .cs-slot__label {
+  color: var(--cs-accent);
+}
+
+.cs-slot--empty .cs-slot__square {
+  border-style: dashed;
+  border-color: var(--cs-rule);
+  background: transparent;
+  color: var(--cs-rule-strong);
+}
+
+.cs-slot--empty .cs-slot__label {
+  color: var(--cs-muted);
+}
+
+/* Tooltip ---------------------------------------------------------------
+   Shown with CSS alone: on hover where the device has one, and on keyboard
+   focus. Taps on touch screens just follow the link. */
+.cs-tip {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: calc(100% + 0.6rem);
+  width: 16rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-tip-bg);
+  box-shadow: var(--cs-tip-shadow);
+  color: var(--cs-ink);
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+/* Bridges the gap so the pointer can move onto the tooltip without it
+   closing. */
+.cs-tip::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  right: 100%;
+  width: 0.7rem;
+}
+
+.cs__slots--right .cs-tip {
+  left: auto;
+  right: calc(100% + 0.6rem);
+}
+
+.cs__slots--right .cs-tip::before {
+  right: auto;
+  left: 100%;
+}
+
+@media (hover: hover) {
+  .cs-slot__hover:hover .cs-tip {
+    display: block;
+  }
+}
+
+.cs-slot__hover:has(:focus-visible) .cs-tip {
+  display: block;
+}
+
+.cs-slot__hover[data-dismissed] .cs-tip {
+  display: none;
+}
+
+.cs-tip__title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.cs-tip__subtitle {
+  margin-top: 0.1rem;
+  color: var(--cs-muted);
+}
+
+.cs-tip__items {
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--cs-rule);
+}
+
+.cs-tip__items li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--cs-rule);
+}
+
+.cs-tip__note {
+  margin-top: 0.55rem;
+  color: var(--cs-muted);
+}
+
+/* Narrow: portrait on top, slots in a grid below ------------------------ */
+@container cs (max-width: 30rem) {
+  .cs__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .cs__portrait {
+    order: -1;
+    width: min(100%, 13rem);
+    justify-self: center;
+  }
+
+  .cs__slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem 0.5rem;
+  }
+
+  .cs-tip,
+  .cs__slots--right .cs-tip {
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: auto;
+    width: min(16rem, 80cqi);
+  }
+
+  .cs-tip::before,
+  .cs__slots--right .cs-tip::before {
+    inset: auto 0 100% 0;
+    width: auto;
+    height: 0.6rem;
+  }
+
+  .cs__slots li:nth-child(3n) .cs-tip {
+    left: auto;
+    right: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Game theme
+   A darker, framed look in the spirit of an RPG equipment screen. Only
+   variables and frame details change; the layout is shared.
+   ------------------------------------------------------------------ */
+.cs[data-cs-theme="game"] {
+  --cs-panel: #1d1e25;
+  --cs-inset: #15161b;
+  --cs-ink: #ece6d6;
+  --cs-muted: #a8a191;
+  --cs-rule: #393a45;
+  --cs-rule-strong: #6d5d3d;
+  --cs-accent: #d8b46c;
+  --cs-accent-soft: rgb(216 180 108 / 0.14);
+  --cs-radius: 6px;
+  --cs-square-bg: linear-gradient(160deg, #2e2f39, #17181d);
+  --cs-tip-bg: rgb(22 23 29 / 0.97);
+  --cs-tip-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+  --cs-panel-shadow: 0 0 0 1px #0c0c10, 0 10px 30px rgb(0 0 0 / 0.35);
+
+  background: linear-gradient(180deg, #23242c, #191a20);
+}
+
+.cs[data-cs-theme="game"] .cs__header {
+  background: linear-gradient(180deg, rgb(216 180 108 / 0.1), transparent);
+}
+
+.cs[data-cs-theme="game"] .cs__job-title {
+  color: var(--cs-accent);
+  letter-spacing: 0.02em;
+}
+
+.cs[data-cs-theme="game"] .cs-slot__square {
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.6), inset 0 1px 6px rgb(0 0 0 / 0.5);
+}
+
+.cs[data-cs-theme="game"] a.cs-slot__face:hover .cs-slot__square,
+.cs[data-cs-theme="game"] .cs-slot__face:focus-visible .cs-slot__square {
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.6), 0 0 10px rgb(216 180 108 / 0.45);
+}
+
+.cs[data-cs-theme="game"] .cs-tip__title {
+  color: var(--cs-accent);
+}
+
+.cs[data-cs-theme="game"] .cs__portrait {
+  background: radial-gradient(circle at 50% 35%, #2c2d37, #121318 75%);
+}
+
+.cs[data-cs-theme="game"] .cs__placeholder {
+  fill: #3d3e4a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-slot__square {
+    transition: none;
+  }
+}

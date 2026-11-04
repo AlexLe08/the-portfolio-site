@@ -1,0 +1,124 @@
+{
+  "$schema": "../components/character-sheet/character-sheet.schema.json",
+  "defaultJobId": "healthcare",
+  "slots": [
+    { "id": "summary", "label": "Summary", "side": "left", "icon": "Su" },
+    { "id": "skills", "label": "Skills", "side": "left", "icon": "Sk" },
+    { "id": "experience", "label": "Experience", "side": "left", "icon": "Ex" },
+    { "id": "projects", "label": "Projects", "side": "right", "icon": "Pr" },
+    { "id": "contact", "label": "Contact", "side": "right", "icon": "Co" },
+    { "id": "github", "label": "GitHub", "side": "right", "icon": "GH" }
+  ],
+  "jobs": [
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "title": "Developer in healthcare",
+      "level": { "label": "Production React", "value": "4 years" },
+      "slots": {
+        "summary": {
+          "tooltip": {
+            "title": "Summary",
+            "subtitle": "Software engineer for healthcare",
+            "note": "Four years of production React at CVS Health."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "skills": {
+          "tooltip": {
+            "title": "Skills",
+            "subtitle": "Most relevant first",
+            "items": ["React", "TypeScript", "Accessibility", "Python", "Playwright"]
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "experience": {
+          "tooltip": {
+            "title": "Experience",
+            "items": ["CVS Health: four years of production React"]
+          },
+          "action": { "kind": "anchor", "target": "experience" }
+        },
+        "projects": {
+          "tooltip": {
+            "title": "Projects",
+            "subtitle": "Case studies, end to end",
+            "note": "Architecture decisions, the tests that caught real bugs, and the incidents that shaped the design."
+          },
+          "action": { "kind": "anchor", "target": "projects" }
+        },
+        "contact": {
+          "tooltip": {
+            "title": "Contact",
+            "note": "Questions about a project, or a role you think fits? Send a message."
+          },
+          "action": { "kind": "link", "href": "/contact" }
+        },
+        "github": {
+          "tooltip": { "title": "GitHub", "subtitle": "github.com/AlexLe08" },
+          "action": { "kind": "external", "href": "https://github.com/AlexLe08" }
+        }
+      },
+      "sections": {
+        "summary": "Software engineer building technology for healthcare. Four years of production React at CVS Health, with TypeScript on the front end and Python on the back end.",
+        "skills": "- **Front end:** React, TypeScript, Next.js, accessible UI\n- **Back end:** Python, FastAPI, SQLAlchemy, PostgreSQL\n- **Quality:** Playwright end-to-end tests, CI on every pull request, Sentry monitoring",
+        "experience": "**CVS Health:** four years of production React."
+      }
+    },
+    {
+      "id": "ecommerce",
+      "name": "E-commerce",
+      "title": "Developer in e-commerce",
+      "level": { "label": "Stack", "value": "TypeScript and Python" },
+      "slots": {
+        "summary": {
+          "tooltip": {
+            "title": "Summary",
+            "subtitle": "Software engineer for e-commerce",
+            "note": "Full-stack TypeScript and Python, from the storefront UI to the API behind it."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "skills": {
+          "tooltip": {
+            "title": "Skills",
+            "subtitle": "Most relevant first",
+            "items": ["TypeScript", "Next.js", "React", "Python", "PostgreSQL"]
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "experience": {
+          "tooltip": {
+            "title": "Experience",
+            "items": ["CVS Health: four years of production React"]
+          },
+          "action": { "kind": "anchor", "target": "experience" }
+        },
+        "projects": {
+          "tooltip": {
+            "title": "Projects",
+            "subtitle": "Case studies, end to end",
+            "note": "Architecture decisions, the tests that caught real bugs, and the incidents that shaped the design."
+          },
+          "action": { "kind": "anchor", "target": "projects" }
+        },
+        "contact": {
+          "tooltip": {
+            "title": "Contact",
+            "note": "Questions about a project, or a role you think fits? Send a message."
+          },
+          "action": { "kind": "link", "href": "/contact" }
+        },
+        "github": {
+          "tooltip": { "title": "GitHub", "subtitle": "github.com/AlexLe08" },
+          "action": { "kind": "external", "href": "https://github.com/AlexLe08" }
+        }
+      },
+      "sections": {
+        "summary": "Software engineer building technology for e-commerce. TypeScript and Python across the stack, from the pages customers see to the API and database behind them.",
+        "skills": "- **Front end:** TypeScript, Next.js, React\n- **Back end:** Python, FastAPI, PostgreSQL\n- **Delivery:** CI on every pull request, automatic deploys, Playwright smoke tests against production",
+        "experience": "**CVS Health:** four years of production React."
+      }
+    }
+  ]
+}

@@ -20,6 +20,24 @@ test("home page lists projects", async ({ page }) => {
   await expect(page.locator(".project-list a[href^='/projects/']").first()).toBeVisible();
 });
 
+test("character sheet changes job through the URL", async ({ page }) => {
+  await page.goto("/");
+  const sheet = page.getByRole("region", { name: "Character sheet" });
+  const title = sheet.locator(".cs__job-title");
+  const defaultTitle = (await title.textContent())?.trim();
+  await expect(sheet.locator(".cs-slot").first()).toBeVisible();
+
+  // Any job other than the current one; the menu is a plain <details>.
+  await sheet.getByText("Change job").click();
+  await sheet.locator(".cs__jobs-link:not([aria-current])").first().click();
+  await expect(page).toHaveURL(/[?&]job=/);
+  await expect(title).not.toHaveText(defaultTitle ?? "");
+
+  // An unknown job falls back to the default instead of failing.
+  await page.goto("/?job=smoke-test-no-such-job");
+  await expect(title).toHaveText(defaultTitle ?? "");
+});
+
 test("project page renders its case study", async ({ page }) => {
   await page.goto("/");
   const link = page.locator(".project-list a[href^='/projects/']").first();

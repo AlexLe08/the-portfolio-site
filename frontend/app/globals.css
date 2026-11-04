@@ -118,6 +118,11 @@ button:focus-visible {
   max-width: var(--content-width);
 }
 
+/* Sheet's lead slot: the home page's character sheet. */
+.sheet__lead {
+  margin-bottom: 2.5rem;
+}
+
 /* ---------------------------------------------------------------------
    Title block
    A drafting-sheet convention, not a hero banner: a bordered table of
@@ -211,6 +216,19 @@ button:focus-visible {
   margin-bottom: 2rem;
 }
 
+.lab-intro {
+  margin-bottom: 1rem;
+}
+
+/* Per-job section text on the home page (lib/character-config.json). */
+.job-section ul {
+  padding-left: 1.25rem;
+}
+
+.job-section li + li {
+  margin-top: 0.35rem;
+}
+
 /* The profile links under the contact form. */
 .contact-elsewhere {
   margin-top: 2rem;
@@ -222,6 +240,7 @@ button:focus-visible {
    tag above a separate heading.
    ------------------------------------------------------------------ */
 .section-rule {
+  scroll-margin-top: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.85rem;
