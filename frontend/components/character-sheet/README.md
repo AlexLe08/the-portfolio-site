@@ -1,9 +1,17 @@
 # Character sheet
 
-A panel modelled on an RPG character/equipment screen: a job and level header,
-slot squares in two columns around a portrait, and a job menu. Each slot shows a
-tooltip on hover or keyboard focus and links to a page section, another page, or
-an external site. Changing the job (`?job=<id>`) swaps the slots, tooltips, and
+A panel modelled on an RPG character/equipment screen:
+
+```
+title bar                                  [Change job]
+[slot]  level / emblem + job title               [slot]
+[col]   portrait (optional corner badge)          [col]
+```
+
+The two header slots sit either side of the job title (think main weapon and
+job stone), and the left and right columns hold 6 slots each. Each slot shows a
+compact item-card tooltip on hover or keyboard focus. Clicking it goes to a page
+section, another page, or an external site. Changing the job (`?job=<id>`) swaps the slots, tooltips, and
 portrait, and the host page can swap its own content too.
 
 This folder is meant to become its own package. It imports nothing from the site:
@@ -30,20 +38,29 @@ A config is plain JSON. Add `"$schema"` pointing at
 
 ```json
 {
+  "title": "Character profile",
   "defaultJobId": "healthcare",
   "slots": [
-    { "id": "skills", "label": "Skills", "side": "left", "icon": "Sk" }
+    { "id": "core", "label": "Core stack", "position": "header-start", "icon": "◆" },
+    { "id": "skills", "label": "Skills", "position": "left", "icon": "Sk" }
   ],
   "jobs": [
     {
       "id": "healthcare",
       "name": "Healthcare",
       "title": "Developer in healthcare",
+      "icon": "Hc",
       "level": { "label": "Lv.", "value": "4" },
       "portrait": { "src": "https://…/me.jpg", "alt": "…", "framing": "face" },
+      "badge": { "label": "Projects", "value": "3" },
       "slots": {
         "skills": {
-          "tooltip": { "title": "Skills", "items": ["React", "TypeScript"] },
+          "tooltip": {
+            "title": "Skills",
+            "tags": ["Most relevant first"],
+            "stat": { "label": "Years", "value": "4" },
+            "items": [{ "label": "Front end", "value": "React, TypeScript" }, "Accessibility"]
+          },
           "action": { "kind": "anchor", "target": "skills" }
         }
       },
@@ -53,16 +70,25 @@ A config is plain JSON. Add `"$schema"` pointing at
 }
 ```
 
-- **Slots** are the layout, and their labels are free text. A slot that a job
-  doesn't fill renders as a dimmed empty square.
+- **Slots** are the layout, and their labels are free text. `position` is one
+  of `left` or `right` (6 per column fills it), or `header-start` or
+  `header-end` (one each).
+- **Empty slots:** a slot that a job doesn't fill renders as a dimmed empty
+  square.
+- **Square icons:** a slot's square shows its `icon` glyph, or a job can set an
+  image per slot with `iconSrc`.
 - **Actions** have one of these kinds:
   - `anchor`: a same-page `#id`.
   - `link`: a site path.
   - `external`: an http(s) URL, opening in the same tab unless `newTab` is set.
   - `none`: tooltip only.
 - **Sections** are data for the host page. The panel doesn't render them.
-- **Portrait framing:** `face` is a 4:5 frame and `full` is a 1:2 frame. With
-  no portrait, a placeholder silhouette is shown.
+- **Tooltips** hold `tags`, `title`, `subtitle` (which defaults to the slot's
+  label), one `stat` line, and `items`. Plain strings render as a list; label
+  and value pairs render as a two-column table. There's also a `note`.
+- **Portrait:** it fills the frame between the columns. `framing` picks the
+  crop: `face` keeps the top, `full` centers. With no portrait, a placeholder
+  silhouette is shown.
 
 ## Usage
 
@@ -74,6 +100,7 @@ const job = resolveJob(config, searchParams.job);
   config={config}
   job={job}
   theme="document"          // or "game"
+  labels="narrow"           // slot names under squares: "narrow" (default) or "always"
   basePath="/"              // where the job links point
   renderLink={(p) => …}     // optional: your router's link (default <a>)
   renderPortrait={(p) => …} // optional: your image component (default <img>)
@@ -94,8 +121,9 @@ first one that yields a usable config. It never throws: problems go to
   - On touch screens, a tap simply follows the slot's link.
 - **Job menu:** a `<details>` element listing job links. It needs no
   JavaScript, works with the back button, and makes every job shareable.
-- **Layout:** below a 30rem container width, the portrait moves on top and the
-  slots become a 3-column grid. This is a container query, so it follows the
+- **Layout:** below a 26rem container width, the portrait moves on top. The
+  columns become 3-column grids with the slot names showing, since touch
+  screens get no tooltip. This is a container query, so it follows the
   panel's width, not the viewport.
 
 ## Theming

@@ -16,19 +16,33 @@ const id = z
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
+export const SLOT_POSITIONS = ["header-start", "left", "right", "header-end"] as const;
+
 export const slotDefSchema = z.object({
   id: id.describe("Stable id; jobs fill slots by this id."),
-  label: text(40).describe('Shown under the square, e.g. "Skills".'),
-  side: z.enum(["left", "right"]).describe("Which column the slot sits in."),
+  label: text(40).describe('The slot\'s name, e.g. "Skills". Shown in its tooltip, and under the square on narrow screens.'),
+  position: z
+    .enum(SLOT_POSITIONS)
+    .describe(
+      "left/right: the columns beside the portrait (6 each fills them). header-start/header-end: one slot each, either side of the job name.",
+    ),
   icon: text(4)
     .optional()
     .describe("Up to 4 characters drawn in the square. Defaults to the label's first two letters."),
 });
 
+const pairSchema = z.object({ label: text(40), value: text(80) });
+
 export const tooltipSchema = z.object({
   title: text(80),
+  tags: z.array(text(24)).max(3).optional().describe("Short markers above the title."),
   subtitle: text(120).optional(),
-  items: z.array(text(80)).max(12).optional().describe("Listed in order, most relevant first."),
+  stat: pairSchema.optional().describe("One headline figure, on its own ruled line."),
+  items: z
+    .array(z.union([text(80), pairSchema]))
+    .max(10)
+    .optional()
+    .describe("Listed in order, most relevant first. Label/value pairs render as a two-column table."),
   note: text(240).optional(),
 });
 
@@ -56,6 +70,12 @@ export const slotActionSchema = z.discriminatedUnion("kind", [
 export const slotContentSchema = z.object({
   tooltip: tooltipSchema,
   action: slotActionSchema,
+  iconSrc: z
+    .string()
+    .min(1)
+    .max(500)
+    .optional()
+    .describe("An image drawn in the square instead of the slot's glyph (decorative; the label names it)."),
 });
 
 export const portraitSchema = z.object({
@@ -66,18 +86,20 @@ export const portraitSchema = z.object({
   framing: z
     .enum(["face", "full"])
     .default("face")
-    .describe("face: a near-square head-and-shoulders frame. full: a tall full-body frame."),
+    .describe("Where the photo is cropped from when it fills the frame. face: kept near the top. full: centered."),
 });
 
 export const jobSchema = z.object({
   id: id.describe("Used in the URL: ?job=<id>."),
   name: text(40).describe('Short name for the job menu, e.g. "Healthcare".'),
   title: text(80).describe('The panel heading, e.g. "Developer in healthcare".'),
+  icon: text(4).optional().describe("Glyph in the job emblem beside the title. Defaults to the name's first two letters."),
   level: z.object({
     label: text(20).describe('e.g. "Lv." or "Experience".'),
     value: text(40),
   }),
   portrait: portraitSchema.optional(),
+  badge: pairSchema.optional().describe("A figure in the portrait's top corner."),
   slots: z
     .record(id, slotContentSchema)
     .describe("Content per slot id. A slot without an entry renders empty."),
@@ -89,7 +111,8 @@ export const jobSchema = z.object({
 
 export const characterSheetConfigSchema = z.object({
   $schema: z.string().optional(),
+  title: text(60).optional().describe("Text in the panel's top bar."),
   defaultJobId: id,
-  slots: z.array(slotDefSchema).min(1).max(16),
+  slots: z.array(slotDefSchema).min(1).max(20),
   jobs: z.array(jobSchema).min(1).max(20),
 });

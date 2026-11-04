@@ -31,6 +31,10 @@ export function parseConfig(input: unknown): ParseResult {
     if (slotIds.has(slot.id)) errors.push(`slots: duplicate id "${slot.id}"`);
     slotIds.add(slot.id);
   }
+  for (const position of ["header-start", "header-end"] as const) {
+    const extra = shell.data.slots.filter((slot) => slot.position === position).slice(1);
+    for (const slot of extra) errors.push(`slots: "${slot.id}" is a second ${position} slot, not shown`);
+  }
 
   const jobs: Job[] = [];
   shell.data.jobs.forEach((raw, index) => {

@@ -391,7 +391,17 @@
   and a shared `ErrorNotice` (see below).
 - Home page character sheet, a panel modelled on an RPG equipment screen
   (`components/character-sheet/`). Jobs are the target industries, slots
-  are résumé sections, and the panel sits above the title block. Each slot
+  are résumé sections, and the panel sits above the title block. The layout
+  is:
+  - a title bar with the job menu;
+  - a header with one slot either side of the level and job title;
+  - 6 slots in each column, with rails along the outer edge;
+  - a portrait filling the space between the columns, with an optional
+    corner badge.
+
+  Tooltips are compact item cards: tags, a title, a stat line, and items as
+  plain lines or label/value pairs. Unfilled slots render as dimmed
+  squares. Each slot
   shows a tooltip on hover or keyboard focus, and Escape dismisses it.
   Clicking a slot goes to a page section, another page, or an external
   site. "Change job" is a `<details>` menu of `?job=` links, so it works

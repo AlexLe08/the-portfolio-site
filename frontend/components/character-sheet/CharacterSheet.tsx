@@ -1,12 +1,25 @@
 import { useId, type AnchorHTMLAttributes, type ReactNode } from "react";
 import { actionHref, jobHref } from "./resolve";
 import { SlotHover } from "./SlotHover";
-import type { CharacterSheetConfig, Job, Portrait, SlotContent, SlotDef, Theme } from "./types";
+import type {
+  CharacterSheetConfig,
+  Job,
+  Portrait,
+  SlotContent,
+  SlotDef,
+  SlotPosition,
+  Theme,
+  Tooltip,
+} from "./types";
 import "./character-sheet.css";
 
-// An equipment-screen style panel: a job header, slot squares in two
-// columns around a portrait, and a job menu. Slots are links (to a page
-// section, another page, or another site) with a tooltip on hover/focus.
+// An equipment-screen style panel:
+//   top bar      title, and the job menu
+//   header       [header-start slot]  level, emblem, job title  [header-end slot]
+//   body         left column | portrait (optional corner badge) | right column
+// Slots are links (to a page section, another page, or another site) with
+// a compact tooltip on hover or keyboard focus. Slots a job doesn't fill
+// render as dimmed empty squares.
 //
 // A Server Component with no framework imports. The host passes its own
 // link and image components, so in Next.js links use <Link> and the
@@ -27,11 +40,18 @@ export type CharacterSheetProps = {
   basePath?: string;
   jobParam?: string;
   theme?: Theme;
-  // Accessible name for the panel landmark.
+  // Slot names under the squares: "narrow" shows them only when the panel
+  // is narrow (touch screens have no hover tooltip); "always" shows them
+  // at every width. Either way they are the slots' accessible names.
+  labels?: "narrow" | "always";
+  // Accessible name for the panel landmark; also the top bar's text when
+  // the config sets no title.
   label?: string;
   renderLink?: (props: LinkRendererProps) => ReactNode;
   renderPortrait?: (portrait: Portrait) => ReactNode;
 };
+
+type RenderLink = (props: LinkRendererProps) => ReactNode;
 
 function defaultLink({ intent, ...props }: LinkRendererProps) {
   void intent; // a plain link has no use for it
@@ -43,32 +63,28 @@ function defaultPortrait(portrait: Portrait) {
   return <img src={portrait.src} alt={portrait.alt} width={portrait.width} height={portrait.height} />;
 }
 
+const glyph = (text: string) => text.slice(0, 2);
+
 export function CharacterSheet({
   config,
   job,
   basePath = "/",
   jobParam = "job",
   theme = "document",
+  labels = "narrow",
   label = "Character sheet",
   renderLink = defaultLink,
   renderPortrait = defaultPortrait,
 }: CharacterSheetProps) {
-  const left = config.slots.filter((slot) => slot.side === "left");
-  const right = config.slots.filter((slot) => slot.side === "right");
   // Tooltip ids must be unique even with two panels on one page.
   const idPrefix = useId();
   const framing = job.portrait?.framing ?? "face";
+  const column = { job, idPrefix, renderLink, slots: config.slots };
 
   return (
-    <section className="cs" data-cs-theme={theme} aria-label={label}>
-      <div className="cs__header">
-        <div className="cs__job">
-          <p className="cs__job-title">{job.title}</p>
-          <p className="cs__level">
-            <span className="cs__level-label">{job.level.label}</span>{" "}
-            <span className="cs__level-value">{job.level.value}</span>
-          </p>
-        </div>
+    <section className="cs" data-cs-theme={theme} data-cs-labels={labels} aria-label={label}>
+      <div className="cs__bar">
+        <p className="cs__bar-title">{config.title ?? label}</p>
         {config.jobs.length > 1 && (
           // Keyed by job so the menu closes after a job change, which
           // re-renders this panel without reloading the page.
@@ -84,6 +100,9 @@ export function CharacterSheet({
                     "aria-current": option.id === job.id ? "true" : undefined,
                     children: (
                       <>
+                        <span className="cs__jobs-emblem" aria-hidden="true">
+                          {option.icon ?? glyph(option.name)}
+                        </span>
                         <span className="cs__jobs-name">{option.name}</span>
                         <span className="cs__jobs-level">
                           {option.level.label} {option.level.value}
@@ -98,34 +117,62 @@ export function CharacterSheet({
         )}
       </div>
 
-      <div className={`cs__body cs__body--${framing}`}>
-        <SlotColumn side="left" slots={left} job={job} idPrefix={idPrefix} renderLink={renderLink} />
+      <div className="cs__header">
+        <SlotList position="header-start" {...column} />
+        <div className="cs__job">
+          <p className="cs__level">
+            <span className="cs__level-label">{job.level.label}</span>{" "}
+            <span className="cs__level-value">{job.level.value}</span>
+          </p>
+          <div className="cs__job-line">
+            <span className="cs__job-emblem" aria-hidden="true">
+              {job.icon ?? glyph(job.name)}
+            </span>
+            <p className="cs__job-title">{job.title}</p>
+          </div>
+        </div>
+        <SlotList position="header-end" {...column} />
+      </div>
+
+      <div className="cs__body">
+        <SlotList position="left" {...column} />
         <div className={`cs__portrait cs__portrait--${framing}`}>
           {job.portrait ? renderPortrait(job.portrait) : <PortraitPlaceholder />}
+          {job.badge && (
+            <p className="cs__badge">
+              <span className="cs__badge-label">{job.badge.label}</span>{" "}
+              <span className="cs__badge-value">{job.badge.value}</span>
+            </p>
+          )}
         </div>
-        <SlotColumn side="right" slots={right} job={job} idPrefix={idPrefix} renderLink={renderLink} />
+        <SlotList position="right" {...column} />
       </div>
     </section>
   );
 }
 
-function SlotColumn({
-  side,
+function SlotList({
+  position,
   slots,
   job,
   idPrefix,
   renderLink,
 }: {
-  side: "left" | "right";
+  position: SlotPosition;
   slots: SlotDef[];
   job: Job;
   idPrefix: string;
-  renderLink: (props: LinkRendererProps) => ReactNode;
+  renderLink: RenderLink;
 }) {
-  if (slots.length === 0) return <div className={`cs__slots cs__slots--${side}`} />;
+  let here = slots.filter((slot) => slot.position === position);
+  // One slot each side of the job title; parseConfig reports any extras.
+  if (position === "header-start" || position === "header-end") here = here.slice(0, 1);
+  const className = `cs__slots cs__slots--${position}`;
+  if (here.length === 0) return <div className={className} />;
+
   return (
-    <ul className={`cs__slots cs__slots--${side}`}>
-      {slots.map((slot) => (
+    <ul className={className}>
+      {here.map((slot) => (
         <Slot
           key={slot.id}
           slot={slot}
@@ -138,6 +185,15 @@ function SlotColumn({
   );
 }
 
+function SlotIcon({ slot, content }: { slot: SlotDef; content?: SlotContent }) {
+  if (content?.iconSrc) {
+    // Decorative: the slot's label is its accessible name.
+    // eslint-disable-next-line @next/next/no-img-element -- tiny, decorative, any host
+    return <img className="cs-slot__img" src={content.iconSrc} alt="" />;
+  }
+  return <>{slot.icon ?? glyph(slot.label)}</>;
+}
+
 function Slot({
   slot,
   content,
@@ -147,12 +203,12 @@ function Slot({
   slot: SlotDef;
   content: SlotContent | undefined;
   tipId: string;
-  renderLink: (props: LinkRendererProps) => ReactNode;
+  renderLink: RenderLink;
 }) {
   const face = (
     <>
       <span className="cs-slot__square" aria-hidden="true">
-        {slot.icon ?? slot.label.slice(0, 2)}
+        <SlotIcon slot={slot} content={content} />
       </span>
       <span className="cs-slot__label">{slot.label}</span>
     </>
@@ -169,7 +225,7 @@ function Slot({
     );
   }
 
-  const { action, tooltip } = content;
+  const { action } = content;
   const href = actionHref(action);
   const common = { className: "cs-slot__face", "aria-describedby": tipId };
 
@@ -202,28 +258,75 @@ function Slot({
     <li className={`cs-slot cs-slot--${action.kind}`}>
       <SlotHover>
         {trigger}
-        <div className="cs-tip" role="tooltip" id={tipId}>
-          <p className="cs-tip__title">{tooltip.title}</p>
-          {tooltip.subtitle && <p className="cs-tip__subtitle">{tooltip.subtitle}</p>}
-          {tooltip.items && tooltip.items.length > 0 && (
-            <ul className="cs-tip__items">
-              {tooltip.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          )}
-          {tooltip.note && <p className="cs-tip__note">{tooltip.note}</p>}
-        </div>
+        <SlotTooltip id={tipId} slot={slot} content={content} />
       </SlotHover>
     </li>
   );
 }
 
+// A compact item card: icon and title block, an optional headline figure,
+// then the details.
+function SlotTooltip({ id, slot, content }: { id: string; slot: SlotDef; content: SlotContent }) {
+  const tooltip: Tooltip = content.tooltip;
+  const items = tooltip.items ?? [];
+  const pairs = items.filter((item) => typeof item !== "string");
+  const lines = items.filter((item) => typeof item === "string");
+
+  return (
+    <div className="cs-tip" role="tooltip" id={id}>
+      <div className="cs-tip__head">
+        <span className="cs-tip__icon" aria-hidden="true">
+          <SlotIcon slot={slot} content={content} />
+        </span>
+        <div className="cs-tip__heading">
+          {tooltip.tags && (
+            <p className="cs-tip__tags">
+              {tooltip.tags.map((tag) => (
+                <span key={tag}>{tag} </span>
+              ))}
+            </p>
+          )}
+          <p className="cs-tip__title">{tooltip.title}</p>
+          <p className="cs-tip__category">{tooltip.subtitle ?? slot.label}</p>
+        </div>
+      </div>
+      {tooltip.stat && (
+        <p className="cs-tip__stat">
+          <span className="cs-tip__stat-label">{tooltip.stat.label}</span>{" "}
+          <span className="cs-tip__stat-value">{tooltip.stat.value}</span>
+        </p>
+      )}
+      {(items.length > 0 || tooltip.note) && (
+        <div className="cs-tip__body">
+          {pairs.length > 0 && (
+            <dl className="cs-tip__pairs">
+              {pairs.map((pair) => (
+                <div key={pair.label} className="cs-tip__pair">
+                  <dt>{pair.label}</dt>
+                  <dd>{pair.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {lines.length > 0 && (
+            <ul className="cs-tip__items">
+              {lines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          )}
+          {tooltip.note && <p className="cs-tip__note">{tooltip.note}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PortraitPlaceholder() {
   return (
-    <svg className="cs__placeholder" viewBox="0 0 100 120" role="img" aria-label="No portrait yet">
-      <circle cx="50" cy="42" r="20" />
-      <path d="M14 120c0-24 16-40 36-40s36 16 36 40z" />
+    <svg className="cs__placeholder" viewBox="0 0 100 200" role="img" aria-label="No portrait yet">
+      <circle cx="50" cy="34" r="17" />
+      <path d="M22 200V96c0-26 12-42 28-42s28 16 28 42v104z" />
     </svg>
   );
 }

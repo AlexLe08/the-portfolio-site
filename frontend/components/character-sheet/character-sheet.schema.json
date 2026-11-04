@@ -6,6 +6,12 @@
     "$schema": {
       "type": "string"
     },
+    "title": {
+      "description": "Text in the panel's top bar.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
     "defaultJobId": {
       "type": "string",
       "maxLength": 40,
@@ -13,7 +19,7 @@
     },
     "slots": {
       "minItems": 1,
-      "maxItems": 16,
+      "maxItems": 20,
       "type": "array",
       "items": {
         "type": "object",
@@ -28,15 +34,17 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 40,
-            "description": "Shown under the square, e.g. \"Skills\"."
+            "description": "The slot's name, e.g. \"Skills\". Shown in its tooltip, and under the square on narrow screens."
           },
-          "side": {
+          "position": {
             "type": "string",
             "enum": [
+              "header-start",
               "left",
-              "right"
+              "right",
+              "header-end"
             ],
-            "description": "Which column the slot sits in."
+            "description": "left/right: the columns beside the portrait (6 each fills them). header-start/header-end: one slot each, either side of the job name."
           },
           "icon": {
             "description": "Up to 4 characters drawn in the square. Defaults to the label's first two letters.",
@@ -48,7 +56,7 @@
         "required": [
           "id",
           "label",
-          "side"
+          "position"
         ]
       }
     },
@@ -76,6 +84,12 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "The panel heading, e.g. \"Developer in healthcare\"."
+          },
+          "icon": {
+            "description": "Glyph in the job emblem beside the title. Defaults to the name's first two letters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
           },
           "level": {
             "type": "object",
@@ -122,7 +136,7 @@
               },
               "framing": {
                 "default": "face",
-                "description": "face: a near-square head-and-shoulders frame. full: a tall full-body frame.",
+                "description": "Where the photo is cropped from when it fills the frame. face: kept near the top. full: centered.",
                 "type": "string",
                 "enum": [
                   "face",
@@ -133,6 +147,26 @@
             "required": [
               "src",
               "alt"
+            ]
+          },
+          "badge": {
+            "description": "A figure in the portrait's top corner.",
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              }
+            },
+            "required": [
+              "label",
+              "value"
             ]
           },
           "slots": {
@@ -153,19 +187,72 @@
                       "minLength": 1,
                       "maxLength": 80
                     },
+                    "tags": {
+                      "description": "Short markers above the title.",
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 24
+                      }
+                    },
                     "subtitle": {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 120
                     },
+                    "stat": {
+                      "description": "One headline figure, on its own ruled line.",
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        }
+                      },
+                      "required": [
+                        "label",
+                        "value"
+                      ]
+                    },
                     "items": {
-                      "description": "Listed in order, most relevant first.",
-                      "maxItems": 12,
+                      "description": "Listed in order, most relevant first. Label/value pairs render as a two-column table.",
+                      "maxItems": 10,
                       "type": "array",
                       "items": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 80
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 40
+                              },
+                              "value": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 80
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "value"
+                            ]
+                          }
+                        ]
                       }
                     },
                     "note": {
@@ -253,6 +340,12 @@
                       ]
                     }
                   ]
+                },
+                "iconSrc": {
+                  "description": "An image drawn in the square instead of the slot's glyph (decorative; the label names it).",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
                 }
               },
               "required": [
