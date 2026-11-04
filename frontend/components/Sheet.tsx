@@ -7,15 +7,19 @@ type Props = {
   // Under the h1, inside the ruled header.
   header?: ReactNode;
   back?: { href: string; label: string };
+  // Above the reading column, at the full sheet width (the home page's
+  // character sheet, which centers itself).
+  lead?: ReactNode;
   children: ReactNode;
 };
 
 // Every page's frame: the sheet, the reading width, an optional back link,
 // and the ruled header. Named after the .sheet class, not "Page", which
 // would read like the App Router's page.tsx files.
-export function Sheet({ title, header, back, children }: Props) {
+export function Sheet({ title, header, back, lead, children }: Props) {
   return (
     <main className="sheet">
+      {lead && <div className="sheet__lead">{lead}</div>}
       <div className="prose-width">
         {back && (
           <Link href={back.href} className="back-link">

@@ -389,8 +389,53 @@
   identical byte for byte, plus computed focus rings. Not extracted: a
   `FormField` wrapper or `SubmitButton` (the fields differ too much),
   and a shared `ErrorNotice` (see below).
+- Home page character sheet, a panel modelled on an RPG equipment screen
+  (`components/character-sheet/`). Jobs are the target industries, slots
+  are résumé sections, and the panel sits above the title block. The layout
+  is:
+  - a title bar with the job menu;
+  - a header with one slot either side of the level and job title;
+  - 6 slots in each column, with rails along the outer edge;
+  - a portrait filling the space between the columns, with an optional
+    corner badge.
+
+  Tooltips are compact item cards: tags, a title, a stat line, and items as
+  plain lines or label/value pairs. Unfilled slots render as dimmed
+  squares. Each slot
+  shows a tooltip on hover or keyboard focus, and Escape dismisses it.
+  Clicking a slot goes to a page section, another page, or an external
+  site. "Change job" is a `<details>` menu of `?job=` links, so it works
+  without JavaScript, links can be shared, and the back button works; an
+  unknown `?job=` falls back to the default job. The Summary, Skills, and
+  Experience sections below the panel change with the job.
+  - Content lives in `lib/character-config.json` and is validated by a
+    zod schema (`schema.ts`). `lib/character.ts` fails the build on any
+    problem. `npm run generate:character-schema` writes a JSON Schema for
+    editor autocomplete.
+  - The module imports nothing from the site: the host passes its link and
+    image components, and the CSS uses `--cs-*` variables.
+  - There are two themes, `document` (the site's tokens) and `game`. Both
+    are shown, unlinked and noindexed, at `/lab/character-sheet`.
+  - `parseConfig` and `loadConfig` are ready for remote sources: invalid
+    jobs are dropped, and a source that fails falls back to the next one,
+    ending at the bundled file.
 
 ## Next up (candidates, unordered)
+
+- Character sheet follow-ups, roughly in order:
+  - A real portrait. Upload it at `/admin/media` and set `portrait` on each
+    job in `lib/character-config.json` (`framing: "face"` or `"full"`).
+  - More jobs, such as AI development, plus slots like Education.
+  - Admin editing: store the whole config as one validated JSON document
+    (a new table or a `site_content` key, with Pydantic checking it against
+    the same JSON Schema). Edit it with a structured form plus a raw JSON
+    fallback, and load it through `loadConfig([adminSource], bundled)`.
+  - Slot actions that change the current page (for example filtering the
+    project list), which need a small client bridge.
+  - Extraction to its own repository as a React package: core, themes,
+    schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
+    the core never imports a CMS SDK), and a demo site. A custom-element
+    wrapper only if someone asks for one.
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a

@@ -1,0 +1,185 @@
+{
+  "$schema": "../components/character-sheet/character-sheet.schema.json",
+  "title": "Character profile",
+  "defaultJobId": "healthcare",
+  "slots": [
+    { "id": "core", "label": "Core stack", "position": "header-start", "icon": "◆" },
+    { "id": "focus", "label": "Industry focus", "position": "header-end", "icon": "◇" },
+
+    { "id": "summary", "label": "Summary", "position": "left", "icon": "Su" },
+    { "id": "skills", "label": "Skills", "position": "left", "icon": "Sk" },
+    { "id": "experience", "label": "Experience", "position": "left", "icon": "Ex" },
+    { "id": "projects", "label": "Projects", "position": "left", "icon": "Pr" },
+    { "id": "education", "label": "Education", "position": "left", "icon": "Ed" },
+    { "id": "certifications", "label": "Certifications", "position": "left", "icon": "Ce" },
+
+    { "id": "contact", "label": "Contact", "position": "right", "icon": "Co" },
+    { "id": "github", "label": "GitHub", "position": "right", "icon": "GH" },
+    { "id": "linkedin", "label": "LinkedIn", "position": "right", "icon": "in" },
+    { "id": "resume", "label": "Résumé", "position": "right", "icon": "Re" },
+    { "id": "writing", "label": "Writing", "position": "right", "icon": "Wr" },
+    { "id": "volunteering", "label": "Volunteering", "position": "right", "icon": "Vo" }
+  ],
+  "jobs": [
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "title": "Developer in healthcare",
+      "icon": "Hc",
+      "level": { "label": "Production React", "value": "4 years" },
+      "slots": {
+        "core": {
+          "tooltip": {
+            "title": "React",
+            "subtitle": "Core stack",
+            "stat": { "label": "In production", "value": "4 years" },
+            "note": "At CVS Health, with TypeScript on the front end."
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "focus": {
+          "tooltip": {
+            "title": "Healthcare",
+            "subtitle": "Industry focus",
+            "note": "Software engineer building technology for healthcare."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "summary": {
+          "tooltip": {
+            "title": "Summary",
+            "note": "Four years of production React at CVS Health, with TypeScript and Python across the stack."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "skills": {
+          "tooltip": {
+            "title": "Skills",
+            "subtitle": "Most relevant first",
+            "items": [
+              { "label": "Front end", "value": "React, TypeScript, accessibility" },
+              { "label": "Back end", "value": "Python, FastAPI, PostgreSQL" },
+              { "label": "Testing", "value": "Playwright, CI on every PR" }
+            ]
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "experience": {
+          "tooltip": {
+            "title": "Experience",
+            "items": [{ "label": "CVS Health", "value": "4 years of production React" }]
+          },
+          "action": { "kind": "anchor", "target": "experience" }
+        },
+        "projects": {
+          "tooltip": {
+            "title": "Projects",
+            "subtitle": "Case studies, end to end",
+            "note": "Architecture decisions, the tests that caught real bugs, and the incidents that shaped the design."
+          },
+          "action": { "kind": "anchor", "target": "projects" }
+        },
+        "contact": {
+          "tooltip": {
+            "title": "Contact",
+            "note": "Questions about a project, or a role you think fits? Send a message."
+          },
+          "action": { "kind": "link", "href": "/contact" }
+        },
+        "github": {
+          "tooltip": { "title": "GitHub", "subtitle": "github.com/AlexLe08" },
+          "action": { "kind": "external", "href": "https://github.com/AlexLe08" }
+        },
+        "linkedin": {
+          "tooltip": { "title": "LinkedIn", "subtitle": "Alexander Le" },
+          "action": { "kind": "external", "href": "https://www.linkedin.com/in/alexander-le-65a1b89a" }
+        }
+      },
+      "sections": {
+        "summary": "Software engineer building technology for healthcare. Four years of production React at CVS Health, with TypeScript on the front end and Python on the back end.",
+        "skills": "- **Front end:** React, TypeScript, Next.js, accessible UI\n- **Back end:** Python, FastAPI, SQLAlchemy, PostgreSQL\n- **Quality:** Playwright end-to-end tests, CI on every pull request, Sentry monitoring",
+        "experience": "**CVS Health:** four years of production React."
+      }
+    },
+    {
+      "id": "ecommerce",
+      "name": "E-commerce",
+      "title": "Developer in e-commerce",
+      "icon": "Ec",
+      "level": { "label": "Stack", "value": "TypeScript and Python" },
+      "slots": {
+        "core": {
+          "tooltip": {
+            "title": "TypeScript",
+            "subtitle": "Core stack",
+            "stat": { "label": "Paired with", "value": "Python" },
+            "note": "From the pages customers see to the API behind them."
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "focus": {
+          "tooltip": {
+            "title": "E-commerce",
+            "subtitle": "Industry focus",
+            "note": "Software engineer building technology for e-commerce."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "summary": {
+          "tooltip": {
+            "title": "Summary",
+            "note": "Full-stack TypeScript and Python, from the storefront UI to the API and database behind it."
+          },
+          "action": { "kind": "anchor", "target": "summary" }
+        },
+        "skills": {
+          "tooltip": {
+            "title": "Skills",
+            "subtitle": "Most relevant first",
+            "items": [
+              { "label": "Front end", "value": "TypeScript, Next.js, React" },
+              { "label": "Back end", "value": "Python, FastAPI, PostgreSQL" },
+              { "label": "Delivery", "value": "CI, automatic deploys" }
+            ]
+          },
+          "action": { "kind": "anchor", "target": "skills" }
+        },
+        "experience": {
+          "tooltip": {
+            "title": "Experience",
+            "items": [{ "label": "CVS Health", "value": "4 years of production React" }]
+          },
+          "action": { "kind": "anchor", "target": "experience" }
+        },
+        "projects": {
+          "tooltip": {
+            "title": "Projects",
+            "subtitle": "Case studies, end to end",
+            "note": "Architecture decisions, the tests that caught real bugs, and the incidents that shaped the design."
+          },
+          "action": { "kind": "anchor", "target": "projects" }
+        },
+        "contact": {
+          "tooltip": {
+            "title": "Contact",
+            "note": "Questions about a project, or a role you think fits? Send a message."
+          },
+          "action": { "kind": "link", "href": "/contact" }
+        },
+        "github": {
+          "tooltip": { "title": "GitHub", "subtitle": "github.com/AlexLe08" },
+          "action": { "kind": "external", "href": "https://github.com/AlexLe08" }
+        },
+        "linkedin": {
+          "tooltip": { "title": "LinkedIn", "subtitle": "Alexander Le" },
+          "action": { "kind": "external", "href": "https://www.linkedin.com/in/alexander-le-65a1b89a" }
+        }
+      },
+      "sections": {
+        "summary": "Software engineer building technology for e-commerce. TypeScript and Python across the stack, from the pages customers see to the API and database behind them.",
+        "skills": "- **Front end:** TypeScript, Next.js, React\n- **Back end:** Python, FastAPI, PostgreSQL\n- **Delivery:** CI on every pull request, automatic deploys, Playwright smoke tests against production",
+        "experience": "**CVS Health:** four years of production React."
+      }
+    }
+  ]
+}

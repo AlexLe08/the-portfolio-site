@@ -111,6 +111,7 @@ Frontend:
   `components/ContentField.tsx`, `components/MediaUploadForm.tsx`,
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
+  `components/character-sheet/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
@@ -137,6 +138,12 @@ Frontend:
   role). Spacing goes in `globals.css` classes, not inline styles.
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
+- The home page's character sheet (`components/character-sheet/`) is a
+  self-contained module meant to become its own package: it imports
+  nothing from `@/`, Next, or `globals.css` (the host passes `renderLink`
+  and `renderPortrait`, see `lib/character-render.tsx`). Its content is
+  `lib/character-config.json`, validated by `schema.ts` at build time.
+  After changing `schema.ts`, run `npm run generate:character-schema`.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
 
@@ -176,6 +183,9 @@ title-block labels).
 Avoid: uppercase or letter-spaced eyebrow labels, arrow-suffixed links,
 middot-joined lists, rounded-and-shadowed cards, gradients, and new accent
 colors. Keep visible `:focus-visible` rings on everything interactive.
+The one exception is the character sheet's `game` theme: inside
+`.cs[data-cs-theme="game"]` only, gradients, rounded frames, shadows, and
+its gold accent are allowed. The live site uses the `document` theme.
 
 ## Workflow
 

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "generate:types": "openapi-typescript ../backend/openapi.json -o lib/api-types.ts",
+    "generate:character-schema": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON components/character-sheet/generate-schema.mjs",
     "test:smoke": "playwright test"
   },
   "dependencies": {
@@ -17,7 +18,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

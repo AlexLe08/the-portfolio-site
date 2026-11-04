@@ -1,0 +1,820 @@
+/* ---------------------------------------------------------------------
+   Character sheet panel
+   Every color and size is a --cs-* property, so a host restyles it by
+   overriding variables rather than selectors. The "document" theme reads
+   the host's tokens when they exist (--paper, --ink, --signal...) and has
+   plain fallbacks when they don't, so it also works outside this site.
+   The "game" theme is the one place gradients, rounded frames, shadows,
+   and uppercase labels are allowed (see CLAUDE.md), and only inside its
+   own selector.
+
+   Layout, wide:
+     bar      title ............................ [Change job]
+     header   [slot]  level / emblem + job title          [slot]
+     body     [col]   portrait (badge in the corner)       [col]
+   Narrow (container under 26rem): the portrait moves above the slots,
+   which become 3-column grids with their names showing.
+   ------------------------------------------------------------------ */
+.cs {
+  --cs-panel: var(--paper-raised, #ffffff);
+  --cs-inset: var(--paper, #f6f6f3);
+  --cs-ink: var(--ink, #1c1e22);
+  --cs-muted: var(--muted, #5b616b);
+  --cs-rule: var(--rule, #c9cdd3);
+  --cs-rule-strong: var(--rule-strong, #9aa0a8);
+  --cs-accent: var(--signal, #2f5fa3);
+  --cs-accent-soft: var(--signal-soft, #eaf0f8);
+  --cs-rail: var(--cs-accent);
+  --cs-font: var(--font-body, system-ui, sans-serif);
+  --cs-font-technical: var(--font-technical, ui-monospace, monospace);
+  --cs-font-display: var(--cs-font);
+  --cs-radius: 0;
+  --cs-bar-bg: var(--cs-inset);
+  --cs-square-bg: var(--cs-inset);
+  --cs-portrait-bg: var(--cs-inset);
+  --cs-tip-bg: var(--cs-panel);
+  --cs-tip-shadow: none;
+  --cs-panel-shadow: none;
+  --cs-slot-size: 3.25rem;
+  --cs-slot-gap: 0.5rem;
+  --cs-rail-width: 3px;
+  /* A column is a square plus room for its rail. */
+  --cs-column: calc(var(--cs-slot-size) + var(--cs-rail-width) + 0.35rem);
+
+  container: cs / inline-size;
+  max-width: 30rem;
+  margin-inline: auto;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-panel);
+  box-shadow: var(--cs-panel-shadow);
+  color: var(--cs-ink);
+  font-family: var(--cs-font);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.cs *,
+.cs *::before,
+.cs *::after {
+  box-sizing: border-box;
+}
+
+/* Zero specificity, so the panel's own classes always win over the reset. */
+:where(.cs) :where(p, ul, dl, dd) {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.cs) :where(ul) {
+  list-style: none;
+}
+
+.cs :focus-visible {
+  outline: 2px solid var(--cs-accent);
+  outline-offset: 2px;
+}
+
+.cs-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Top bar: title and job menu ------------------------------------------ */
+.cs__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius) var(--cs-radius) 0 0;
+  background: var(--cs-bar-bg);
+}
+
+.cs__bar-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.cs__jobs {
+  position: relative;
+}
+
+.cs__jobs-toggle {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-panel);
+  color: var(--cs-accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cs__jobs-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.cs__jobs-toggle:hover,
+.cs__jobs[open] .cs__jobs-toggle {
+  border-color: var(--cs-accent);
+}
+
+.cs__jobs-list {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: max-content;
+  min-width: 15rem;
+  max-width: min(22rem, 90vw);
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-tip-bg);
+  box-shadow: var(--cs-tip-shadow);
+}
+
+.cs__jobs-list li + li {
+  border-top: 1px solid var(--cs-rule);
+}
+
+.cs__jobs-link {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem 0.55rem 0.6rem;
+  border-left: 3px solid transparent;
+  color: var(--cs-ink);
+  text-decoration: none;
+}
+
+.cs__jobs-link:hover {
+  background: var(--cs-accent-soft);
+}
+
+.cs__jobs-link[aria-current="true"] {
+  border-left-color: var(--cs-accent);
+  background: var(--cs-accent-soft);
+  font-weight: 600;
+}
+
+.cs__jobs-name {
+  white-space: nowrap;
+}
+
+.cs__jobs-level {
+  color: var(--cs-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Header: slot, level and job, slot ------------------------------------ */
+.cs__header,
+.cs__body {
+  display: grid;
+  grid-template-columns: var(--cs-column) minmax(0, 1fr) var(--cs-column);
+  gap: 0.75rem;
+  padding-inline: 0.75rem;
+}
+
+.cs__header {
+  align-items: center;
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--cs-rule);
+}
+
+.cs__job {
+  min-width: 0;
+}
+
+.cs__level {
+  color: var(--cs-muted);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.cs__level-label {
+  font-family: var(--cs-font-technical);
+  font-size: 0.75rem;
+}
+
+.cs__level-value {
+  color: var(--cs-ink);
+  font-weight: 500;
+}
+
+.cs__job-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.cs__job-emblem,
+.cs__jobs-emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  color: var(--cs-accent);
+  font-family: var(--cs-font-technical);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.cs__job-title {
+  font-family: var(--cs-font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Body: slot columns around the portrait ------------------------------- */
+.cs__body {
+  padding-block: 0.85rem;
+}
+
+.cs__slots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-slot-gap);
+}
+
+/* Squares sit against the portrait; the rails run along the outer edge. */
+.cs__slots--left,
+.cs__slots--header-start {
+  align-items: flex-end;
+}
+
+.cs__slots--right,
+.cs__slots--header-end {
+  align-items: flex-start;
+}
+
+.cs__portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  overflow: hidden;
+  border: 1px solid var(--cs-rule);
+  border-radius: var(--cs-radius);
+  background: var(--cs-portrait-bg);
+}
+
+/* The portrait fills the space between the columns; framing picks the
+   crop. */
+.cs__portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 15%;
+}
+
+.cs__portrait--full img {
+  object-position: 50% 50%;
+}
+
+.cs__placeholder {
+  height: 78%;
+  max-width: 60%;
+  align-self: end;
+  fill: var(--cs-rule);
+}
+
+.cs__badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.55rem;
+  font-size: 0.75rem;
+  color: var(--cs-muted);
+  text-align: right;
+}
+
+.cs__badge-value {
+  color: var(--cs-accent);
+  font-family: var(--cs-font-technical);
+  font-size: 1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Slots ---------------------------------------------------------------- */
+.cs-slot {
+  position: relative;
+}
+
+/* The rail: a thin bar on the slot's outer side, lit when filled. */
+.cs-slot::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: var(--cs-slot-size);
+  width: var(--cs-rail-width);
+  background: var(--cs-rail);
+}
+
+.cs__slots--left .cs-slot::before,
+.cs__slots--header-start .cs-slot::before {
+  left: calc(-1 * (var(--cs-rail-width) + 0.35rem));
+}
+
+.cs__slots--right .cs-slot::before,
+.cs__slots--header-end .cs-slot::before {
+  right: calc(-1 * (var(--cs-rail-width) + 0.35rem));
+}
+
+.cs-slot--empty::before {
+  display: none;
+}
+
+.cs-slot__hover {
+  position: relative;
+}
+
+.cs-slot__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--cs-ink);
+  text-decoration: none;
+}
+
+.cs-slot__square,
+.cs-tip__icon {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-square-bg);
+  color: var(--cs-accent);
+  font-family: var(--cs-font-technical);
+  font-weight: 500;
+}
+
+.cs-slot__square {
+  width: var(--cs-slot-size);
+  height: var(--cs-slot-size);
+  font-size: 0.9375rem;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.cs-tip__icon {
+  overflow: hidden;
+}
+
+.cs-slot__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs-slot__label {
+  max-width: calc(var(--cs-slot-size) + 1.5rem);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Names hidden at full width (the tooltip carries them) unless asked for;
+   still the link's accessible name. */
+.cs[data-cs-labels="narrow"] .cs-slot__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+a.cs-slot__face:hover .cs-slot__square,
+.cs-slot__face:focus-visible .cs-slot__square {
+  border-color: var(--cs-accent);
+  background: var(--cs-accent-soft);
+}
+
+.cs-slot--empty .cs-slot__square {
+  border-style: dashed;
+  border-color: var(--cs-rule);
+  background: transparent;
+  color: var(--cs-rule-strong);
+}
+
+.cs-slot--empty .cs-slot__label {
+  color: var(--cs-muted);
+}
+
+/* Socket dots (showSockets): two small rings stacked in the square's
+   top-right corner, half over its edge. */
+.cs-slot__square {
+  position: relative;
+  overflow: visible;
+}
+
+.cs-slot__img {
+  border-radius: inherit;
+}
+
+.cs-slot__sockets {
+  position: absolute;
+  top: 0.2rem;
+  right: -0.3rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.cs-slot__socket {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: 50%;
+  background: var(--cs-panel);
+}
+
+/* Toolbar (showToolbar): a row of round buttons under the portrait. */
+.cs__toolbar {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cs__toolbar-group {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.cs__toolbar-button {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: 50%;
+  background: var(--cs-panel);
+  color: var(--cs-muted);
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+.cs__toolbar-button--lit {
+  border-color: var(--cs-accent);
+  color: var(--cs-accent);
+}
+
+/* Tooltip ---------------------------------------------------------------
+   A compact item card. Shown with CSS alone: on hover where the device has
+   one, and on keyboard focus. Taps on touch screens just follow the link.
+   It opens toward the portrait. */
+.cs-tip {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: calc(100% + 0.6rem);
+  width: 17rem;
+  border: 1px solid var(--cs-rule-strong);
+  border-radius: var(--cs-radius);
+  background: var(--cs-tip-bg);
+  box-shadow: var(--cs-tip-shadow);
+  color: var(--cs-ink);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* Bridges the gap so the pointer can move onto the tooltip without it
+   closing. */
+.cs-tip::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  right: 100%;
+  width: 0.7rem;
+}
+
+.cs__slots--right .cs-tip,
+.cs__slots--header-end .cs-tip {
+  left: auto;
+  right: calc(100% + 0.6rem);
+}
+
+.cs__slots--right .cs-tip::before,
+.cs__slots--header-end .cs-tip::before {
+  right: auto;
+  left: 100%;
+}
+
+@media (hover: hover) {
+  .cs-slot__hover:hover .cs-tip {
+    display: block;
+  }
+}
+
+.cs-slot__hover:has(:focus-visible) .cs-tip {
+  display: block;
+}
+
+.cs-slot__hover[data-dismissed] .cs-tip {
+  display: none;
+}
+
+.cs-tip__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.7rem;
+}
+
+.cs-tip__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.8125rem;
+}
+
+.cs-tip__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  color: var(--cs-muted);
+  font-size: 0.6875rem;
+}
+
+.cs-tip__title {
+  color: var(--cs-accent);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cs-tip__category {
+  color: var(--cs-muted);
+}
+
+.cs-tip__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.7rem;
+  border-block: 1px solid var(--cs-rule);
+  background: var(--cs-inset);
+}
+
+.cs-tip__stat-label {
+  color: var(--cs-muted);
+}
+
+.cs-tip__stat-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.cs-tip__body {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.5rem 0.7rem 0.6rem;
+}
+
+.cs-tip__head + .cs-tip__body {
+  border-top: 1px solid var(--cs-rule);
+}
+
+.cs-tip__pairs {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.cs-tip__pair {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+.cs-tip__pair dt {
+  color: var(--cs-muted);
+}
+
+.cs-tip__items li + li {
+  margin-top: 0.1rem;
+}
+
+.cs-tip__note {
+  color: var(--cs-muted);
+}
+
+/* Narrow: portrait on top, slots in grids below ------------------------- */
+@container cs (max-width: 26rem) {
+  .cs__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding-inline: 1rem;
+  }
+
+  .cs__toolbar {
+    order: -1;
+    grid-column: auto;
+    justify-self: center;
+    width: min(100%, 13rem);
+  }
+
+  .cs__portrait {
+    order: -1;
+    width: min(100%, 13rem);
+    aspect-ratio: 3 / 4;
+    justify-self: center;
+  }
+
+  .cs__body .cs__slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-items: center;
+    gap: 0.85rem 0.5rem;
+  }
+
+  /* Rails would collide in a grid; the squares stand alone. */
+  .cs__body .cs-slot::before {
+    display: none;
+  }
+
+  .cs[data-cs-labels="narrow"] .cs-slot__label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  /* The header squares keep their place; their names stay hidden, since
+     the job title sits right beside them. */
+  .cs[data-cs-labels="narrow"] .cs__header .cs-slot__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .cs__body .cs-tip,
+  .cs__body .cs__slots--right .cs-tip {
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: auto;
+    width: min(17rem, 85cqi);
+  }
+
+  .cs__body .cs-tip::before,
+  .cs__body .cs__slots--right .cs-tip::before {
+    inset: auto 0 100% 0;
+    width: auto;
+    height: 0.6rem;
+  }
+
+  .cs__body .cs__slots li:nth-child(3n) .cs-tip {
+    left: auto;
+    right: 0;
+  }
+
+  .cs__header .cs-tip,
+  .cs__header .cs__slots--header-end .cs-tip {
+    top: calc(100% + 0.5rem);
+    width: min(17rem, 85cqi);
+  }
+
+  .cs__header .cs__slots--header-start .cs-tip {
+    left: 0;
+  }
+
+  .cs__header .cs__slots--header-end .cs-tip {
+    left: auto;
+    right: 0;
+  }
+
+  .cs__header .cs-tip::before {
+    inset: auto 0 100% 0;
+    width: auto;
+    height: 0.6rem;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Game theme
+   A darker, framed look in the spirit of an RPG equipment screen. Mostly
+   variables; the layout is shared.
+   ------------------------------------------------------------------ */
+.cs[data-cs-theme="game"] {
+  --cs-panel: #1d1e25;
+  --cs-inset: #15161b;
+  --cs-ink: #ece6d6;
+  --cs-muted: #a8a191;
+  --cs-rule: #393a45;
+  --cs-rule-strong: #5b5e6c;
+  --cs-accent: #e2c27f;
+  --cs-accent-soft: rgb(226 194 127 / 0.14);
+  --cs-rail: #3f8fd6;
+  --cs-font-display: ui-serif, Georgia, "Times New Roman", serif;
+  --cs-radius: 6px;
+  --cs-bar-bg: linear-gradient(180deg, #34353f, #24252d);
+  --cs-square-bg: linear-gradient(160deg, #3a5f8f, #1d2c44);
+  --cs-portrait-bg: radial-gradient(circle at 50% 30%, #3a3c48, #15161b 80%);
+  --cs-tip-bg: rgb(22 23 29 / 0.97);
+  --cs-tip-shadow: 0 6px 18px rgb(0 0 0 / 0.5);
+  --cs-panel-shadow: 0 0 0 1px #0c0c10, 0 10px 30px rgb(0 0 0 / 0.35);
+
+  background: linear-gradient(180deg, #2a2b33, #1b1c22);
+}
+
+.cs[data-cs-theme="game"] .cs-slot__square,
+.cs[data-cs-theme="game"] .cs-tip__icon {
+  border-color: #6f8fb8;
+  color: #f1e9d4;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.5), inset 0 2px 6px rgb(255 255 255 / 0.12);
+}
+
+.cs[data-cs-theme="game"] a.cs-slot__face:hover .cs-slot__square,
+.cs[data-cs-theme="game"] .cs-slot__face:focus-visible .cs-slot__square {
+  border-color: var(--cs-accent);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.5), 0 0 10px rgb(226 194 127 / 0.5);
+}
+
+.cs[data-cs-theme="game"] .cs-slot--empty .cs-slot__square {
+  border: 1px solid var(--cs-rule-strong);
+  background: rgb(0 0 0 / 0.25);
+  color: var(--cs-rule-strong);
+  box-shadow: inset 0 1px 4px rgb(0 0 0 / 0.6);
+}
+
+.cs[data-cs-theme="game"] .cs__level-label {
+  font-family: var(--cs-font);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cs[data-cs-theme="game"] .cs__job-title {
+  color: var(--cs-accent);
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.cs[data-cs-theme="game"] .cs__job-emblem,
+.cs[data-cs-theme="game"] .cs__jobs-emblem {
+  border-color: var(--cs-accent);
+  border-radius: 50%;
+}
+
+.cs[data-cs-theme="game"] .cs__header {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent);
+}
+
+.cs[data-cs-theme="game"] .cs-slot__socket {
+  border-color: #8fa3b8;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.cs[data-cs-theme="game"] .cs__toolbar-button {
+  border-color: #5b5e6c;
+  background: linear-gradient(180deg, #33343e, #1c1d23);
+  box-shadow: inset 0 1px 2px rgb(255 255 255 / 0.08);
+}
+
+.cs[data-cs-theme="game"] .cs__toolbar-button--lit {
+  border-color: var(--cs-accent);
+  box-shadow: 0 0 6px rgb(226 194 127 / 0.35);
+}
+
+.cs[data-cs-theme="game"] .cs__badge-value {
+  color: #6fd3d3;
+}
+
+.cs[data-cs-theme="game"] .cs-tip {
+  border-color: #8a7647;
+}
+
+.cs[data-cs-theme="game"] .cs-tip__title {
+  color: #7fb2ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-slot__square {
+    transition: none;
+  }
+}

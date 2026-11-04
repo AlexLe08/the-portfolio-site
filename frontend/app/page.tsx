@@ -2,10 +2,14 @@ import * as Sentry from "@sentry/nextjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Markdown from "react-markdown";
+import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
+import { resolveJob } from "@/components/character-sheet/resolve";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { StatusMessage } from "@/components/StatusMessage";
 import { api } from "@/lib/api";
+import { characterConfig } from "@/lib/character";
+import { renderLink, renderPortrait } from "@/lib/character-render";
 import { getContent, type ContentKey } from "@/lib/content";
 
 // Projects change through the admin UI at any time, so every visit fetches.
@@ -37,15 +41,34 @@ async function loadProjects() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getContent();
-  return { description: content["site.description"] };
+  // ?job= only changes emphasis, so every variant points at the one URL.
+  return { description: content["site.description"], alternates: { canonical: "/" } };
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   // Started together so the content request adds no wait of its own.
-  const [projects, content] = await Promise.all([loadProjects(), getContent()]);
+  const [projects, content, { job: jobParam }] = await Promise.all([
+    loadProjects(),
+    getContent(),
+    searchParams,
+  ]);
+  const job = resolveJob(characterConfig, jobParam);
+  // The job's page sections, in slot order, labelled like their slots.
+  const sections = characterConfig.slots.filter((slot) => job.sections?.[slot.id]);
 
   return (
-    <Sheet>
+    <Sheet
+      lead={
+        <CharacterSheet
+          config={characterConfig}
+          job={job}
+          renderLink={renderLink}
+          renderPortrait={renderPortrait}
+          showSockets
+          showToolbar
+        />
+      }
+    >
       <div className="title-block">
         <div className="title-block__heading">
           <h1 className="title-block__name">Alexander Le</h1>
@@ -65,7 +88,20 @@ export default async function HomePage() {
         <Markdown>{content["home.intro"]}</Markdown>
       </div>
 
-      <div className="section-rule">
+      {sections.map((slot) => (
+        <section key={slot.id} aria-labelledby={`${slot.id}-heading`}>
+          <div className="section-rule" id={slot.id}>
+            <h2 className="section-rule__label" id={`${slot.id}-heading`}>
+              {slot.label}
+            </h2>
+          </div>
+          <div className="intro job-section">
+            <Markdown>{job.sections?.[slot.id]}</Markdown>
+          </div>
+        </section>
+      ))}
+
+      <div className="section-rule" id="projects">
         <h2 className="section-rule__label">Projects</h2>
       </div>
 
