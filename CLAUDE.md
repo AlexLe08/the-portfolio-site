@@ -143,7 +143,11 @@ Frontend:
   nothing from `@/`, Next, or `globals.css` (the host passes `renderLink`
   and `renderPortrait`, see `lib/character-render.tsx`). Its content is
   `lib/character-config.json`, validated by `schema.ts` at build time.
-  After changing `schema.ts`, run `npm run generate:character-schema`.
+  After changing `schema.ts`, run `npm run generate:character-schema`:
+  it also copies the JSON Schema to `backend/app/services/`, which
+  validates admin saves against it (a backend test fails if the copies
+  differ). Write rules the backend must enforce as zod checks that
+  export to JSON Schema (`.regex()`, lengths), not refinements.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
 

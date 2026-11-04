@@ -1,7 +1,15 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    JsonValue,
+    StringConstraints,
+    model_validator,
+)
 
 from app import models
 
@@ -111,6 +119,26 @@ class ContentEntry(BaseModel):
 
     key: str
     value: str
+    updated_at: datetime
+
+
+class CharacterSheetUpdate(BaseModel):
+    """The whole config, replacing the stored one.
+
+    Typed only as a JSON object: its shape is checked against the JSON
+    Schema in services/character_sheet.py, generated from the frontend's
+    zod schema, so the rules live in one place.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    config: dict[str, JsonValue]
+
+
+class CharacterSheetEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    config: dict[str, JsonValue]
     updated_at: datetime
 
 

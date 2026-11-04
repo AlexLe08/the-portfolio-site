@@ -16,6 +16,7 @@ dependencies = [
     "sentry-sdk>=2.73",   # error reporting (2.73 has the data_collection option), off unless SENTRY_DSN is set (core/monitoring.py)
     "cloudinary>=1.46",   # image uploads for the media library (services/media.py)
     "python-multipart>=0.0.20",  # lets FastAPI parse multipart/form-data (UploadFile, Form) for POST /media
+    "jsonschema>=4.26",   # checks the character sheet config against the JSON Schema generated from the frontend's zod schema (services/character_sheet.py)
 ]
 
 [project.optional-dependencies]

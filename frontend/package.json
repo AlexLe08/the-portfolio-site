@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "generate:types": "openapi-typescript ../backend/openapi.json -o lib/api-types.ts",
-    "generate:character-schema": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON components/character-sheet/generate-schema.mjs",
+    "generate:character-schema": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON components/character-sheet/generate-schema.mjs && cp components/character-sheet/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json",
     "test:smoke": "playwright test"
   },
   "dependencies": {
