@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { StatusMessage } from "@/components/StatusMessage";
 
 // A deleted image's row disappears, taking its button (and keyboard focus)
 // with it, so the confirmation lives here instead: above the list, and
@@ -22,9 +23,9 @@ export function MediaDeleteNotice({ children }: { children: ReactNode }) {
   return (
     <SetNotice value={setDeleted}>
       {deleted !== null && (
-        <div ref={ref} tabIndex={-1} className="form-status form-status--success" role="status">
+        <StatusMessage ref={ref} tabIndex={-1} tone="success">
           Deleted &ldquo;{deleted}&rdquo;.
-        </div>
+        </StatusMessage>
       )}
       {children}
     </SetNotice>

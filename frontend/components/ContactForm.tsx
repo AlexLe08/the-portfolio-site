@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { StatusMessage } from "@/components/StatusMessage";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { describeRetryAfter, SERVER_UNREACHABLE } from "@/lib/messages";
@@ -87,11 +88,7 @@ export function ContactForm() {
   }
 
   if (status === "success") {
-    return (
-      <div className="form-status form-status--success" role="status">
-        Message sent. I&rsquo;ll reply by email.
-      </div>
-    );
+    return <StatusMessage tone="success">Message sent. I&rsquo;ll reply by email.</StatusMessage>;
   }
 
   return (
@@ -160,11 +157,7 @@ export function ContactForm() {
         />
       </div>
 
-      {status === "error" && (
-        <div className="form-status form-status--error" role="alert">
-          {errorMessage}
-        </div>
-      )}
+      {status === "error" && <StatusMessage tone="error">{errorMessage}</StatusMessage>}
 
       <div className="form-actions">
         <button

@@ -5,6 +5,7 @@ import { MediaAltTextForm } from "@/components/MediaAltTextForm";
 import { MediaDeleteButton } from "@/components/MediaDeleteButton";
 import { MediaDeleteNotice } from "@/components/MediaDeleteNotice";
 import { MediaUploadForm } from "@/components/MediaUploadForm";
+import { Sheet } from "@/components/Sheet";
 import { adminLoad } from "@/lib/admin-api";
 import { deleteMedia, updateAltText } from "./actions";
 
@@ -22,86 +23,76 @@ export default async function AdminMediaPage() {
   const media = await adminLoad("media", (api) => api.GET("/admin/media"));
 
   return (
-    <main className="sheet">
-      <div className="prose-width">
-        <Link href="/admin" className="back-link">
-          Admin
-        </Link>
+    <Sheet title="Media" back={{ href: "/admin", label: "Admin" }}>
+      <MediaUploadForm />
 
-        <header className="detail-header">
-          <h1 className="detail-header__title">Media</h1>
-        </header>
-
-        <MediaUploadForm />
-
-        <h2 className="admin-heading admin-toolbar--section">Uploads</h2>
-        <MediaDeleteNotice>
-          {media.length === 0 ? (
-            <p className="form-help">Nothing uploaded yet.</p>
-          ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th scope="col">Image</th>
-                  <th scope="col">Details</th>
+      <h2 className="admin-heading admin-toolbar--section">Uploads</h2>
+      <MediaDeleteNotice>
+        {media.length === 0 ? (
+          <p className="form-help">Nothing uploaded yet.</p>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">Image</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {media.map((item) => (
+                <tr key={item.id}>
+                  <td className="admin-table__thumb">
+                    <a href={item.url}>
+                      <Image
+                        src={item.url}
+                        alt={item.alt_text}
+                        width={item.width}
+                        height={item.height}
+                        sizes="10rem"
+                      />
+                      <span className="visually-hidden"> (full size)</span>
+                    </a>
+                  </td>
+                  <td>
+                    <div className="admin-table__slug">
+                      {item.width} × {item.height}, {Math.round(item.size_bytes / 1024)} KB
+                    </div>
+                    <MediaAltTextForm
+                      action={updateAltText.bind(null, item.id)}
+                      id={item.id}
+                      altText={item.alt_text}
+                    />
+                    <label htmlFor={`markdown-${item.id}`} className="form-label media-markdown__label">
+                      Markdown
+                    </label>
+                    <div className="media-markdown__row">
+                      <input
+                        id={`markdown-${item.id}`}
+                        readOnly
+                        value={markdownFor(item.alt_text, item.url)}
+                        className="form-input media-markdown"
+                      />
+                      <CopyButton
+                        text={markdownFor(item.alt_text, item.url)}
+                        inputId={`markdown-${item.id}`}
+                        label={
+                          <>
+                            Copy<span className="visually-hidden"> markdown for {item.alt_text}</span>
+                          </>
+                        }
+                      />
+                    </div>
+                    <MediaDeleteButton
+                      action={deleteMedia.bind(null, item.id)}
+                      altText={item.alt_text}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {media.map((item) => (
-                  <tr key={item.id}>
-                    <td className="admin-table__thumb">
-                      <a href={item.url}>
-                        <Image
-                          src={item.url}
-                          alt={item.alt_text}
-                          width={item.width}
-                          height={item.height}
-                          sizes="10rem"
-                        />
-                        <span className="visually-hidden"> (full size)</span>
-                      </a>
-                    </td>
-                    <td>
-                      <div className="admin-table__slug">
-                        {item.width} × {item.height}, {Math.round(item.size_bytes / 1024)} KB
-                      </div>
-                      <MediaAltTextForm
-                        action={updateAltText.bind(null, item.id)}
-                        id={item.id}
-                        altText={item.alt_text}
-                      />
-                      <label htmlFor={`markdown-${item.id}`} className="form-label media-markdown__label">
-                        Markdown
-                      </label>
-                      <div className="media-markdown__row">
-                        <input
-                          id={`markdown-${item.id}`}
-                          readOnly
-                          value={markdownFor(item.alt_text, item.url)}
-                          className="form-input media-markdown"
-                        />
-                        <CopyButton
-                          text={markdownFor(item.alt_text, item.url)}
-                          inputId={`markdown-${item.id}`}
-                          label={
-                            <>
-                              Copy<span className="visually-hidden"> markdown for {item.alt_text}</span>
-                            </>
-                          }
-                        />
-                      </div>
-                      <MediaDeleteButton
-                        action={deleteMedia.bind(null, item.id)}
-                        altText={item.alt_text}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </MediaDeleteNotice>
-      </div>
-    </main>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </MediaDeleteNotice>
+    </Sheet>
   );
 }

@@ -2,6 +2,8 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { Sheet } from "@/components/Sheet";
+import { StatusMessage } from "@/components/StatusMessage";
 import "./globals.css";
 
 // Shown when the root layout itself fails, so it replaces the whole page
@@ -25,16 +27,14 @@ export default function GlobalError({
     <html lang="en">
       <body>
         <title>Something went wrong</title>
-        <main className="sheet">
-          <div className="prose-width">
-            <div className="form-status form-status--error" role="alert">
-              Something went wrong loading this page. It has been reported.
-            </div>
-            <button type="button" className="form-button" onClick={() => retry()}>
-              Try again
-            </button>
-          </div>
-        </main>
+        <Sheet>
+          <StatusMessage tone="error">
+            Something went wrong loading this page. It has been reported.
+          </StatusMessage>
+          <button type="button" className="form-button" onClick={() => retry()}>
+            Try again
+          </button>
+        </Sheet>
       </body>
     </html>
   );

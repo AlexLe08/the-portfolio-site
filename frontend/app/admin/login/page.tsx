@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
+import { Sheet } from "@/components/Sheet";
+import { StatusMessage } from "@/components/StatusMessage";
 import { getSessionToken } from "@/lib/session";
 
 export const metadata = {
@@ -14,20 +16,9 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
   if (!expired && (await getSessionToken())) redirect("/admin");
 
   return (
-    <main className="sheet">
-      <div className="prose-width">
-        <header className="detail-header">
-          <h1 className="detail-header__title">Sign in</h1>
-        </header>
-
-        {expired && (
-          <div className="form-status" role="status">
-            Your session has expired. Sign in again.
-          </div>
-        )}
-
-        <LoginForm />
-      </div>
-    </main>
+    <Sheet title="Sign in">
+      {expired && <StatusMessage tone="info">Your session has expired. Sign in again.</StatusMessage>}
+      <LoginForm />
+    </Sheet>
   );
 }

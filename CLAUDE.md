@@ -131,6 +131,10 @@ Frontend:
   `SaveStatus`, which submit through `onSubmit` so a rejected save keeps
   the edit. Project field rules (slug pattern, max lengths) live in
   `lib/project-rules.ts`, mirroring `schemas.ProjectCreate`.
+- Every page renders inside `Sheet` (`components/Sheet.tsx`: the sheet,
+  an optional back link and ruled header), and boxed status text is
+  `StatusMessage` (tone `error` | `success` | `info`, which sets the ARIA
+  role). Spacing goes in `globals.css` classes, not inline styles.
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go

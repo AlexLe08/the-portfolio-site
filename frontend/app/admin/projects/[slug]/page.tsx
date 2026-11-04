@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { updateProject } from "../actions";
 import { ProjectForm } from "@/components/ProjectForm";
+import { Sheet } from "@/components/Sheet";
 import { adminLoad } from "@/lib/admin-api";
 
 export const metadata = {
@@ -16,27 +17,22 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
   );
 
   return (
-    <main className="sheet">
-      <div className="prose-width">
-        <Link href="/admin" className="back-link">
-          All projects
-        </Link>
-
-        <header className="detail-header">
-          <h1 className="detail-header__title">{project.title}</h1>
-          <p className="admin-table__slug">
-            {project.published ? (
-              <Link href={`/projects/${project.slug}`}>/projects/{project.slug}</Link>
-            ) : (
-              <>/projects/{project.slug} (draft, not on the site yet)</>
-            )}
-          </p>
-        </header>
-
-        {/* bind fixes the slug as the action's first argument. It isn't a
-            secret, and updateProject still checks the session itself. */}
-        <ProjectForm action={updateProject.bind(null, project.slug)} project={project} />
-      </div>
-    </main>
+    <Sheet
+      title={project.title}
+      back={{ href: "/admin", label: "All projects" }}
+      header={
+        <p className="admin-table__slug">
+          {project.published ? (
+            <Link href={`/projects/${project.slug}`}>/projects/{project.slug}</Link>
+          ) : (
+            <>/projects/{project.slug} (draft, not on the site yet)</>
+          )}
+        </p>
+      }
+    >
+      {/* bind fixes the slug as the action's first argument. It isn't a
+          secret, and updateProject still checks the session itself. */}
+      <ProjectForm action={updateProject.bind(null, project.slug)} project={project} />
+    </Sheet>
   );
 }
