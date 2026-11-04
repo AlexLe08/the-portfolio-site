@@ -7,6 +7,7 @@ import pytest
 from app import models
 from app.services import character_sheet
 from app.services.character_sheet import ConfigTooLarge, InvalidConfig
+from tests.helpers import ADMIN_HEADERS
 
 FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
 BUNDLED_CONFIG = json.loads((FRONTEND / "lib/character-config.json").read_text(encoding="utf-8"))
@@ -131,3 +132,71 @@ def test_oversized_config_is_rejected_before_validation(db_session, config, monk
         character_sheet.save_config(db_session, config)
 
     assert character_sheet.get_config(db_session) is None
+
+
+# --- Routes (admin credentials are checked for every route in test_auth.py) ---
+
+
+def test_get_is_404_until_saved(client):
+    response = client.get("/character-sheet")
+
+    assert response.status_code == 404
+
+
+def test_put_saves_and_get_returns_it_publicly(client, config):
+    response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json()["config"] == config
+    assert "updated_at" in response.json()
+    stored = client.get("/character-sheet")
+    assert stored.status_code == 200
+    assert stored.json()["config"] == config
+
+
+def test_put_is_idempotent(client, config):
+    for _ in range(2):
+        client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert client.get("/character-sheet").json()["config"] == config
+
+
+def test_put_reports_invalid_config_like_fastapi_validation_errors(client, config):
+    config["jobs"][0]["level"]["value"] = ""
+
+    response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "minLength",
+                "loc": ["body", "config", "jobs", 0, "level", "value"],
+                "msg": "'' should be non-empty",
+            }
+        ]
+    }
+    assert client.get("/character-sheet").status_code == 404
+
+
+def test_put_rejects_a_config_that_is_not_an_object(client):
+    for body in ({"config": []}, {"config": "{}"}, {}):
+        response = client.put("/character-sheet", json=body, headers=ADMIN_HEADERS)
+        assert response.status_code == 422, body
+
+
+def test_put_rejects_unknown_fields(client, config):
+    response = client.put(
+        "/character-sheet", json={"config": config, "id": 2}, headers=ADMIN_HEADERS
+    )
+
+    assert response.status_code == 422
+
+
+def test_put_rejects_oversized_config(client, config, monkeypatch):
+    monkeypatch.setattr(character_sheet, "MAX_CONFIG_BYTES", 1024)
+
+    response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 413
+    assert response.json() == {"detail": "The config can be at most 1 KB"}

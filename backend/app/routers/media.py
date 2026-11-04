@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Annotated
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 @contextmanager
-def _http_errors() -> Iterator[None]:
+def _http_errors() -> Generator[None, None, None]:
     """Turn the media service's exceptions into HTTP errors."""
     try:
         yield

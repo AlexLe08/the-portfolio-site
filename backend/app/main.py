@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.monitoring import init_sentry
-from app.routers import admin, auth, contact, content, media, projects
+from app.routers import admin, auth, character_sheet, contact, content, media, projects
 
 init_sentry()
 
@@ -29,6 +29,7 @@ app.include_router(content.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(media.router)
+app.include_router(character_sheet.router)
 
 
 @app.get("/health")
