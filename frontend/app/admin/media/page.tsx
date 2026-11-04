@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { MediaAltTextForm } from "@/components/MediaAltTextForm";
 import { MediaDeleteButton } from "@/components/MediaDeleteButton";
