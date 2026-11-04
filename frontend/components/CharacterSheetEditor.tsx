@@ -13,15 +13,20 @@ type Props = {
   // before the first save), compared to explain what the site shows.
   bundled: string;
   stored: string | null;
+  // Keys in the stored copy that the schema doesn't have (see
+  // findUnknownKeys); a save replaces them with its own list.
+  unknownKeys: string[];
 };
 
 // The whole config as raw JSON, matching PUT /character-sheet, which
 // replaces the document. The structured form for common edits is PR 3.
-export function CharacterSheetEditor({ action, value, bundled, stored }: Props) {
+export function CharacterSheetEditor({ action, value, bundled, stored, unknownKeys }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
 
-  // After a save the page isn't re-fetched, so compare what was just saved.
-  const current = state && "saved" in state ? state.saved : stored;
+  // After a save the page isn't re-fetched, so use what was just saved.
+  const lastSave = state && "saved" in state ? state : null;
+  const current = lastSave ? lastSave.saved : stored;
+  const ignoredKeys = lastSave ? lastSave.unknownKeys : unknownKeys;
   let note;
   if (current === null) {
     note = "Not saved yet: the site shows lib/character-config.json, which this starts from.";
@@ -66,6 +71,17 @@ export function CharacterSheetEditor({ action, value, bundled, stored }: Props) 
         </StatusMessage>
       ) : (
         <SaveStatus state={state} pending={pending} />
+      )}
+      {/* Saved anyway: the panel just leaves these out (see actions.ts). */}
+      {ignoredKeys.length > 0 && !pending && (
+        <StatusMessage tone="info">
+          The site ignores these keys, which the schema doesn&rsquo;t have. Typos?
+          <ul className="json-editor__problems">
+            {ignoredKeys.map((key) => (
+              <li key={key}>{key}</li>
+            ))}
+          </ul>
+        </StatusMessage>
       )}
 
       <div className="form-actions">

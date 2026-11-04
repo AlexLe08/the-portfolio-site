@@ -1,6 +1,6 @@
 "use server";
 
-import { parseConfig } from "@/components/character-sheet/parse";
+import { findUnknownKeys, parseConfig } from "@/components/character-sheet/parse";
 import { adminRequest } from "@/lib/admin-api";
 import type { components } from "@/lib/api-types";
 import { formText } from "@/lib/form-data";
@@ -8,11 +8,17 @@ import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 
 // problems lists every issue by path, so a long document can be fixed in
 // one pass. A save returns the document it stored as compact JSON, so the
-// editor can compare it with the bundled file without re-fetching.
+// editor can compare it with the bundled file without re-fetching, and any
+// keys the schema doesn't have, which are saved but ignored by the site.
 export type CharacterSheetFormState =
   | { error: string; problems?: string[] }
-  | { saved: string }
+  | { saved: string; unknownKeys: string[] }
   | null;
+
+// parseConfig's messages end with what the home page's lenient read does
+// about the problem (", dropped", ", using "healthcare""). Here nothing is
+// saved, so that part would mislead. A suffix added later just shows again.
+const LENIENT_OUTCOME = /, (dropped|ignored|not shown|using "[^"]*")$/;
 
 export async function updateCharacterSheet(
   _previous: CharacterSheetFormState,
@@ -32,13 +38,19 @@ export async function updateCharacterSheet(
   // The backend's JSON Schema can't see duplicate ids, a job naming a slot
   // that doesn't exist, or a defaultJobId with no job; saved anyway, those
   // would make the home page quietly drop a job or fall back.
-  const { errors } = parseConfig(config);
+  const { config: parsed, errors } = parseConfig(config);
   if (errors.length > 0) {
-    return { error: "Not saved. Fix these problems first:", problems: errors };
+    return {
+      error: "Not saved. Fix these problems first:",
+      problems: errors.map((error) => error.replace(LENIENT_OUTCOME, "")),
+    };
   }
 
   // The document as written, not zod's parsed copy, which drops unknown
   // keys: a typo should stay visible in the editor, not vanish on save.
+  // Unknown keys are reported after saving rather than blocking it: a typo
+  // in a required field already fails above as missing, so these can only
+  // be optional fields the panel leaves out.
   const body = { config: config as Record<string, components["schemas"]["JsonValue"]> };
   // adminRequest() checks the session: Server Actions can be POSTed to
   // directly, without the page that renders the form.
@@ -46,7 +58,7 @@ export async function updateCharacterSheet(
   if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
   if (error) return describeRejection(response, error);
-  return { saved: JSON.stringify(config) };
+  return { saved: JSON.stringify(config), unknownKeys: findUnknownKeys(config, parsed) };
 }
 
 // The backend's 422 items carry the full path ["body", "config", "jobs", 1,

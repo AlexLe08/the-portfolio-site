@@ -65,6 +65,32 @@ export function parseConfig(input: unknown): ParseResult {
   return { config: { ...shell.data, defaultJobId, jobs }, errors };
 }
 
+// Keys in the raw input that parsing dropped, as dotted paths
+// ("jobs.0.slots.skills.tooltip.subtitel"). z.object strips keys it doesn't
+// know, so a key missing from the parsed copy is one the schema doesn't
+// have: usually a typo of an optional field, which the panel then leaves
+// out. Pass the config of a parseConfig() call without errors, so its jobs
+// line up with the input's by index.
+export function findUnknownKeys(raw: unknown, parsed: unknown, path = ""): string[] {
+  if (Array.isArray(raw) && Array.isArray(parsed)) {
+    return raw.flatMap((item, index) => findUnknownKeys(item, parsed[index], join(path, index)));
+  }
+  if (!isPlainObject(raw) || !isPlainObject(parsed)) return [];
+  return Object.entries(raw).flatMap(([key, value]) =>
+    // hasOwn, not `in`: a stray "constructor" key would otherwise match
+    // the prototype and pass unreported.
+    Object.hasOwn(parsed, key) ? findUnknownKeys(value, parsed[key], join(path, key)) : [join(path, key)],
+  );
+}
+
+function join(path: string, key: string | number): string {
+  return path ? `${path}.${key}` : String(key);
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 // A content source: anything that can produce raw config data. Adapters for
 // an API, a CMS, or a remote JSON file implement this; the component never
 // knows which one it got. Resolving to undefined means the source has

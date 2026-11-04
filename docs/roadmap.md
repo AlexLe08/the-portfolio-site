@@ -466,6 +466,17 @@
   `app/admin/error.tsx`, so a cold start can't prefill a fallback that
   would then be saved over the real copy. A note says when the saved copy
   differs from `lib/character-config.json`, which shows during outages.
+  Unknown keys (typos like `subtitel`) are saved but listed as likely
+  typos, after each save and on load. `findUnknownKeys` in
+  `components/character-sheet/parse.ts` compares the raw document with
+  zod's output, since `z.object` strips keys it doesn't know; that follows
+  union branches with no second copy of the schema. Rejected: deep-strict
+  zod schemas (a second copy of every object) and walking the JSON Schema
+  (a second validator). Warn rather than block, because a typo in a
+  required field already fails as missing, so only optional fields can
+  slip through, and the site just leaves them out. The bundled
+  `lib/character-config.json` is held to more: an unknown key there fails
+  the build, like its other problems.
   Rejected: CodeMirror or Monaco (weight; PR 3's form is the real UX
   upgrade) and checking in the browser too (a second code path for one
   editor). Verified with Playwright on the demo stack: first load, invalid
@@ -484,8 +495,8 @@
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
-    Decide before content comes from a CMS; until then the raw editor
-    (`/admin/character-sheet`) can warn about them without blocking.
+    Decide before content comes from a CMS. The admin editor already warns
+    about them (`findUnknownKeys`), and a CMS adapter could do the same.
   - Slot actions that change the current page (for example filtering the
     project list), which need a small client bridge.
   - Extraction to its own repository as a React package: core, themes,
