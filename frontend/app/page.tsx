@@ -64,6 +64,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           job={job}
           renderLink={renderLink}
           renderPortrait={renderPortrait}
+          showSockets
+          showToolbar
         />
       }
     >

@@ -44,6 +44,11 @@ export type CharacterSheetProps = {
   // is narrow (touch screens have no hover tooltip); "always" shows them
   // at every width. Either way they are the slots' accessible names.
   labels?: "narrow" | "always";
+  // Decorative extras with no function yet: two socket dots on each filled
+  // slot, and a row of round buttons under the portrait. Hidden from
+  // assistive tech and not focusable until they do something.
+  showSockets?: boolean;
+  showToolbar?: boolean;
   // Accessible name for the panel landmark; also the top bar's text when
   // the config sets no title.
   label?: string;
@@ -72,6 +77,8 @@ export function CharacterSheet({
   jobParam = "job",
   theme = "document",
   labels = "narrow",
+  showSockets = false,
+  showToolbar = false,
   label = "Character sheet",
   renderLink = defaultLink,
   renderPortrait = defaultPortrait,
@@ -79,7 +86,7 @@ export function CharacterSheet({
   // Tooltip ids must be unique even with two panels on one page.
   const idPrefix = useId();
   const framing = job.portrait?.framing ?? "face";
-  const column = { job, idPrefix, renderLink, slots: config.slots };
+  const column = { job, idPrefix, renderLink, showSockets, slots: config.slots };
 
   return (
     <section className="cs" data-cs-theme={theme} data-cs-labels={labels} aria-label={label}>
@@ -146,6 +153,7 @@ export function CharacterSheet({
           )}
         </div>
         <SlotList position="right" {...column} />
+        {showToolbar && <Toolbar />}
       </div>
     </section>
   );
@@ -157,12 +165,14 @@ function SlotList({
   job,
   idPrefix,
   renderLink,
+  showSockets,
 }: {
   position: SlotPosition;
   slots: SlotDef[];
   job: Job;
   idPrefix: string;
   renderLink: RenderLink;
+  showSockets: boolean;
 }) {
   let here = slots.filter((slot) => slot.position === position);
   // One slot each side of the job title; parseConfig reports any extras.
@@ -179,6 +189,7 @@ function SlotList({
           content={job.slots[slot.id]}
           tipId={`${idPrefix}tip-${slot.id}`}
           renderLink={renderLink}
+          showSockets={showSockets}
         />
       ))}
     </ul>
@@ -199,16 +210,24 @@ function Slot({
   content,
   tipId,
   renderLink,
+  showSockets,
 }: {
   slot: SlotDef;
   content: SlotContent | undefined;
   tipId: string;
   renderLink: RenderLink;
+  showSockets: boolean;
 }) {
   const face = (
     <>
       <span className="cs-slot__square" aria-hidden="true">
         <SlotIcon slot={slot} content={content} />
+        {showSockets && content && (
+          <span className="cs-slot__sockets">
+            <span className="cs-slot__socket" />
+            <span className="cs-slot__socket" />
+          </span>
+        )}
       </span>
       <span className="cs-slot__label">{slot.label}</span>
     </>
@@ -318,6 +337,29 @@ function SlotTooltip({ id, slot, content }: { id: string; slot: SlotDef; content
           {tooltip.note && <p className="cs-tip__note">{tooltip.note}</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+// Round buttons under the portrait: three each side, the first two lit.
+// Visual only for now; when they get a job, make them real <button>s.
+const TOOLBAR_GLYPHS = { start: ["◐", "◑", "↻"], end: ["△", "◎", "↺"] };
+
+function Toolbar() {
+  return (
+    <div className="cs__toolbar" aria-hidden="true">
+      {(["start", "end"] as const).map((side) => (
+        <span key={side} className={`cs__toolbar-group cs__toolbar-group--${side}`}>
+          {TOOLBAR_GLYPHS[side].map((glyph, index) => (
+            <span
+              key={glyph}
+              className={`cs__toolbar-button${side === "start" && index < 2 ? " cs__toolbar-button--lit" : ""}`}
+            >
+              {glyph}
+            </span>
+          ))}
+        </span>
+      ))}
     </div>
   );
 }

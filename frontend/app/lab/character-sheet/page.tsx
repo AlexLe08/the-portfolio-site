@@ -16,7 +16,15 @@ const BASE_PATH = "/lab/character-sheet";
 
 export default async function CharacterSheetLabPage({ searchParams }: PageProps<"/lab/character-sheet">) {
   const job = resolveJob(characterConfig, (await searchParams).job);
-  const shared = { config: characterConfig, job, basePath: BASE_PATH, renderLink, renderPortrait };
+  const shared = {
+    config: characterConfig,
+    job,
+    basePath: BASE_PATH,
+    renderLink,
+    renderPortrait,
+    showSockets: true,
+    showToolbar: true,
+  };
 
   return (
     <Sheet title="Character sheet themes" back={{ href: "/", label: "Home" }}>

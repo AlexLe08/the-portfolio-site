@@ -101,6 +101,8 @@ const job = resolveJob(config, searchParams.job);
   job={job}
   theme="document"          // or "game"
   labels="narrow"           // slot names under squares: "narrow" (default) or "always"
+  showSockets               // optional: two decorative socket dots on each filled slot
+  showToolbar               // optional: a decorative row of round buttons under the portrait
   basePath="/"              // where the job links point
   renderLink={(p) => …}     // optional: your router's link (default <a>)
   renderPortrait={(p) => …} // optional: your image component (default <img>)
@@ -125,6 +127,10 @@ first one that yields a usable config. It never throws: problems go to
   columns become 3-column grids with the slot names showing, since touch
   screens get no tooltip. This is a container query, so it follows the
   panel's width, not the viewport.
+
+`showSockets` and `showToolbar` are visual only for now. They're hidden from
+assistive tech and aren't focusable. When either one gets a real function, make
+it a real control (`<button>`, with a label) instead.
 
 ## Theming
 
