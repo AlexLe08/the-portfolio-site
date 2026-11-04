@@ -6,7 +6,7 @@ from pydantic import SecretStr, ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import Settings, settings
-from app.models import Media, SiteContent
+from app.models import CharacterSheet, Media, SiteContent
 from app.services import media as media_service
 from tests.helpers import ADMIN_HEADERS, make_project
 
@@ -412,3 +412,38 @@ def test_usage_search_treats_like_wildcards_literally(db_session):
     db_session.commit()
 
     assert media_service.find_usages(db_session, item) == []
+
+
+def test_image_picked_as_a_portrait_is_409_and_kept(client, db_session, fake_cloudinary):
+    uploaded = post_image(client).json()
+    item = db_session.get(Media, uploaded["id"])
+    resized = item.url.replace("/upload/", "/upload/w_400/")
+    jobs = [
+        {"id": "healthcare", "portrait": {"src": item.url, "alt": "Me"}},
+        {"id": "fintech", "portrait": {"src": "https://example.com/other.jpg", "alt": "Me"}},
+        {"id": "games", "portrait": {"src": resized, "alt": "Me"}},
+    ]
+    db_session.add(CharacterSheet(id=1, config={"title": "Profile", "jobs": jobs}))
+    make_project(db_session, slug="alpha", summary=f"![x]({item.url})")
+    db_session.commit()
+
+    response = delete_image(client, item.id)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Still used in project alpha, character sheet job healthcare, character sheet job games;"
+        " remove it there first"
+    )
+    assert fake_cloudinary.destroyed == []
+    assert db_session.query(Media).count() == 1
+
+
+def test_usage_search_reports_the_character_sheet_outside_jobs(db_session):
+    item = make_media("portfolio/me-abc123")
+    db_session.add(item)
+    config = {"title": "portfolio/me-abc123", "jobs": [{"id": "healthcare"}]}
+    db_session.add(CharacterSheet(id=1, config=config))
+    db_session.commit()
+
+    assert media_service.find_usages(db_session, item) == ["character sheet"]
+    assert media_service.find_usages(db_session, make_media("portfolio/other")) == []

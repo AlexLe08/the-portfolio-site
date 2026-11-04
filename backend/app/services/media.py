@@ -5,6 +5,7 @@ Files travel browser -> Next.js Server Action -> POST /media -> Cloudinary
 the exceptions below into HTTP status codes; nothing here knows about HTTP.
 """
 
+import json
 import logging
 import re
 import unicodedata
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.core.config import settings
+from app.services import character_sheet
 
 # Vercel rejects function request bodies over 4.5 MB, and every upload
 # passes through a Server Action there first. 4 MB leaves room for the
@@ -171,7 +173,8 @@ def list_media(db: Session) -> list[models.Media]:
 def find_usages(db: Session, media: models.Media) -> list[str]:
     """Where site text embeds the image, e.g. ["project my-app", "content home.intro"].
 
-    Images are only ever pasted in as markdown, so this is a text search.
+    Images are pasted in as markdown or picked as a character sheet
+    portrait, so this is a text search.
     It looks for the public_id rather than the stored URL: the random suffix
     makes it just as unique, and it also matches resized Cloudinary URLs
     (".../upload/w_400/portfolio/..."). Drafts count, since publishing one
@@ -191,7 +194,26 @@ def find_usages(db: Session, media: models.Media) -> list[str]:
         .where(models.SiteContent.value.contains(media.public_id, autoescape=True))
         .order_by(models.SiteContent.key)
     )
-    return [f"project {slug}" for slug in projects] + [f"content {key}" for key in content]
+    return (
+        [f"project {slug}" for slug in projects]
+        + [f"content {key}" for key in content]
+        + _character_sheet_usages(db, media.public_id)
+    )
+
+
+def _character_sheet_usages(db: Session, public_id: str) -> list[str]:
+    # One small row, so it's searched in Python rather than SQL, which lets
+    # the message name the job to edit. public_ids are ASCII without
+    # quotes or backslashes, so json.dumps leaves them unescaped.
+    row = character_sheet.get_config(db)
+    if row is None:
+        return []
+    jobs = row.config.get("jobs", [])
+    usages = [f"character sheet job {job['id']}" for job in jobs if public_id in json.dumps(job)]
+    rest = {key: value for key, value in row.config.items() if key != "jobs"}
+    if public_id in json.dumps(rest):
+        usages.append("character sheet")
+    return usages
 
 
 def delete_media(db: Session, media: models.Media) -> None:
