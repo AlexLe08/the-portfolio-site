@@ -67,7 +67,9 @@ export function parseConfig(input: unknown): ParseResult {
 
 // A content source: anything that can produce raw config data. Adapters for
 // an API, a CMS, or a remote JSON file implement this; the component never
-// knows which one it got.
+// knows which one it got. Resolving to undefined means the source has
+// nothing yet (no save, an empty CMS entry): not a problem to report, so
+// loadConfig moves on to the next source quietly.
 export type ConfigSource = {
   name: string;
   load: () => Promise<unknown>;
@@ -85,7 +87,9 @@ export async function loadConfig(
 ): Promise<CharacterSheetConfig> {
   for (const source of sources) {
     try {
-      const { config, errors } = parseConfig(await source.load());
+      const raw = await source.load();
+      if (raw === undefined) continue;
+      const { config, errors } = parseConfig(raw);
       if (errors.length > 0) onIssue?.({ source: source.name, errors });
       if (config) return config;
     } catch (error) {

@@ -437,6 +437,22 @@
   (typeshed deprecates `Iterator` there). Backend suite is now 238 tests.
   Deployed: production ran the migration, `GET /character-sheet` answers
   404 "No character sheet saved yet", and an unauthenticated `PUT` is 401.
+- The home page reads the saved character sheet (admin editing, PR 2a):
+  `getCharacterConfig()` in `lib/character.ts` runs
+  `loadConfig([apiSource], bundled)`, in the page's existing
+  `Promise.all`, with a 5-second timeout like `getContent()`. A source's
+  `load()` may now resolve to `undefined` ("nothing here yet"), which
+  `loadConfig` skips without an issue; the 404 before the first save
+  uses it, so it's in the module rather than this site's glue. Reported
+  to Sentry: HTTP errors and saved copies that fail zod (a dropped job
+  lists its path). Only logged: timeouts and an unreachable backend,
+  which every cold start would otherwise report. `/lab/character-sheet`
+  loads the same way, so it keeps matching the home page. Verified locally: no save (bundled, no
+  event), a valid save (shown), a job made invalid in the database
+  (dropped, one event with `jobs.1.level`), backend stopped (bundled,
+  only `loadProjects`' existing event), and a 500 from a fake backend
+  (bundled, one event). The timeout itself wasn't exercised; it takes the
+  same `catch` as the unreachable backend.
 
 ## Next up (candidates, unordered)
 
@@ -444,9 +460,8 @@
   - A real portrait. Upload it at `/admin/media` and set `portrait` on each
     job in `lib/character-config.json` (`framing: "face"` or `"full"`).
   - More jobs, such as AI development, plus slots like Education.
-  - Admin editing, PR 2: the home page loads through
-    `loadConfig([apiSource], bundled)` (with a timeout, issues to Sentry),
-    and `/admin/character-sheet` edits the raw JSON (zod checks the whole
+  - Admin editing, PR 2b: `/admin/character-sheet` edits the raw JSON
+    (zod checks the whole
     document before saving and lists every problem by path; starts from the
     bundled file until the first save). PR 3: a structured form for the
     fields edited most.

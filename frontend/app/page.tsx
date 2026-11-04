@@ -8,7 +8,7 @@ import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { StatusMessage } from "@/components/StatusMessage";
 import { api } from "@/lib/api";
-import { characterConfig } from "@/lib/character";
+import { getCharacterConfig } from "@/lib/character";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 import { getContent, type ContentKey } from "@/lib/content";
 
@@ -46,10 +46,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
-  // Started together so the content request adds no wait of its own.
-  const [projects, content, { job: jobParam }] = await Promise.all([
+  // Started together so the content and character sheet requests add no
+  // wait of their own.
+  const [projects, content, characterConfig, { job: jobParam }] = await Promise.all([
     loadProjects(),
     getContent(),
+    getCharacterConfig(),
     searchParams,
   ]);
   const job = resolveJob(characterConfig, jobParam);
