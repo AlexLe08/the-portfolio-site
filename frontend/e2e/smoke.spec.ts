@@ -41,7 +41,8 @@ test("character sheet changes job through the URL", async ({ page }) => {
 test("project page renders its case study", async ({ page }) => {
   await page.goto("/");
   const link = page.locator(".project-list a[href^='/projects/']").first();
-  const title = (await link.locator(".project-card__title").textContent())?.trim();
+  // The link's whole text is the project title.
+  const title = (await link.textContent())?.trim();
   await link.click();
 
   // Scoped to the page header: a case study can have its own `#` heading.
