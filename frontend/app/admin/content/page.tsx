@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { updateContent } from "./actions";
 import { ContentField } from "@/components/ContentField";
+import { Sheet } from "@/components/Sheet";
 import { adminLoad } from "@/lib/admin-api";
 import { FALLBACK_CONTENT, type ContentKey } from "@/lib/content";
 
@@ -30,28 +30,18 @@ export default async function AdminContentPage() {
   const keys = Object.keys(FALLBACK_CONTENT) as ContentKey[];
 
   return (
-    <main className="sheet">
-      <div className="prose-width">
-        <Link href="/admin" className="back-link">
-          Admin
-        </Link>
-
-        <header className="detail-header">
-          <h1 className="detail-header__title">Site content</h1>
-        </header>
-
-        {keys.map((key) => (
-          <ContentField
-            key={key}
-            action={updateContent.bind(null, key)}
-            contentKey={key}
-            description={DESCRIPTIONS[key]}
-            value={stored[key] ?? FALLBACK_CONTENT[key]}
-            fallback={FALLBACK_CONTENT[key]}
-            isSet={key in stored}
-          />
-        ))}
-      </div>
-    </main>
+    <Sheet title="Site content" back={{ href: "/admin", label: "Admin" }}>
+      {keys.map((key) => (
+        <ContentField
+          key={key}
+          action={updateContent.bind(null, key)}
+          contentKey={key}
+          description={DESCRIPTIONS[key]}
+          value={stored[key] ?? FALLBACK_CONTENT[key]}
+          fallback={FALLBACK_CONTENT[key]}
+          isSet={key in stored}
+        />
+      ))}
+    </Sheet>
   );
 }

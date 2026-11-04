@@ -373,37 +373,24 @@
   `local-stack.sh` didn't blank `CLOUDINARY_URL`, so a test upload
   reached the real Cloudinary account; both now blank it (uploads get
   the 503 "not configured" message).
+- Frontend components and CSS refactor (second refactor pass, step 4 of
+  4, which completes it; no visual changes). `components/Sheet.tsx`
+  frames every page (sheet, back link, ruled header; named after the
+  `.sheet` class rather than `Page`, which reads like a `page.tsx`
+  route), and `components/StatusMessage.tsx` replaces 15 hand-written
+  `form-status` divs, deriving the ARIA role from the tone. Three inline
+  margins became classes (`home-intro`, `contact-intro`,
+  `contact-elsewhere`). In `globals.css`, the sheet and the site header
+  share one width rule (they must line up), and the page-title,
+  stack-row, and narrow-screen title-block rules are merged; a
+  `.form-button:focus-visible` that repeated the global ring is gone.
+  Verified by 21 before/after screenshots (public pages at 1280 and 390
+  wide, every admin page, each status message, backend-down pages),
+  identical byte for byte, plus computed focus rings. Not extracted: a
+  `FormField` wrapper or `SubmitButton` (the fields differ too much),
+  and a shared `ErrorNotice` (see below).
 
 ## Next up (candidates, unordered)
-
-- Second refactor pass (planned 2026-11-03, four PRs, in order; no
-  behavior changes beyond those listed). Comments are trimmed in the PR
-  that touches each file: keep the why (platform limits, security,
-  incidents, mirrored rules), cut restated code and framework tutorials.
-  1. Backend code: 404 lookups as FastAPI dependencies
-     (`existing_project`, `existing_media`); one exception-to-HTTP
-     mapping in `routers/media.py`; `Annotated` field types in
-     `schemas.py` with lengths from constants in `models.py`; one `_post`
-     for both notifiers; one `_destroy` for Cloudinary (fixes
-     `_delete_quietly` having no timeout); one origin splitter in
-     `config.py`. `openapi.json` must not change.
-  2. (Done.) Backend tests: `contact_payload`, `project_payload`, and a fast
-     argon2 hash in `tests/helpers.py`; one parametrized credentials test
-     over every admin route, plus a guard test that fails when a route
-     outside a public allowlist lacks `require_admin`; one fake
-     `httpx2.post`; the pinned-settings fixtures merged.
-  3. (Done.) Frontend lib and actions: `adminRequest()` (actions) and
-     `adminLoad()` (pages) in `lib/admin-api.ts` replace the repeated
-     try/catch and 401 handling; `formText()`; `checkAltText()` and
-     upload-limit text built from `lib/media-rules.ts`; shared
-     `describeRetryAfter()`, `SERVER_UNREACHABLE` in ContactForm, and
-     `describeSaveFailure()` (content and alt-text saves gain 422 field
-     details; the login 429 text matches the contact form's).
-  4. Frontend components and CSS: `StatusMessage` (the `form-status`
-     div) and `Page` (sheet, back link, header); inline styles to
-     classes, duplicate CSS rules merged. Verified by before/after
-     screenshots. Not extracted: a `FormField` wrapper or `SubmitButton`
-     (fields differ too much), and the error boundaries (see below).
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a

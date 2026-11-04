@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { login } from "@/app/admin/actions";
+import { StatusMessage } from "@/components/StatusMessage";
 
 // A client component only for useActionState, which tracks the pending
 // state and the error the login action returns. The form posts straight
@@ -27,15 +28,11 @@ export function LoginForm() {
         />
       </div>
 
-      {state?.error && (
-        <div className="form-status form-status--error" role="alert">
-          {state.error}
-        </div>
-      )}
+      {state?.error && <StatusMessage tone="error">{state.error}</StatusMessage>}
       {pending && (
-        <div className="form-status" role="status">
+        <StatusMessage tone="info">
           Signing in. If the server is asleep, this can take up to a minute.
-        </div>
+        </StatusMessage>
       )}
 
       <div className="form-actions">

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { DeleteMediaState } from "@/app/admin/media/actions";
 import { useDeleteNotice } from "@/components/MediaDeleteNotice";
+import { StatusMessage } from "@/components/StatusMessage";
 
 type Props = {
   // deleteMedia bound to this image's id.
@@ -37,11 +38,7 @@ export function MediaDeleteButton({ action, altText }: Props) {
 
   return (
     <div className="form-actions">
-      {error && (
-        <div className="form-status form-status--error" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <StatusMessage tone="error">{error}</StatusMessage>}
       <button type="button" className="form-button" disabled={pending} onClick={onClick}>
         {pending ? "Deleting…" : "Delete"}
         <span className="visually-hidden"> {altText}</span>

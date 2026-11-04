@@ -93,17 +93,25 @@ button:focus-visible {
 /* ---------------------------------------------------------------------
    Layout shell
    ------------------------------------------------------------------ */
-.sheet {
+/* The site header's inner row shares the sheet's width and side padding,
+   so the name lines up with the page content. */
+.sheet,
+.site-header__inner {
   width: 100%;
   max-width: var(--sheet-width);
   margin-inline: auto;
-  padding: 2.5rem 1.5rem 5rem;
+  padding-inline: 1.5rem;
 }
 
 @media (min-width: 640px) {
-  .sheet {
+  .sheet,
+  .site-header__inner {
     padding-inline: 2.5rem;
   }
+}
+
+.sheet {
+  padding-block: 2.5rem 5rem;
 }
 
 .prose-width {
@@ -125,10 +133,15 @@ button:focus-visible {
   padding: 1.75rem 1.5rem 1.25rem;
 }
 
-.title-block__name {
+/* The home page's name and every other page's h1. */
+.title-block__name,
+.detail-header__title {
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+.title-block__name {
   line-height: 1.15;
 }
 
@@ -144,12 +157,6 @@ button:focus-visible {
   border-top: 1px solid var(--rule-strong);
 }
 
-@media (max-width: 560px) {
-  .title-block__facts {
-    grid-template-columns: 1fr;
-  }
-}
-
 .title-block__fact {
   padding: 0.85rem 1.5rem;
   border-left: 1px solid var(--rule);
@@ -160,6 +167,9 @@ button:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .title-block__facts {
+    grid-template-columns: 1fr;
+  }
   .title-block__fact {
     border-left: none;
     border-top: 1px solid var(--rule);
@@ -191,6 +201,19 @@ button:focus-visible {
 
 .intro p + p {
   margin-top: 0.9rem;
+}
+
+.home-intro {
+  margin-top: 1.75rem;
+}
+
+.contact-intro {
+  margin-bottom: 2rem;
+}
+
+/* The profile links under the contact form. */
+.contact-elsewhere {
+  margin-top: 2rem;
 }
 
 /* ---------------------------------------------------------------------
@@ -281,10 +304,14 @@ button:focus-visible {
   max-width: 60ch;
 }
 
-.project-card__stack {
+.project-card__stack,
+.detail-header__stack {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+}
+
+.project-card__stack {
   margin-top: 0.85rem;
 }
 
@@ -307,16 +334,10 @@ button:focus-visible {
 }
 
 .detail-header__title {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .detail-header__stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
   margin-top: 0.9rem;
 }
 
@@ -386,7 +407,6 @@ button:focus-visible {
   font-size: 0.9375rem;
 }
 
-
 /* ---------------------------------------------------------------------
    Site header
    Present on every page via layout.tsx. Deliberately quiet -- the home
@@ -398,20 +418,11 @@ button:focus-visible {
 }
 
 .site-header__inner {
-  width: 100%;
-  max-width: var(--sheet-width);
-  margin-inline: auto;
-  padding: 1rem 1.5rem;
+  padding-block: 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .site-header__inner {
-    padding-inline: 2.5rem;
-  }
 }
 
 .site-header__brand {
@@ -516,11 +527,6 @@ button:focus-visible {
   border-color: var(--signal);
 }
 
-.form-button:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
-}
-
 .form-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -548,6 +554,7 @@ button:focus-visible {
   background: var(--signal-soft);
   border-color: color-mix(in srgb, var(--signal) 45%, transparent);
 }
+
 /* ---------------------------------------------------------------------
    Admin
    Same document language as the public pages: ruled table, muted
@@ -649,10 +656,9 @@ button:focus-visible {
   border: 1px solid var(--rule);
 }
 
+/* Block, so the global focus ring goes around the whole thumbnail. */
 .admin-table__thumb a:focus-visible {
   display: block;
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
 }
 
 .media-markdown__label {
