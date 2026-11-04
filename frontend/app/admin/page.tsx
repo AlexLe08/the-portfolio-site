@@ -43,6 +43,11 @@ export default async function AdminPage() {
       </div>
 
       <div className="admin-toolbar admin-toolbar--section">
+        <h2 className="admin-heading">Character sheet</h2>
+        <Link href="/admin/character-sheet">Edit character sheet</Link>
+      </div>
+
+      <div className="admin-toolbar admin-toolbar--section">
         <h2 className="admin-heading">Media</h2>
         <Link href="/admin/media">Upload images</Link>
       </div>

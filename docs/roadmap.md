@@ -453,6 +453,26 @@
   only `loadProjects`' existing event), and a 500 from a fake backend
   (bundled, one event). The timeout itself wasn't exercised; it takes the
   same `catch` as the unreachable backend.
+- Character sheet editor (admin editing, PR 2b): `/admin/character-sheet`
+  edits the whole config as raw JSON in a textarea, matching
+  `PUT /character-sheet`. The Server Action runs `parseConfig` strictly
+  (any problem blocks the save, each listed by path inside the alert), the
+  same rule as the bundled file's build check, because the backend's JSON
+  Schema can't see duplicate ids, a job naming an unknown slot, or a
+  `defaultJobId` with no job. It sends the document as written, not zod's
+  output, which would drop unknown keys. Backend 422s show their full path
+  after `config`, not only the last segment. The page starts from the
+  bundled file only on a 404; any other load failure shows
+  `app/admin/error.tsx`, so a cold start can't prefill a fallback that
+  would then be saved over the real copy. A note says when the saved copy
+  differs from `lib/character-config.json`, which shows during outages.
+  Rejected: CodeMirror or Monaco (weight; PR 3's form is the real UX
+  upgrade) and checking in the browser too (a second code path for one
+  editor). Verified with Playwright on the demo stack: first load, invalid
+  JSON, cross-field problems (nothing sent), a save shown on the home page,
+  reload, and the backend down on save (edit kept) and on load. Not
+  exercised: a backend 422 or 413, which zod and the size cap make hard to
+  reach from the form.
 
 ## Next up (candidates, unordered)
 
@@ -460,16 +480,12 @@
   - A real portrait. Upload it at `/admin/media` and set `portrait` on each
     job in `lib/character-config.json` (`framing: "face"` or `"full"`).
   - More jobs, such as AI development, plus slots like Education.
-  - Admin editing, PR 2b: `/admin/character-sheet` edits the raw JSON
-    (zod checks the whole
-    document before saving and lists every problem by path; starts from the
-    bundled file until the first save). PR 3: a structured form for the
-    fields edited most.
+  - Admin editing, PR 3: a structured form for the fields edited most.
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
-    Decide before content comes from a CMS; until then the PR 2 editor
-    can warn about them.
+    Decide before content comes from a CMS; until then the raw editor
+    (`/admin/character-sheet`) can warn about them without blocking.
   - Slot actions that change the current page (for example filtering the
     project list), which need a small client bridge.
   - Extraction to its own repository as a React package: core, themes,

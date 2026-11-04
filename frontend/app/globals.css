@@ -729,6 +729,22 @@ button:focus-visible {
   border-bottom: 1px solid var(--rule);
 }
 
+/* Raw JSON on /admin/character-sheet: no wrapping, so indentation reads. */
+.json-editor {
+  font-family: var(--font-technical);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.json-editor__problems {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-family: var(--font-technical);
+  font-size: 0.8125rem;
+}
+
 .content-field__key {
   display: block;
   font-family: var(--font-technical);
