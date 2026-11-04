@@ -458,7 +458,15 @@
   - Extraction to its own repository as a React package: core, themes,
     schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
     the core never imports a CMS SDK), and a demo site. A custom-element
-    wrapper only if someone asks for one.
+    wrapper only if someone asks for one. Backend code stays out of it
+    (decided with PR #54): the package ships the JSON Schema as the
+    contract, which any backend can validate against in its own language,
+    and this site's FastAPI storage stays here as one example of a backend
+    using it. The schema gets a versioned `$id`, and `backend/` then copies
+    it from the installed package instead of the frontend folder. A Python
+    validator package (`find_issues` and its `oneOf` explanation) only if
+    someone asks, and then in the same repository, so it ships with the
+    schema version it checks.
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
