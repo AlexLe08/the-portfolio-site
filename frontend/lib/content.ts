@@ -18,7 +18,7 @@ export const FALLBACK_CONTENT = {
   "home.intro":
     "This site documents three recent projects end to end: the architecture decisions, the tests that caught real bugs, and the incidents that shaped the final design. The first is this site itself.",
   "contact.intro":
-    "Questions about a case study, or a role you think fits? Send a message and I'll reply by email.",
+    "Questions about a project, or a role you think fits? Send a message and I'll reply by email.",
 };
 
 export type ContentKey = keyof typeof FALLBACK_CONTENT;

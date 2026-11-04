@@ -400,11 +400,8 @@
   separate (own `<html>`, styles, Sentry).
 
 - Project deletion, only if unpublishing ever stops being enough.
-- Content follow-ups, now doable at `/admin/content` and
-  `/admin/projects`: the owner's own `contact.intro` (the current text
-  was drafted by Claude), and `repo_url`s for other repositories as they
-  go public. Then sync the fallbacks in `lib/content.ts`; the editor
-  flags every key whose stored value differs.
+- Content follow-up, doable at `/admin/projects`: `repo_url`s for other
+  repositories as they go public.
 - Every secret setting as `SecretStr` (`JWT_SECRET`, `ADMIN_API_KEY`,
   `ADMIN_PASSWORD_HASH`, `DATABASE_URL`, `RESEND_API_KEY`,
   `DISCORD_WEBHOOK_URL`), only if settings ever get printed: `SecretStr`
