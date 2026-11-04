@@ -33,7 +33,8 @@ Backend (run from `backend/`, always via venv binaries; there is no plain
 - New migration after editing `app/models.py`:
   `./.venv/bin/alembic revision --autogenerate -m "describe change"`, then
   read the generated file before upgrading. Autogenerate treats a column
-  rename as drop + add, which deletes data.
+  rename as drop + add, which deletes data. Then run
+  `scripts/check-migration.sh` to try it on Postgres.
 
 Frontend (run from `frontend/`; expects the backend at
 `NEXT_PUBLIC_API_URL`, default `http://localhost:8000`):
@@ -67,6 +68,13 @@ retyping the commands they wrap; each explains itself in its header:
 - `scripts/new-worktree.sh <branch>`: next task's worktree from
   `origin/main`, with no upstream (so a bare `git push` can't hit `main`),
   then `setup-worktree.sh`.
+- `scripts/check-migration.sh [table ...]`: migrations up, down, up,
+  and `alembic check` on a throwaway Postgres container and a throwaway
+  SQLite file, then the Postgres table definitions. Run after every new
+  migration (CI only runs SQLite). Needs Docker running.
+- `scripts/mutate.py FILE OLD NEW [-- pytest args]` (or a JSON list of
+  changes): breaks code on purpose and reports which backend tests catch
+  it. Use it on new logic whose tests passed on the first run.
 - `scripts/fake-backend.py [port]`: fake API (`/__mode/ok|500|down`,
   optionally `?path=`) plus a fake Sentry endpoint that logs envelopes,
   for testing outage handling and what gets reported.

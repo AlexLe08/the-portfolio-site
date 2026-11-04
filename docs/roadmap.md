@@ -435,6 +435,8 @@
   not `Any`. Migration checked on Postgres 16 and SQLite. Also:
   `@contextmanager` functions return `Generator[None, None, None]`
   (typeshed deprecates `Iterator` there). Backend suite is now 238 tests.
+  Deployed: production ran the migration, `GET /character-sheet` answers
+  404 "No character sheet saved yet", and an unauthenticated `PUT` is 401.
 
 ## Next up (candidates, unordered)
 
