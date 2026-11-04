@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import type { Job } from "@/components/character-sheet/types";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
+import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
 import { useSaveAction } from "@/lib/use-save-action";
 
 // Max lengths read from the zod schema by the page (null: no limit), so the
@@ -21,6 +21,8 @@ type Props = {
   // the way the home page renders a job's sections.
   slots: { id: string; label: string }[];
   limits: JobFieldLimits;
+  // For the portrait; null when loading them failed.
+  uploads: PortraitUpload[] | null;
   // As in CharacterSheetEditor.
   bundled: string;
   stored: string | null;
@@ -29,7 +31,7 @@ type Props = {
 
 // The fields of one job edited most. updateCharacterJob writes them into
 // the saved copy and leaves the rest of the document alone.
-export function CharacterJobForm({ action, job, slots, limits, bundled, stored, unknownKeys }: Props) {
+export function CharacterJobForm({ action, job, slots, limits, uploads, bundled, stored, unknownKeys }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
   const max = (limit: number | null) => limit ?? undefined;
@@ -143,35 +145,13 @@ export function CharacterJobForm({ action, job, slots, limits, bundled, stored, 
 
       <fieldset className="form-group">
         <legend className="admin-heading">Portrait</legend>
-        <div className="form-field">
-          <label htmlFor="portrait_src" className="form-label">
-            Image URL
-          </label>
-          <input
-            id="portrait_src"
-            name="portrait_src"
-            maxLength={max(limits.portraitSrc)}
-            defaultValue={job.portrait?.src ?? ""}
-            aria-describedby="portrait-src-help"
-            className="form-input"
-          />
-          <p id="portrait-src-help" className="form-help">
-            Optional. Upload images at <Link href="/admin/media">Media</Link>. Empty removes the portrait, alt text included.
-          </p>
-        </div>
-
-        <div className="form-field">
-          <label htmlFor="portrait_alt" className="form-label">
-            Alt text
-          </label>
-          <input
-            id="portrait_alt"
-            name="portrait_alt"
-            maxLength={max(limits.portraitAlt)}
-            defaultValue={job.portrait?.alt ?? ""}
-            className="form-input"
-          />
-        </div>
+        <PortraitPicker
+          uploads={uploads}
+          src={job.portrait?.src ?? ""}
+          alt={job.portrait?.alt ?? ""}
+          srcMaxLength={max(limits.portraitSrc)}
+          altMaxLength={max(limits.portraitAlt)}
+        />
 
         <div className="form-field">
           <label htmlFor="portrait_framing" className="form-label">

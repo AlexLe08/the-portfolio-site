@@ -105,7 +105,7 @@ function throwawayLogin() {
 // Seeds a throwaway database, builds the frontend (skip with build: false
 // when .next already holds a build pointed at localhost:8000), and starts
 // both apps. Returns { baseUrl, apiUrl, adminPassword, backend: { start,
-// stop }, stop }.
+// stop }, dbPath, stop }.
 export async function startStack({ build = true } = {}) {
   await assertPortFree(8000);
   await assertPortFree(3000);
@@ -156,6 +156,8 @@ export async function startStack({ build = true } = {}) {
     baseUrl: BASE_URL,
     apiUrl: API_URL,
     adminPassword: admin.password,
+    // For rows seed.py doesn't make, such as media (uploads are off here).
+    dbPath: `${dbDir}/demo.db`,
     backend,
     async stop() {
       await Promise.all([backend.stop(), stopProcess(next)]);

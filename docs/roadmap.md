@@ -523,7 +523,16 @@
     pasting a URL. Frontend only: `GET /admin/media` already returns
     `url`, `alt_text`, `width`, and `height`. Keep "no portrait" and a
     pasted URL as options; picking an image can prefill its alt text.
-    Asked for after #57.
+    Asked for after #57. In progress: `components/PortraitPicker.tsx`, a
+    radio group (no portrait, upload thumbnails, pasted URL) that submits
+    the same `portrait_src` field, so `updateCharacterJob` is unchanged.
+  - Media delete guard for portraits (backend, small PR after the
+    picker): `find_usages` in `backend/app/services/media.py` searches
+    projects and site content but not the `character_sheet` table, so an
+    image picked as a portrait can be deleted at `/admin/media` and the
+    home page then shows a broken image. Add a search of the stored
+    config's text (reported as e.g. "character sheet job healthcare") and
+    a test.
   - A real portrait. Upload it at `/admin/media` and pick it for each job
     in the form, then copy the result into `lib/character-config.json`
     (`framing: "face"` or `"full"`) so outages show it too.

@@ -607,6 +607,86 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Portrait picker: "No portrait", a grid of uploads, then a pasted URL,
+   all one radio group. The picked tile takes the signal border. */
+.portrait-picker {
+  border: 0;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.portrait-picker .form-check {
+  margin-bottom: 0.75rem;
+}
+
+.portrait-picker__uploads {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.75rem;
+}
+
+.portrait-picker__upload {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  height: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+}
+
+.portrait-picker__upload:has(input:checked) {
+  border-color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.portrait-picker__upload input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--signal);
+}
+
+.portrait-picker__upload input:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* Square, like the portrait frame, whatever the upload's shape. */
+.portrait-picker__upload img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.portrait-picker__caption {
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.portrait-picker__size {
+  display: block;
+  font-family: var(--font-technical);
+  color: var(--muted);
+}
+
+/* .form-check sizes every input like its checkbox; this one is text, and
+   wraps under its label on narrow screens. */
+.portrait-picker__pasted {
+  flex-wrap: wrap;
+}
+
+.portrait-picker__pasted .form-input {
+  flex: 1 1 14rem;
+  width: auto;
+  height: auto;
+}
+
 .admin-toolbar {
   display: flex;
   justify-content: space-between;
