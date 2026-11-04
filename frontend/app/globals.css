@@ -729,7 +729,7 @@ button:focus-visible {
   border-bottom: 1px solid var(--rule);
 }
 
-/* Raw JSON on /admin/character-sheet: no wrapping, so indentation reads. */
+/* Raw JSON on /admin/character-sheet/json: no wrapping, so indentation reads. */
 .json-editor {
   font-family: var(--font-technical);
   font-size: 0.8125rem;
@@ -743,6 +743,62 @@ button:focus-visible {
   padding-left: 1.25rem;
   font-family: var(--font-technical);
   font-size: 0.8125rem;
+}
+
+/* The job links on /admin/character-sheet. The current job reads as plain
+   text, like a selected tab without the tab. */
+.job-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.job-picker a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-intro {
+  margin-bottom: 2rem;
+}
+
+/* A ruled group of fields; the legend reads like an admin heading. */
+.form-group {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 0 0 1.5rem;
+  padding: 1rem 0 0;
+}
+
+.form-group > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.form-group > legend + * {
+  clear: left;
+}
+
+/* A note on the whole group, above its first field. */
+.form-group > .form-help {
+  margin: 0 0 1.25rem;
+}
+
+.form-more > summary {
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--signal);
+  margin-bottom: 1.25rem;
+}
+
+.form-more > summary:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
 }
 
 .content-field__key {

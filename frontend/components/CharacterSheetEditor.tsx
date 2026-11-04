@@ -1,8 +1,7 @@
 "use client";
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
-import { SaveStatus } from "@/components/SaveStatus";
-import { StatusMessage } from "@/components/StatusMessage";
+import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
 import { useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
@@ -13,27 +12,14 @@ type Props = {
   // before the first save), compared to explain what the site shows.
   bundled: string;
   stored: string | null;
-  // Keys in the stored copy that the schema doesn't have (see
-  // findUnknownKeys); a save replaces them with its own list.
   unknownKeys: string[];
 };
 
 // The whole config as raw JSON, matching PUT /character-sheet, which
-// replaces the document. The structured form for common edits is PR 3.
+// replaces the document. CharacterJobForm covers the common edits.
 export function CharacterSheetEditor({ action, value, bundled, stored, unknownKeys }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
-
-  // After a save the page isn't re-fetched, so use what was just saved.
-  const lastSave = state && "saved" in state ? state : null;
-  const current = lastSave ? lastSave.saved : stored;
-  const ignoredKeys = lastSave ? lastSave.unknownKeys : unknownKeys;
-  let note;
-  if (current === null) {
-    note = "Not saved yet: the site shows lib/character-config.json, which this starts from.";
-  } else if (current !== bundled) {
-    note =
-      "Differs from lib/character-config.json, which shows during outages. Update it there too.";
-  }
+  const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
 
   return (
     <form onSubmit={onSubmit}>
@@ -59,30 +45,7 @@ export function CharacterSheetEditor({ action, value, bundled, stored, unknownKe
         </p>
       </div>
 
-      {/* The list goes inside the alert, so it's read out with the error. */}
-      {state && "problems" in state && state.problems ? (
-        <StatusMessage tone="error">
-          {state.error}
-          <ul className="json-editor__problems">
-            {state.problems.map((problem) => (
-              <li key={problem}>{problem}</li>
-            ))}
-          </ul>
-        </StatusMessage>
-      ) : (
-        <SaveStatus state={state} pending={pending} />
-      )}
-      {/* Saved anyway: the panel just leaves these out (see actions.ts). */}
-      {ignoredKeys.length > 0 && !pending && (
-        <StatusMessage tone="info">
-          The site ignores these keys, which the schema doesn&rsquo;t have. Typos?
-          <ul className="json-editor__problems">
-            {ignoredKeys.map((key) => (
-              <li key={key}>{key}</li>
-            ))}
-          </ul>
-        </StatusMessage>
-      )}
+      <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={unknownKeys} />
 
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>
