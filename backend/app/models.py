@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text, func
+from pydantic import JsonValue
+from sqlalchemy import JSON, Boolean, CheckConstraint, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -44,6 +45,29 @@ class SiteContent(Base):
 
     key: Mapped[str] = mapped_column(String(CONTENT_KEY_LENGTH), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class CharacterSheet(Base):
+    """The home page's character sheet config, edited as one JSON document.
+
+    A single row (the check constraint keeps it that way): the frontend
+    loads the whole document at once and falls back to its bundled copy
+    while no row exists. JSON rather than Postgres's JSONB, because JSON
+    keeps the document's key order, which matters when editing it raw.
+    """
+
+    __tablename__ = "character_sheet"
+    __table_args__ = (CheckConstraint("id = 1", name="character_sheet_single_row"),)
+
+    # Always 1, never generated, so Postgres creates no id sequence.
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    # Typed as "a JSON object", not the config's exact shape: the backend
+    # never reads inside it, and the shape is owned by the frontend's zod
+    # schema (enforced here through the JSON Schema generated from it).
+    config: Mapped[dict[str, JsonValue]] = mapped_column(JSON)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

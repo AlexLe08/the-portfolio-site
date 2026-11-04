@@ -622,6 +622,84 @@
         }
       }
     },
+    "/character-sheet": {
+      "get": {
+        "tags": [
+          "character-sheet"
+        ],
+        "summary": "Get Character Sheet",
+        "operationId": "get_character_sheet_character_sheet_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterSheetEntry"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "character-sheet"
+        ],
+        "summary": "Put Character Sheet",
+        "operationId": "put_character_sheet_character_sheet_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CharacterSheetUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterSheetEntry"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Config too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ]
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -700,6 +778,46 @@
           "file"
         ],
         "title": "Body_upload_media_media_post"
+      },
+      "CharacterSheetEntry": {
+        "properties": {
+          "config": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Config"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "config",
+          "updated_at"
+        ],
+        "title": "CharacterSheetEntry"
+      },
+      "CharacterSheetUpdate": {
+        "properties": {
+          "config": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Config"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "title": "CharacterSheetUpdate",
+        "description": "The whole config, replacing the stored one.\n\nTyped only as a JSON object: its shape is checked against the JSON\nSchema in services/character_sheet.py, generated from the frontend's\nzod schema, so the rules live in one place."
       },
       "ContactConfirmation": {
         "properties": {
@@ -818,6 +936,7 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "JsonValue": {},
       "MediaCreate": {
         "properties": {
           "alt_text": {

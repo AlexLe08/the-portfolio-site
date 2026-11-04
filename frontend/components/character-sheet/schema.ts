@@ -61,7 +61,13 @@ export const slotActionSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("external"),
-    href: z.url({ protocol: /^https?$/ }).max(300),
+    // The regex repeats the protocol rule because z.url's `protocol` option
+    // doesn't carry over to the generated JSON Schema (it becomes only
+    // "format": "uri"), and the backend validates against that schema.
+    href: z
+      .url({ protocol: /^https?$/ })
+      .regex(/^https?:\/\//, "an http or https URL")
+      .max(300),
     newTab: z.boolean().optional().describe("Open in a new tab. Off by default."),
   }),
   z.object({ kind: z.literal("none") }),

@@ -194,6 +194,24 @@ export interface paths {
         patch: operations["update_media_media__media_id__patch"];
         trace?: never;
     };
+    "/character-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Character Sheet */
+        get: operations["get_character_sheet_character_sheet_get"];
+        /** Put Character Sheet */
+        put: operations["put_character_sheet_character_sheet_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -243,6 +261,32 @@ export interface components {
              */
             file: string;
         } & components["schemas"]["MediaCreate"];
+        /** CharacterSheetEntry */
+        CharacterSheetEntry: {
+            /** Config */
+            config: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * CharacterSheetUpdate
+         * @description The whole config, replacing the stored one.
+         *
+         *     Typed only as a JSON object: its shape is checked against the JSON
+         *     Schema in services/character_sheet.py, generated from the frontend's
+         *     zod schema, so the rules live in one place.
+         */
+        CharacterSheetUpdate: {
+            /** Config */
+            config: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+        };
         /** ContactConfirmation */
         ContactConfirmation: {
             /** Id */
@@ -302,6 +346,7 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        JsonValue: unknown;
         /**
          * MediaCreate
          * @description The form fields sent alongside the file in POST /media.
@@ -884,6 +929,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MediaRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_character_sheet_character_sheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CharacterSheetEntry"];
+                };
+            };
+        };
+    };
+    put_character_sheet_character_sheet_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CharacterSheetUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CharacterSheetEntry"];
+                };
+            };
+            /** @description Config too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
                 };
             };
             /** @description Validation Error */

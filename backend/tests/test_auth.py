@@ -155,6 +155,7 @@ PUBLIC_OPERATIONS = {
     "GET /projects",
     "GET /projects/{slug}",
     "GET /content",
+    "GET /character-sheet",
     "POST /contact",
     "POST /auth/login",
 }
