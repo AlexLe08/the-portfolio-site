@@ -514,28 +514,37 @@
   saved), and the backend down on save (edit kept). Merged as #57 and
   deployed 2026-11-04 (`74d092f`); editing jobs through the form was
   confirmed working in production.
+- Portrait picker: the form's portrait is picked from the uploads at
+  `/admin/media` (thumbnail grid, newest first), a pasted URL, or none,
+  all one radio group (`components/PortraitPicker.tsx`). It submits the
+  same `portrait_src` field the URL input did, so `updateCharacterJob` is
+  unchanged. Picking an upload fills in its alt text unless the alt text
+  was written by hand. The page loads uploads with `adminRequest`, so a
+  failed media list leaves the URL option working instead of showing the
+  error page. Rejected: a `<select>` (no thumbnails) and a modal gallery
+  (focus trapping for a handful of images). The demo stack now returns
+  `dbPath`, so demo scripts can insert media rows (uploads are off
+  there). Verified with Playwright on the demo stack (11 asserted steps,
+  inline-SVG uploads, so Cloudinary thumbnails weren't exercised). Merged
+  as #58 and deployed 2026-11-04 (`85aafbd`); not yet tried in production.
+- Media delete guard for portraits: `find_usages` also searches the
+  stored character sheet, so deleting an image a job still uses is a 409
+  naming the job ("character sheet job healthcare"; plain "character
+  sheet" for a match outside `jobs`). The one row is searched in Python,
+  each job's JSON as text, rather than with a SQL cast to text, which could
+  only say "character sheet". Still a text search, so resized URLs and an
+  image anywhere in a job count. Not covered: the frontend's bundled
+  `lib/character-config.json`, which the backend can't see, so an image
+  copied there can still be deleted. Mutation-checked (6 of 6 caught).
 
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
-  - Portrait picker (next; branch `feat/portrait-picker`): choose the
-    portrait from images already uploaded at `/admin/media` instead of
-    pasting a URL. Frontend only: `GET /admin/media` already returns
-    `url`, `alt_text`, `width`, and `height`. Keep "no portrait" and a
-    pasted URL as options; picking an image can prefill its alt text.
-    Asked for after #57. In progress: `components/PortraitPicker.tsx`, a
-    radio group (no portrait, upload thumbnails, pasted URL) that submits
-    the same `portrait_src` field, so `updateCharacterJob` is unchanged.
-  - Media delete guard for portraits (backend, small PR after the
-    picker): `find_usages` in `backend/app/services/media.py` searches
-    projects and site content but not the `character_sheet` table, so an
-    image picked as a portrait can be deleted at `/admin/media` and the
-    home page then shows a broken image. Add a search of the stored
-    config's text (reported as e.g. "character sheet job healthcare") and
-    a test.
-  - A real portrait. Upload it at `/admin/media` and pick it for each job
-    in the form, then copy the result into `lib/character-config.json`
-    (`framing: "face"` or `"full"`) so outages show it too.
+  - A real portrait (next). Upload it at `/admin/media` and pick it for
+    each job in the form, then copy the result into
+    `lib/character-config.json` (`framing: "face"` or `"full"`) so outages
+    show it too. The delete guard doesn't see that copy, so don't delete
+    the upload afterwards.
   - More jobs, such as AI development, plus slots like Education.
   - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
     note, stat; `items` mixes strings and label/value pairs, so it needs
