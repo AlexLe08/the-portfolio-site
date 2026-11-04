@@ -19,8 +19,9 @@ export async function adminApi() {
 
 type AdminClient = Awaited<ReturnType<typeof adminApi>>;
 
-// For admin Server Actions. Returns null when the call throws (network
-// failure or timeout), so the action can show SERVER_UNREACHABLE. The
+// For admin Server Actions, and for pages that can do without the data.
+// Returns null when the call throws (network failure or timeout), so the
+// action can show SERVER_UNREACHABLE. The
 // redirects stay outside the try: redirect() works by throwing.
 export async function adminRequest<Result extends { response: Response }>(
   call: (api: AdminClient) => Promise<Result>,

@@ -3,8 +3,10 @@ import { updateCharacterJob } from "./actions";
 import { jobHref, resolveJob } from "@/components/character-sheet/resolve";
 import { jobSchema, portraitSchema } from "@/components/character-sheet/schema";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
+import type { PortraitUpload } from "@/components/PortraitPicker";
 import { Sheet } from "@/components/Sheet";
 import { StatusMessage } from "@/components/StatusMessage";
+import { adminRequest } from "@/lib/admin-api";
 import { loadCharacterSheetForAdmin } from "@/lib/character-admin";
 
 export const metadata = {
@@ -32,9 +34,10 @@ const LIMITS: JobFieldLimits = {
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
-  const [{ parsed, bundled, stored, unknownKeys }, { job: jobParam }] = await Promise.all([
+  const [{ parsed, bundled, stored, unknownKeys }, { job: jobParam }, uploads] = await Promise.all([
     loadCharacterSheetForAdmin(),
     searchParams,
+    loadUploads(),
   ]);
   const jsonLink = <Link href={`${BASE_PATH}/json`}>Edit as JSON</Link>;
 
@@ -89,10 +92,21 @@ export default async function AdminCharacterSheetPage({
         job={job}
         slots={config.slots.map(({ id, label }) => ({ id, label }))}
         limits={LIMITS}
+        uploads={uploads}
         bundled={bundled}
         stored={stored}
         unknownKeys={unknownKeys}
       />
     </Sheet>
+  );
+}
+
+// The portrait picker's choices. Without them the form still works with a
+// pasted URL, so a failed load shows a note instead of the error page.
+// Only the fields the picker shows go to the browser.
+async function loadUploads(): Promise<PortraitUpload[] | null> {
+  const result = await adminRequest((api) => api.GET("/admin/media"));
+  return (
+    result?.data?.map(({ url, alt_text, width, height }) => ({ url, alt_text, width, height })) ?? null
   );
 }

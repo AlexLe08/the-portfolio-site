@@ -511,13 +511,31 @@
   tab kept by a later form save, title/icon/section edits shown on the
   home page, switching jobs, a portrait added then removed, an empty
   title past the browser's check (listed as `jobs.1.title`, nothing
-  saved), and the backend down on save (edit kept).
+  saved), and the backend down on save (edit kept). Merged as #57 and
+  deployed 2026-11-04 (`74d092f`); editing jobs through the form was
+  confirmed working in production.
 
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
-  - A real portrait. Upload it at `/admin/media` and set `portrait` on each
-    job in `lib/character-config.json` (`framing: "face"` or `"full"`).
+  - Portrait picker (next; branch `feat/portrait-picker`): choose the
+    portrait from images already uploaded at `/admin/media` instead of
+    pasting a URL. Frontend only: `GET /admin/media` already returns
+    `url`, `alt_text`, `width`, and `height`. Keep "no portrait" and a
+    pasted URL as options; picking an image can prefill its alt text.
+    Asked for after #57. In progress: `components/PortraitPicker.tsx`, a
+    radio group (no portrait, upload thumbnails, pasted URL) that submits
+    the same `portrait_src` field, so `updateCharacterJob` is unchanged.
+  - Media delete guard for portraits (backend, small PR after the
+    picker): `find_usages` in `backend/app/services/media.py` searches
+    projects and site content but not the `character_sheet` table, so an
+    image picked as a portrait can be deleted at `/admin/media` and the
+    home page then shows a broken image. Add a search of the stored
+    config's text (reported as e.g. "character sheet job healthcare") and
+    a test.
+  - A real portrait. Upload it at `/admin/media` and pick it for each job
+    in the form, then copy the result into `lib/character-config.json`
+    (`framing: "face"` or `"full"`) so outages show it too.
   - More jobs, such as AI development, plus slots like Education.
   - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
     note, stat; `items` mixes strings and label/value pairs, so it needs

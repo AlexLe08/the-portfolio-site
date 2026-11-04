@@ -8,7 +8,7 @@
 // A per-PR script only needs this file (it re-exports chromium), so it can
 // live outside the repo:
 //
-//   import { chromium, startStack, login, recordingContext, caption, pause, saveVideo }
+//   import { chromium, startStack, login, recordingContext, step, pause, saveVideo }
 //     from "<repo>/frontend/demo/stack.mjs";
 //   const stack = await startStack();
 //   const browser = await chromium.launch();
@@ -17,7 +17,7 @@
 //   try {
 //     await login(page, stack);          // only for admin pages
 //     await page.goto(stack.baseUrl);
-//     await caption(page, "1. Projects listed");
+//     await step(page, "1. Projects listed");
 //     await pause(3000);
 //     await stack.backend.stop();   // stage an outage
 //     ...
@@ -27,8 +27,9 @@
 //     await stack.stop();
 //   }
 //
-// Assert each state before captioning it, so a broken flow fails instead
-// of recording. Videos don't show the cursor; hover before a click.
+// Assert each state before its step(), so a broken flow fails instead of
+// recording. Videos don't show the cursor; hover before a click. For a
+// layout check without a video, see screenshot.mjs.
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdtempSync, renameSync, rmSync } from "node:fs";
@@ -104,7 +105,7 @@ function throwawayLogin() {
 // Seeds a throwaway database, builds the frontend (skip with build: false
 // when .next already holds a build pointed at localhost:8000), and starts
 // both apps. Returns { baseUrl, apiUrl, adminPassword, backend: { start,
-// stop }, stop }.
+// stop }, dbPath, stop }.
 export async function startStack({ build = true } = {}) {
   await assertPortFree(8000);
   await assertPortFree(3000);
@@ -155,6 +156,8 @@ export async function startStack({ build = true } = {}) {
     baseUrl: BASE_URL,
     apiUrl: API_URL,
     adminPassword: admin.password,
+    // For rows seed.py doesn't make, such as media (uploads are off here).
+    dbPath: `${dbDir}/demo.db`,
     backend,
     async stop() {
       await Promise.all([backend.stop(), stopProcess(next)]);
@@ -186,6 +189,13 @@ export async function saveVideo(page, context, name) {
   const video = page.video();
   await context.close();
   if (video) renameSync(await video.path(), path.join(LOGS, `${name}.webm`));
+}
+
+// A caption for the video plus an "ok:" line in the terminal, so one run
+// reads as a checklist in both. Call it after asserting the state.
+export async function step(page, text) {
+  console.log(`ok: ${text}`);
+  await caption(page, text);
 }
 
 // A fixed caption bar along the bottom of the page; call again to change it.

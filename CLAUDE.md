@@ -80,6 +80,9 @@ retyping the commands they wrap; each explains itself in its header:
   for testing outage handling and what gets reported.
 - `frontend/demo/stack.mjs`: helpers for PR demo videos (seeded backend,
   production build, stoppable backend, captions, `.webm` in `.logs/`).
+  `step()` captions and logs each checked state.
+- `frontend/demo/screenshot.mjs <path> [--no-build]`: full-page PNG of
+  one page on that stack, signed in for `/admin` paths, in `.logs/`.
 
 ## Architecture rules
 
@@ -120,6 +123,7 @@ Frontend:
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
   `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
+  `components/PortraitPicker.tsx`,
   `components/character-sheet/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
