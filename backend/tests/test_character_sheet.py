@@ -68,6 +68,28 @@ def test_slot_action_with_unknown_kind_lists_the_allowed_kinds(config):
     }
 
 
+@pytest.mark.parametrize(
+    "href",
+    ["javascript:alert(1)", "JAVASCRIPT:alert(1)", "data:text/html,hi", "ftp://example.com"],
+)
+def test_external_links_must_be_http_or_https(config, href):
+    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "external", "href": href}
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path[-1], issue.kind) for issue in issues] == [("href", "pattern")]
+
+
+def test_external_https_link_is_valid(config):
+    config["jobs"][0]["slots"]["core"]["action"] = {
+        "kind": "external",
+        "href": "https://github.com/AlexLe08",
+        "newTab": True,
+    }
+
+    assert character_sheet.find_issues(config) == []
+
+
 def test_issues_are_in_path_order_with_numeric_indexes(config):
     jobs = [copy.deepcopy(config["jobs"][0]) for _ in range(11)]
     for index, job in enumerate(jobs):

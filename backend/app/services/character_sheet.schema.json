@@ -315,7 +315,7 @@
                         "href": {
                           "type": "string",
                           "maxLength": 300,
-                          "format": "uri"
+                          "pattern": "^https?:\\/\\/"
                         },
                         "newTab": {
                           "description": "Open in a new tab. Off by default.",

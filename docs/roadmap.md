@@ -419,6 +419,22 @@
   - `parseConfig` and `loadConfig` are ready for remote sources: invalid
     jobs are dropped, and a source that fails falls back to the next one,
     ending at the bundled file.
+- Character sheet storage on the backend (the first of three PRs for admin
+  editing; nothing reads it yet). A single-row `character_sheet` table
+  holds the whole config as one JSON document (`JSON`, not `JSONB`, so key
+  order survives raw editing; `CHECK (id = 1)` and no id sequence). Public
+  `GET /character-sheet` (404 until the first save) and admin `PUT`, which
+  checks the document against the JSON Schema generated from zod
+  (`jsonschema`), so the rules live only in `schema.ts`. 422 items use
+  FastAPI's `{loc, msg, type}` shape, with the full path into the document;
+  a failed slot action is explained from the branch its `kind` selects.
+  `generate:character-schema` copies the schema to the backend, and a test
+  fails if the copies differ. Found on the way: `z.url`'s protocol rule
+  didn't reach the JSON Schema, so it accepted `javascript:` links; a
+  `.regex()` now exports as a `pattern`. Typed as `dict[str, JsonValue]`,
+  not `Any`. Migration checked on Postgres 16 and SQLite. Also:
+  `@contextmanager` functions return `Generator[None, None, None]`
+  (typeshed deprecates `Iterator` there). Backend suite is now 238 tests.
 
 ## Next up (candidates, unordered)
 
@@ -426,10 +442,17 @@
   - A real portrait. Upload it at `/admin/media` and set `portrait` on each
     job in `lib/character-config.json` (`framing: "face"` or `"full"`).
   - More jobs, such as AI development, plus slots like Education.
-  - Admin editing: store the whole config as one validated JSON document
-    (a new table or a `site_content` key, with Pydantic checking it against
-    the same JSON Schema). Edit it with a structured form plus a raw JSON
-    fallback, and load it through `loadConfig([adminSource], bundled)`.
+  - Admin editing, PR 2: the home page loads through
+    `loadConfig([apiSource], bundled)` (with a timeout, issues to Sentry),
+    and `/admin/character-sheet` edits the raw JSON (zod checks the whole
+    document before saving and lists every problem by path; starts from the
+    bundled file until the first save). PR 3: a structured form for the
+    fields edited most.
+  - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
+    and the backend. Strict zod objects would reject them in both places,
+    but the lenient read would then drop a whole job over one stray key.
+    Decide before content comes from a CMS; until then the PR 2 editor
+    can warn about them.
   - Slot actions that change the current page (for example filtering the
     project list), which need a small client bridge.
   - Extraction to its own repository as a React package: core, themes,
