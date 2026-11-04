@@ -119,6 +119,7 @@ Frontend:
   `components/ContentField.tsx`, `components/MediaUploadForm.tsx`,
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
+  `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
   `components/character-sheet/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries

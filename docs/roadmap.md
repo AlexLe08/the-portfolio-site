@@ -483,7 +483,35 @@
   JSON, cross-field problems (nothing sent), a save shown on the home page,
   reload, and the backend down on save (edit kept) and on load. Not
   exercised: a backend 422 or 413, which zod and the size cap make hard to
-  reach from the form.
+  reach from the form. Merged as #56 and deployed 2026-11-04 (`8343d8d`);
+  the production smoke tests passed. A save through the editor hasn't
+  been verified in production yet.
+- Character sheet form (admin editing, PR 3): `/admin/character-sheet` is
+  now a form for one job at a time (`?job=`, like the home page): name,
+  title, icon, level, portrait (URL, alt, framing), and one markdown
+  section per slot, with empty slots folded into a `<details>`. The raw
+  editor moved to `/admin/character-sheet/json` for everything else
+  (slots, tooltips, actions, adding jobs). `updateCharacterJob` re-reads
+  the saved copy at save time and writes only the form's fields into that
+  job, so other jobs, unknown keys, and a JSON edit made since the form
+  loaded are kept; both editors then save through the same `saveConfig`
+  (strict `parseConfig`, then `PUT`). Like the page, only a 404 starts
+  from the bundled file; any other failed read refuses to save. Empty
+  optional fields remove their key; a new portrait URL drops the old
+  `width`/`height`; section line endings are normalized to `\n` (the
+  browser sends `\r\n`), so an unchanged section doesn't read as
+  differing from the bundled file. Input `maxLength`s are read from the
+  zod schema on the server (`.maxLength`), so zod stays out of the
+  browser bundle. A saved copy with problems shows them and links to the
+  JSON editor instead of the form, since no form save could pass.
+  Rejected: editing the whole document in the browser (a save could
+  overwrite edits made since the page loaded) and a backend `PATCH`
+  (backend work and partial validation for a single admin). Verified
+  with Playwright on the demo stack: first load, a JSON edit in another
+  tab kept by a later form save, title/icon/section edits shown on the
+  home page, switching jobs, a portrait added then removed, an empty
+  title past the browser's check (listed as `jobs.1.title`, nothing
+  saved), and the backend down on save (edit kept).
 
 ## Next up (candidates, unordered)
 
@@ -491,7 +519,9 @@
   - A real portrait. Upload it at `/admin/media` and set `portrait` on each
     job in `lib/character-config.json` (`framing: "face"` or `"full"`).
   - More jobs, such as AI development, plus slots like Education.
-  - Admin editing, PR 3: a structured form for the fields edited most.
+  - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
+    note, stat; `items` mixes strings and label/value pairs, so it needs
+    its own small list editor).
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
