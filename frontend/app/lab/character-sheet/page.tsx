@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
 import { resolveJob } from "@/components/character-sheet/resolve";
 import { Sheet } from "@/components/Sheet";
-import { characterConfig } from "@/lib/character";
+import { getCharacterConfig } from "@/lib/character";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 
 // A showcase and test bed for the character sheet's themes: the home page's
@@ -12,10 +12,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// The config can change through the admin API at any time.
+export const dynamic = "force-dynamic";
+
 const BASE_PATH = "/lab/character-sheet";
 
 export default async function CharacterSheetLabPage({ searchParams }: PageProps<"/lab/character-sheet">) {
-  const job = resolveJob(characterConfig, (await searchParams).job);
+  const [characterConfig, { job: jobParam }] = await Promise.all([getCharacterConfig(), searchParams]);
+  const job = resolveJob(characterConfig, jobParam);
   const shared = {
     config: characterConfig,
     job,

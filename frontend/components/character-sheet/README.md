@@ -111,8 +111,10 @@ const job = resolveJob(config, searchParams.job);
 
 `loadConfig(sources, fallback, onIssue)` tries each `{ name, load }` source in
 order, such as an admin API, a CMS adapter, or a remote JSON file. It uses the
-first one that yields a usable config. It never throws: problems go to
-`onIssue`, and when every source fails it returns `fallback`.
+first one that yields a usable config. A source whose `load` resolves to
+`undefined` has nothing yet (no save, an empty CMS entry) and is skipped
+without an issue. It never throws: problems go to `onIssue`, and when every
+source fails it returns `fallback`.
 
 ## Behaviour
 
