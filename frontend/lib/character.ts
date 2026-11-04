@@ -1,6 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { cache } from "react";
-import { loadConfig, parseConfig, type ConfigSource } from "@/components/character-sheet/parse";
+import {
+  findUnknownKeys,
+  loadConfig,
+  parseConfig,
+  type ConfigSource,
+} from "@/components/character-sheet/parse";
 import type { CharacterSheetConfig } from "@/components/character-sheet/types";
 import { api } from "./api";
 import rawConfig from "./character-config.json";
@@ -16,6 +21,12 @@ import rawConfig from "./character-config.json";
 const { config, errors } = parseConfig(rawConfig);
 if (!config || errors.length > 0) {
   throw new Error(`lib/character-config.json is invalid:\n${errors.join("\n")}`);
+}
+// Unknown keys too (likely typos the panel would leave out). The admin
+// editor only warns about them; this file is fixed before it ships.
+const unknownKeys = findUnknownKeys(rawConfig, config);
+if (unknownKeys.length > 0) {
+  throw new Error(`lib/character-config.json has unknown keys:\n${unknownKeys.join("\n")}`);
 }
 
 export const characterConfig: CharacterSheetConfig = config;
