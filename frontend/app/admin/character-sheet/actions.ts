@@ -1,5 +1,6 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { findUnknownKeys, parseConfig } from "@/components/character-sheet/parse";
 import { adminRequest } from "@/lib/admin-api";
@@ -55,8 +56,14 @@ export async function updateCharacterJob(
   const jobs = Array.isArray(config.jobs) ? config.jobs : [];
   const job = jobs.find((entry): entry is JsonObject => isObject(entry) && entry.id === jobId);
   if (!job) return { error: `The saved copy has no job "${jobId}" any more. Reload the page.` };
-  applyJobForm(job, formData);
-  return saveConfig(config);
+  const conflict = applyJobForm(job, formData);
+  if (conflict) return { error: conflict };
+  const result = await saveConfig(config);
+  // Re-renders the page from the saved copy, so a slot just filled counts
+  // as filled: sending "fill" for it again would be refused as a conflict.
+  // Typed values stay, since the form's inputs are uncontrolled.
+  if (result && "saved" in result) refresh();
+  return result;
 }
 
 // Adds a job as a copy of an existing one (level, portrait, slots,
@@ -104,8 +111,9 @@ async function loadSavedConfig(): Promise<{ config: JsonObject } | { error: stri
 }
 
 // Writes the form's fields into the job in place. Empty optional fields
-// remove their key, so the panel falls back to its default.
-function applyJobForm(job: JsonObject, formData: FormData) {
+// remove their key, so the panel falls back to its default. Returns a
+// message if the saved copy changed in a way the form can't merge.
+function applyJobForm(job: JsonObject, formData: FormData): string | null {
   const text = (name: string) => formText(formData, name);
   job.name = text("name");
   job.title = text("title");
@@ -136,13 +144,47 @@ function applyJobForm(job: JsonObject, formData: FormData) {
   if (Object.keys(sections).length > 0) job.sections = sections;
   else delete job.sections;
 
-  // Only slots the form showed and the saved copy still fills: a slot
-  // emptied as JSON since the page loaded stays empty.
+  // Slots the form showed filled: only those the saved copy still fills,
+  // so a slot emptied as JSON since the page loaded stays empty.
   const slots = asObject(job.slots);
+  const fill = formData.getAll("fill").map(String);
   for (const [slotId, content] of Object.entries(slots)) {
-    if (!isObject(content) || !formData.has(`tooltip.${slotId}.title`)) continue;
+    if (!isObject(content)) continue;
+    // Filled as JSON since the page loaded: neither copy wins silently.
+    if (fill.includes(slotId)) return `The slot "${slotId}" was filled since this page loaded. Reload the page.`;
+    if (!formData.has(`tooltip.${slotId}.title`)) continue;
     content.tooltip = applyTooltipForm(asObject(content.tooltip), formData, `tooltip.${slotId}.`);
+    if (formData.has(`action.${slotId}.kind`)) {
+      content.action = applyActionForm(asObject(content.action), formData, `action.${slotId}.`);
+    }
   }
+  // Slots filled with the form's button. An id the config has no slot for
+  // is caught by saveConfig, like any other job naming one.
+  for (const slotId of fill) {
+    slots[slotId] = {
+      tooltip: applyTooltipForm({}, formData, `tooltip.${slotId}.`),
+      action: applyActionForm({}, formData, `action.${slotId}.`),
+    };
+  }
+  job.slots = slots;
+  return null;
+}
+
+// One slot's action. A kind the saved action already has keeps its other
+// keys; a new kind starts clean, so no field of the old kind lingers.
+function applyActionForm(saved: JsonObject, formData: FormData, prefix: string): JsonObject {
+  const text = (name: string) => formText(formData, prefix + name);
+  const kind = text("kind");
+  const action: JsonObject = saved.kind === kind ? { ...saved } : { kind };
+  if (kind === "anchor") {
+    // The help text says without the #, but it's an easy slip.
+    action.target = text("target").replace(/^#/, "");
+  } else if (kind === "link" || kind === "external") {
+    action.href = text("href");
+  }
+  if (kind === "external" && formData.has(`${prefix}new_tab`)) action.newTab = true;
+  else delete action.newTab;
+  return action;
 }
 
 // One slot's tooltip fields, over the saved tooltip so keys the form

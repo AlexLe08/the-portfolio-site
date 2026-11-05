@@ -6,6 +6,7 @@ import {
   jobSchema,
   pairSchema,
   portraitSchema,
+  slotActionSchema,
   TOOLTIP_MAX_ITEMS,
   TOOLTIP_MAX_TAGS,
   tooltipSchema,
@@ -13,6 +14,7 @@ import {
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import type { PortraitUpload } from "@/components/PortraitPicker";
+import type { SlotActionLimits } from "@/components/SlotActionFields";
 import type { TooltipFieldLimits } from "@/components/SlotTooltipFields";
 import { Sheet } from "@/components/Sheet";
 import { StatusMessage } from "@/components/StatusMessage";
@@ -53,10 +55,16 @@ const TOOLTIP_LIMITS: TooltipFieldLimits = {
   maxTags: TOOLTIP_MAX_TAGS,
   maxItems: TOOLTIP_MAX_ITEMS,
 };
+const [anchorAction, linkAction, externalAction] = slotActionSchema.options;
+const ACTION_LIMITS: SlotActionLimits = {
+  target: anchorAction.shape.target.maxLength,
+  // One input holds a link's path or an external URL: the tighter limit.
+  href: Math.min(linkAction.shape.href.maxLength ?? Infinity, externalAction.shape.href.maxLength ?? Infinity),
+};
 
 // One job at a time, picked with ?job= like the home page. The rest of the
-// config (slot definitions, actions, filling empty slots, removing jobs) is
-// edited as JSON.
+// config (slot definitions, emptying slots, removing jobs) is edited as
+// JSON.
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
@@ -107,7 +115,7 @@ export default async function AdminCharacterSheetPage({
         {jsonLink}
       </div>
       <p className="form-help admin-intro">
-        Slots, where they link to, and removing jobs are edited as JSON.
+        The slots themselves (names, icons, order) and removing jobs are edited as JSON.
       </p>
       <CharacterJobAddForm
         action={addCharacterJob}
@@ -126,6 +134,13 @@ export default async function AdminCharacterSheetPage({
         slots={config.slots.map(({ id, label }) => ({ id, label }))}
         limits={LIMITS}
         tooltipLimits={TOOLTIP_LIMITS}
+        actionLimits={ACTION_LIMITS}
+        // The ids app/page.tsx renders for this job: its sections, in
+        // slot order, then the project list.
+        anchorTargets={[
+          ...config.slots.filter((slot) => job.sections?.[slot.id]).map((slot) => slot.id),
+          "projects",
+        ]}
         uploads={uploads}
         bundled={bundled}
         stored={stored}

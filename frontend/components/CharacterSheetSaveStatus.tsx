@@ -45,8 +45,8 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys }: Props)
 }
 
 // How the copy the site shows compares with lib/character-config.json.
-// Both are compact JSON; stored is null before the first save. After a save
-// the page isn't re-fetched, so pass what was just saved.
+// Both are compact JSON; stored is null before the first save. The JSON
+// editor's page isn't re-fetched after a save, so pass what was just saved.
 export function describeStoredCopy(stored: string | null, bundled: string): string | undefined {
   if (stored === null) {
     return "Not saved yet: the site shows lib/character-config.json, which this starts from.";

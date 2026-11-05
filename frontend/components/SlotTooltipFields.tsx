@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import type { Tooltip } from "@/components/character-sheet/types";
 
 // Read from the zod schema by the page, like JobFieldLimits.
@@ -14,11 +14,20 @@ type Props = {
   slotId: string;
   tooltip: Tooltip;
   limits: TooltipFieldLimits;
+  // For a slot just filled with a button, which disappears.
+  autoFocus?: boolean;
 };
 
-// One filled slot's tooltip, inside CharacterJobForm. Field names start
-// with "tooltip.<slot id>.", which updateCharacterJob reads back.
-export function SlotTooltipFields({ slotId, tooltip, limits }: Props) {
+// For required fields inside a <details> the admin may have closed again:
+// the browser blocks the save but can't show its message on a hidden field.
+export function openDetails(event: FormEvent<HTMLElement>) {
+  const details = event.currentTarget.closest("details");
+  if (details) details.open = true;
+}
+
+// One slot's tooltip, inside CharacterJobForm. Field names start with
+// "tooltip.<slot id>.", which updateCharacterJob reads back.
+export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props) {
   const name = (field: string) => `tooltip.${slotId}.${field}`;
   const id = (field: string) => `tooltip-${slotId}-${field}`;
   const max = (limit: number | null) => limit ?? undefined;
@@ -35,12 +44,8 @@ export function SlotTooltipFields({ slotId, tooltip, limits }: Props) {
           required
           maxLength={max(limits.title)}
           defaultValue={tooltip.title}
-          // Inside a <details> the admin may have closed again: the browser
-          // blocks the save but can't show its message on a hidden field.
-          onInvalid={(event) => {
-            const details = event.currentTarget.closest("details");
-            if (details) details.open = true;
-          }}
+          autoFocus={autoFocus}
+          onInvalid={openDetails}
           className="form-input"
         />
       </div>
