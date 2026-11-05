@@ -1,5 +1,6 @@
 import Markdown from "react-markdown";
 import { ContactForm } from "@/components/ContactForm";
+import { FallbackNotice } from "@/components/FallbackNotice";
 import { Sheet } from "@/components/Sheet";
 import { getContent } from "@/lib/content";
 import { PROFILE_LINKS } from "@/lib/links";
@@ -12,10 +13,14 @@ export const metadata = {
 };
 
 export default async function ContactPage() {
-  const content = await getContent();
+  const { content, fallback } = await getContent();
 
   return (
-    <Sheet title="Contact" back={{ href: "/", label: "All projects" }}>
+    <Sheet
+      title="Contact"
+      back={{ href: "/", label: "All projects" }}
+      notice={fallback && <FallbackNotice />}
+    >
       <div className="intro contact-intro">
         <Markdown>{content["contact.intro"]}</Markdown>
       </div>

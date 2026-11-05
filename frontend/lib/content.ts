@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { cache } from "react";
 import { api } from "./api";
 
@@ -28,20 +29,30 @@ export type SiteContent = Record<ContentKey, string>;
 // that long, so give up after a few seconds and show the fallbacks.
 const CONTENT_TIMEOUT_MS = 5000;
 
+export type ContentResult = {
+  content: SiteContent;
+  // True when the load failed and every key shows its built-in value. A key
+  // that simply has no saved value isn't a fallback: there the built-in
+  // value is the current one. Pages pass it to FallbackNotice.
+  fallback: boolean;
+};
+
 // cache() memoizes per request: a page and its generateMetadata can both
 // call getContent() and share one backend request. Nothing is shared
 // between requests, so every visit still sees the latest copy.
-export const getContent = cache(async (): Promise<SiteContent> => {
+export const getContent = cache(async (): Promise<ContentResult> => {
   try {
-    const { data } = await api.GET("/content", {
+    const { data, error } = await api.GET("/content", {
       signal: AbortSignal.timeout(CONTENT_TIMEOUT_MS),
     });
-    return { ...FALLBACK_CONTENT, ...pickKnownKeys(data ?? {}) };
+    if (data) return { content: { ...FALLBACK_CONTENT, ...pickKnownKeys(data) }, fallback: false };
+    // An HTTP error is a real bug, unlike a cold start, so it's reported.
+    Sentry.captureException(new Error("Failed to load site content"), { extra: { error } });
   } catch (error) {
     // Network failure or timeout. Log it, but never fail the page over copy.
     console.error("Falling back to built-in site content:", error);
-    return FALLBACK_CONTENT;
   }
+  return { content: FALLBACK_CONTENT, fallback: true };
 });
 
 function pickKnownKeys(remote: Record<string, string>): Partial<SiteContent> {

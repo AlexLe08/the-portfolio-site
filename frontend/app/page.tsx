@@ -4,6 +4,7 @@ import Link from "next/link";
 import Markdown from "react-markdown";
 import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
 import { resolveJob } from "@/components/character-sheet/resolve";
+import { FallbackNotice } from "@/components/FallbackNotice";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { StatusMessage } from "@/components/StatusMessage";
@@ -40,7 +41,7 @@ async function loadProjects() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const content = await getContent();
+  const { content } = await getContent();
   // ?job= only changes emphasis, so every variant points at the one URL.
   return { description: content["site.description"], alternates: { canonical: "/" } };
 }
@@ -48,7 +49,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   // Started together so the content and character sheet requests add no
   // wait of their own.
-  const [projects, content, characterConfig, { job: jobParam }] = await Promise.all([
+  const [
+    projects,
+    { content, fallback: contentFallback },
+    { config: characterConfig, fallback: characterFallback },
+    { job: jobParam },
+  ] = await Promise.all([
     loadProjects(),
     getContent(),
     getCharacterConfig(),
@@ -60,6 +66,9 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   return (
     <Sheet
+      // The project list has its own message below: it has no built-in
+      // copy, so it says so where the list would be.
+      notice={(contentFallback || characterFallback) && <FallbackNotice />}
       lead={
         <CharacterSheet
           config={characterConfig}
