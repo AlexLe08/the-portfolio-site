@@ -34,16 +34,21 @@ export const slotDefSchema = z.object({
     .describe("Up to 4 characters drawn in the square. Defaults to the label's first two letters."),
 });
 
-const pairSchema = z.object({ label: text(40), value: text(80) });
+export const pairSchema = z.object({ label: text(40), value: text(80) });
+
+// Named because zod doesn't expose an array's max the way it does a
+// string's maxLength, and the admin form needs both.
+export const TOOLTIP_MAX_TAGS = 3;
+export const TOOLTIP_MAX_ITEMS = 10;
 
 export const tooltipSchema = z.object({
   title: text(80),
-  tags: z.array(text(24)).max(3).optional().describe("Short markers above the title."),
+  tags: z.array(text(24)).max(TOOLTIP_MAX_TAGS).optional().describe("Short markers above the title."),
   subtitle: text(120).optional(),
   stat: pairSchema.optional().describe("One headline figure, on its own ruled line."),
   items: z
     .array(z.union([text(80), pairSchema]))
-    .max(10)
+    .max(TOOLTIP_MAX_ITEMS)
     .optional()
     .describe("Listed in order, most relevant first. Label/value pairs render as a two-column table."),
   note: text(240).optional(),

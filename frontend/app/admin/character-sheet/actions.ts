@@ -135,6 +135,50 @@ function applyJobForm(job: JsonObject, formData: FormData) {
   }
   if (Object.keys(sections).length > 0) job.sections = sections;
   else delete job.sections;
+
+  // Only slots the form showed and the saved copy still fills: a slot
+  // emptied as JSON since the page loaded stays empty.
+  const slots = asObject(job.slots);
+  for (const [slotId, content] of Object.entries(slots)) {
+    if (!isObject(content) || !formData.has(`tooltip.${slotId}.title`)) continue;
+    content.tooltip = applyTooltipForm(asObject(content.tooltip), formData, `tooltip.${slotId}.`);
+  }
+}
+
+// One slot's tooltip fields, over the saved tooltip so keys the form
+// doesn't show survive. Half-filled stats and items are written as they
+// are, so saveConfig names the missing half instead of it vanishing.
+function applyTooltipForm(saved: JsonObject, formData: FormData, prefix: string): JsonObject {
+  const text = (name: string) => formText(formData, prefix + name);
+  const tooltip: JsonObject = { ...saved, title: text("title") };
+
+  const tags = text("tags")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  if (tags.length > 0) tooltip.tags = tags;
+  else delete tooltip.tags;
+
+  setOrDelete(tooltip, "subtitle", text("subtitle"));
+  setOrDelete(tooltip, "note", text("note"));
+
+  const stat = { label: text("stat_label"), value: text("stat_value") };
+  if (stat.label || stat.value) tooltip.stat = stat;
+  else delete tooltip.stat;
+
+  // Paired by position: the editor sends one label and one value per row.
+  // An empty label makes a plain line; a fully empty row is skipped.
+  const labels = formData.getAll(`${prefix}item_label`).map((label) => String(label).trim());
+  const values = formData.getAll(`${prefix}item_value`).map((value) => String(value).trim());
+  const items = values.flatMap((value, index) => {
+    const label = labels[index] ?? "";
+    if (!label && !value) return [];
+    return [label ? { label, value } : value];
+  });
+  if (items.length > 0) tooltip.items = items;
+  else delete tooltip.items;
+
+  return tooltip;
 }
 
 // Strict, like the bundled file's build-time check in lib/character.ts.

@@ -4,6 +4,7 @@ import type { CharacterSheetFormState } from "@/app/admin/character-sheet/action
 import type { Job } from "@/components/character-sheet/types";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
+import { SlotTooltipFields, type TooltipFieldLimits } from "@/components/SlotTooltipFields";
 import { useSaveAction } from "@/lib/use-save-action";
 
 // Max lengths read from the zod schema by the page (null: no limit), so the
@@ -21,6 +22,7 @@ type Props = {
   // the way the home page renders a job's sections.
   slots: { id: string; label: string }[];
   limits: JobFieldLimits;
+  tooltipLimits: TooltipFieldLimits;
   // For the portrait; null when loading them failed.
   uploads: PortraitUpload[] | null;
   // As in CharacterSheetEditor.
@@ -31,7 +33,17 @@ type Props = {
 
 // The fields of one job edited most. updateCharacterJob writes them into
 // the saved copy and leaves the rest of the document alone.
-export function CharacterJobForm({ action, job, slots, limits, uploads, bundled, stored, unknownKeys }: Props) {
+export function CharacterJobForm({
+  action,
+  job,
+  slots,
+  limits,
+  tooltipLimits,
+  uploads,
+  bundled,
+  stored,
+  unknownKeys,
+}: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
   const max = (limit: number | null) => limit ?? undefined;
@@ -171,6 +183,27 @@ export function CharacterJobForm({ action, job, slots, limits, uploads, bundled,
             Face keeps the top of the photo in frame; full centers it.
           </p>
         </div>
+      </fieldset>
+
+      <fieldset className="form-group">
+        <legend className="admin-heading">Slot tooltips</legend>
+        <p className="form-help">
+          Filled slots only. Filling an empty slot, and where a slot links to, are edited as JSON.
+        </p>
+        {/* Closed by default: open each slot you want to change. Closed
+            fields still submit, so saving never drops a tooltip. */}
+        {slots.map((slot) => {
+          const content = job.slots[slot.id];
+          if (!content) return null;
+          return (
+            <details key={slot.id} className="form-more">
+              <summary>
+                {slot.label}: {content.tooltip.title}
+              </summary>
+              <SlotTooltipFields slotId={slot.id} tooltip={content.tooltip} limits={tooltipLimits} />
+            </details>
+          );
+        })}
       </fieldset>
 
       <fieldset className="form-group">

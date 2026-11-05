@@ -881,6 +881,37 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Slot tooltips: a label input beside a wider value input (the stat, and
+   each item row), with the row's buttons under it. */
+.tooltip-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 0.5rem;
+}
+
+.tooltip-items {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.tooltip-items__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.tooltip-items__row {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.tooltip-items__buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .content-field__key {
   display: block;
   font-family: var(--font-technical);

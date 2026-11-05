@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { addCharacterJob, updateCharacterJob } from "./actions";
 import { jobHref, resolveJob } from "@/components/character-sheet/resolve";
-import { ID_PATTERN, jobSchema, portraitSchema } from "@/components/character-sheet/schema";
+import {
+  ID_PATTERN,
+  jobSchema,
+  pairSchema,
+  portraitSchema,
+  TOOLTIP_MAX_ITEMS,
+  TOOLTIP_MAX_TAGS,
+  tooltipSchema,
+} from "@/components/character-sheet/schema";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import type { PortraitUpload } from "@/components/PortraitPicker";
+import type { TooltipFieldLimits } from "@/components/SlotTooltipFields";
 import { Sheet } from "@/components/Sheet";
 import { StatusMessage } from "@/components/StatusMessage";
 import { adminRequest } from "@/lib/admin-api";
@@ -29,9 +38,25 @@ const LIMITS: JobFieldLimits = {
   portraitAlt: portraitFields.alt.maxLength,
   section: jobFields.sections.unwrap().valueType.maxLength,
 };
+const tooltipFields = tooltipSchema.shape;
+const [lineItem] = tooltipFields.items.unwrap().element.options;
+const TOOLTIP_LIMITS: TooltipFieldLimits = {
+  title: tooltipFields.title.maxLength,
+  tag: tooltipFields.tags.unwrap().element.maxLength,
+  subtitle: tooltipFields.subtitle.unwrap().maxLength,
+  statLabel: pairSchema.shape.label.maxLength,
+  statValue: pairSchema.shape.value.maxLength,
+  itemLabel: pairSchema.shape.label.maxLength,
+  // One input holds a plain line's text or a pair's value: the tighter limit.
+  itemValue: Math.min(lineItem.maxLength ?? Infinity, pairSchema.shape.value.maxLength ?? Infinity),
+  note: tooltipFields.note.unwrap().maxLength,
+  maxTags: TOOLTIP_MAX_TAGS,
+  maxItems: TOOLTIP_MAX_ITEMS,
+};
 
 // One job at a time, picked with ?job= like the home page. The rest of the
-// config (slots, tooltips, actions, removing jobs) is edited as JSON.
+// config (slot definitions, actions, filling empty slots, removing jobs) is
+// edited as JSON.
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
@@ -82,7 +107,7 @@ export default async function AdminCharacterSheetPage({
         {jsonLink}
       </div>
       <p className="form-help admin-intro">
-        Slots, tooltips, links, and removing jobs are edited as JSON.
+        Slots, where they link to, and removing jobs are edited as JSON.
       </p>
       <CharacterJobAddForm
         action={addCharacterJob}
@@ -100,6 +125,7 @@ export default async function AdminCharacterSheetPage({
         job={job}
         slots={config.slots.map(({ id, label }) => ({ id, label }))}
         limits={LIMITS}
+        tooltipLimits={TOOLTIP_LIMITS}
         uploads={uploads}
         bundled={bundled}
         stored={stored}

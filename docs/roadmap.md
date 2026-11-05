@@ -612,20 +612,43 @@
   Verified with Playwright on the demo stack (7 asserted steps: the id
   pattern blocking "AI Dev", an existing id refused with input kept, the
   backend down on add, a copy of E-commerce opening in the form, editing
-  it, and the home page showing it with E-commerce unchanged).
+  it, and the home page showing it with E-commerce unchanged). Merged as
+  #63 (`0962859`) on 2026-11-05. Confirmed working in production the
+  same day: a Teacher job was added through the form and some of its
+  sections filled in.
 
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
-    an AI development job, and Education sections (the `education` slot
-    already exists; it's empty in every job).
+    more jobs as needed (Teacher added 2026-11-05; AI development not
+    yet), and Education sections (the `education` slot exists). The
+    built-in `lib/character-config.json` doesn't have Teacher, which is
+    fine: keeping it in step is low priority (see the last item below).
   - Removing a job from the form, and a hidden/draft flag so a new job
     isn't live before it's edited, if adding jobs becomes routine. Both
     are JSON-only or missing today.
-  - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
-    note, stat; `items` mixes strings and label/value pairs, so it needs
-    its own small list editor).
+  - Admin editing, PR 3b (in progress on `feat/slot-tooltips-form`, not
+    merged): filled slots' tooltips in the job form
+    (`components/SlotTooltipFields.tsx`), one closed `<details>` per
+    slot, saved by the job form's one Save. Items are rows with an
+    optional label (empty: a plain line), add/remove/up/down, sent as
+    repeated `item_label`/`item_value` fields paired by position. Only
+    slots the saved copy still fills are written, over the saved tooltip
+    (unknown keys kept); a half-filled stat or item is written as is so
+    the save names the missing half. Rejected: a form per slot (edits in
+    other slots lost on leaving) and one textarea with `Label: value`
+    lines (ambiguous with colons in plain lines). Verified with
+    Playwright on the demo stack (7 steps: an untouched save stores the
+    bundled file exactly; edit, reorder, remove; reload; home page
+    tooltip; half a stat refused by path; an emptied title in a closed
+    `<details>` reopens it).
+  - Admin editing, PR 3c: filling an empty slot, which needs an action
+    picker (anchor, link, external, none), so the two go together.
+  - A rejected form save also lists `defaultJobId: no valid job ...`:
+    strict `parseConfig` drops the invalid job and then misses the
+    default. Noise, not wrong; skip that follow-on error when the job
+    itself has problems.
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
