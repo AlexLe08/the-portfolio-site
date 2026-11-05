@@ -27,6 +27,11 @@
       "title": "Developer in healthcare",
       "icon": "Hc",
       "level": { "label": "Production React", "value": "4 years" },
+      "portrait": {
+        "src": "https://res.cloudinary.com/av4sl9pk/image/upload/v1793827144/portfolio/lami-s-avatar-sticker-910fc625e091.png",
+        "alt": "lami's avatar sticker",
+        "framing": "face"
+      },
       "slots": {
         "core": {
           "tooltip": {
@@ -107,6 +112,11 @@
       "title": "Developer in e-commerce",
       "icon": "Ec",
       "level": { "label": "Stack", "value": "TypeScript and Python" },
+      "portrait": {
+        "src": "https://res.cloudinary.com/av4sl9pk/image/upload/v1793827144/portfolio/lami-s-avatar-sticker-910fc625e091.png",
+        "alt": "lami's avatar sticker",
+        "framing": "face"
+      },
       "slots": {
         "core": {
           "tooltip": {
