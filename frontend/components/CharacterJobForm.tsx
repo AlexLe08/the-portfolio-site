@@ -3,7 +3,9 @@
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import type { Job } from "@/components/character-sheet/types";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
+import { useRef, useState } from "react";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
+import { SlotActionFields, type SlotActionLimits } from "@/components/SlotActionFields";
 import { SlotTooltipFields, type TooltipFieldLimits } from "@/components/SlotTooltipFields";
 import { useSaveAction } from "@/lib/use-save-action";
 
@@ -23,6 +25,9 @@ type Props = {
   slots: { id: string; label: string }[];
   limits: JobFieldLimits;
   tooltipLimits: TooltipFieldLimits;
+  actionLimits: SlotActionLimits;
+  // Suggested anchor targets: see SlotActionFields.
+  anchorTargets: string[];
   // For the portrait; null when loading them failed.
   uploads: PortraitUpload[] | null;
   // As in CharacterSheetEditor.
@@ -39,6 +44,8 @@ export function CharacterJobForm({
   slots,
   limits,
   tooltipLimits,
+  actionLimits,
+  anchorTargets,
   uploads,
   bundled,
   stored,
@@ -47,6 +54,18 @@ export function CharacterJobForm({
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
   const max = (limit: number | null) => limit ?? undefined;
+
+  // Empty slots the admin chose to fill. They save with the rest of the
+  // form; until then "Don't fill" puts the button back.
+  const [filling, setFilling] = useState<string[]>([]);
+  const empty = slots.filter((slot) => !job.slots[slot.id] && !filling.includes(slot.id));
+  // The Fill button to focus once it's back, since "Don't fill" removes
+  // the button that had focus.
+  const focusSlot = useRef<string | null>(null);
+  function unfill(slotId: string) {
+    focusSlot.current = slotId;
+    setFilling((current) => current.filter((id) => id !== slotId));
+  }
 
   // Slots without a section are folded away, so the page shows what the
   // home page shows. Adding one is a click.
@@ -186,24 +205,68 @@ export function CharacterJobForm({
       </fieldset>
 
       <fieldset className="form-group">
-        <legend className="admin-heading">Slot tooltips</legend>
+        <legend className="admin-heading">Slots</legend>
         <p className="form-help">
-          Filled slots only. Filling an empty slot, and where a slot links to, are edited as JSON.
+          Each filled slot&rsquo;s tooltip and what clicking it opens. Emptying a slot is done as JSON.
         </p>
         {/* Closed by default: open each slot you want to change. Closed
             fields still submit, so saving never drops a tooltip. */}
         {slots.map((slot) => {
           const content = job.slots[slot.id];
-          if (!content) return null;
+          const isNew = !content && filling.includes(slot.id);
+          if (!content && !isNew) return null;
           return (
-            <details key={slot.id} className="form-more">
+            <details key={slot.id} className="form-more" open={isNew || undefined}>
               <summary>
-                {slot.label}: {content.tooltip.title}
+                {slot.label}: {content ? content.tooltip.title : "new"}
               </summary>
-              <SlotTooltipFields slotId={slot.id} tooltip={content.tooltip} limits={tooltipLimits} />
+              {isNew && <input type="hidden" name="fill" value={slot.id} />}
+              <SlotActionFields
+                slotId={slot.id}
+                action={content?.action ?? { kind: "none" }}
+                limits={actionLimits}
+                anchorTargets={anchorTargets}
+              />
+              <SlotTooltipFields
+                slotId={slot.id}
+                tooltip={content?.tooltip ?? { title: "" }}
+                limits={tooltipLimits}
+                autoFocus={isNew}
+              />
+              {isNew && (
+                <button type="button" className="form-button form-button--small" onClick={() => unfill(slot.id)}>
+                  Don&rsquo;t fill {slot.label}
+                </button>
+              )}
             </details>
           );
         })}
+        {empty.length > 0 && (
+          <div className="form-field">
+            <p className="form-label" id="empty-slots">
+              Empty slots
+            </p>
+            <ul className="slot-fill-list" aria-labelledby="empty-slots">
+              {empty.map((slot) => (
+                <li key={slot.id}>
+                  <button
+                    type="button"
+                    ref={(button) => {
+                      if (button && focusSlot.current === slot.id) {
+                        focusSlot.current = null;
+                        button.focus();
+                      }
+                    }}
+                    className="form-button form-button--small"
+                    onClick={() => setFilling((current) => [...current, slot.id])}
+                  >
+                    Fill {slot.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </fieldset>
 
       <fieldset className="form-group">

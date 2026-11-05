@@ -616,6 +616,21 @@
   #63 (`0962859`) on 2026-11-05. Confirmed working in production the
   same day: a Teacher job was added through the form and some of its
   sections filled in.
+- Slot tooltips in the job form (admin editing, PR 3b): filled slots'
+  tooltips (`components/SlotTooltipFields.tsx`), one closed `<details>`
+  per slot, saved by the job form's one Save. Items are rows with an
+  optional label (empty: a plain line), add/remove/up/down, sent as
+  repeated `item_label`/`item_value` fields paired by position. Only
+  slots the saved copy still fills are written, over the saved tooltip
+  (unknown keys kept); a half-filled stat or item is written as is so
+  the save names the missing half. Rejected: a form per slot (edits in
+  other slots lost on leaving) and one textarea with `Label: value`
+  lines (ambiguous with colons in plain lines). Verified with
+  Playwright on the demo stack (7 steps: an untouched save stores the
+  bundled file exactly; edit, reorder, remove; reload; home page
+  tooltip; half a stat refused by path; an emptied title in a closed
+  `<details>` reopens it). Merged as #64 (`b6c3272`) on
+  2026-11-05 and deployed (Vercel); not yet tried in production.
 
 ## Next up (candidates, unordered)
 
@@ -628,23 +643,31 @@
   - Removing a job from the form, and a hidden/draft flag so a new job
     isn't live before it's edited, if adding jobs becomes routine. Both
     are JSON-only or missing today.
-  - Admin editing, PR 3b (in progress on `feat/slot-tooltips-form`, not
-    merged): filled slots' tooltips in the job form
-    (`components/SlotTooltipFields.tsx`), one closed `<details>` per
-    slot, saved by the job form's one Save. Items are rows with an
-    optional label (empty: a plain line), add/remove/up/down, sent as
-    repeated `item_label`/`item_value` fields paired by position. Only
-    slots the saved copy still fills are written, over the saved tooltip
-    (unknown keys kept); a half-filled stat or item is written as is so
-    the save names the missing half. Rejected: a form per slot (edits in
-    other slots lost on leaving) and one textarea with `Label: value`
-    lines (ambiguous with colons in plain lines). Verified with
-    Playwright on the demo stack (7 steps: an untouched save stores the
-    bundled file exactly; edit, reorder, remove; reload; home page
-    tooltip; half a stat refused by path; an emptied title in a closed
-    `<details>` reopens it).
-  - Admin editing, PR 3c: filling an empty slot, which needs an action
-    picker (anchor, link, external, none), so the two go together.
+  - Admin editing, PR 3c (in progress on `feat/slot-actions-form`, not
+    merged): an action picker per slot
+    (`components/SlotActionFields.tsx`: none, anchor, link, external
+    with a new-tab box; only the chosen kind's inputs render, so only
+    they submit; anchors suggest the job's section ids plus `projects`
+    through a `<datalist>`; a leading # is stripped), and a Fill
+    button per empty slot that adds the same fields, open and focused,
+    with "Don't fill" to undo before saving. A kept kind keeps the
+    saved action's other keys; a changed kind starts clean. New slots
+    send a hidden `fill` field; if the saved copy fills that slot by
+    save time, the save is refused ("reload") rather than either copy
+    winning. `updateCharacterJob` calls `refresh()` after a save so a
+    just-filled slot counts as filled (otherwise the next save would
+    resend `fill` and be refused). Rejected: always-rendered fields for
+    every empty slot (no `required` title, doubles the form). Verified
+    with Playwright on the demo stack (10 steps: untouched save stores
+    the bundled file exactly; new tab; fill with focus and a `#`
+    target; refreshed to filled; second save; Don't fill; kind change
+    drops `href`; empty path in a closed `<details>` reopens it; bad
+    path refused by path; home page link; fill conflict refused).
+  - Emptying a filled slot from the form (still JSON only), if it's
+    needed.
+  - Anchor targets aren't checked against what the home page renders
+    (a section the job doesn't have scrolls nowhere). A save-time
+    warning, like unknown keys, if it ever bites.
   - A rejected form save also lists `defaultJobId: no valid job ...`:
     strict `parseConfig` drops the invalid job and then misses the
     default. Noise, not wrong; skip that follow-on error when the job
