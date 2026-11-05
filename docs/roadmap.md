@@ -545,36 +545,58 @@
   alone. The delete guard doesn't see the bundled copy, so don't delete
   that upload. Merged as #60 (`20ddd96`).
 
-## Next up (candidates, unordered)
+- Fallback notice: when a load fails (backend unreachable or past the
+  5-second timeout, an HTTP error, or a saved character sheet that fails
+  the schema), the home, contact, and `/lab/character-sheet` pages show
+  one plain `StatusMessage` (tone `info`) at the top through `Sheet`'s new
+  `notice` slot: "Parts of this page show built-in content because the
+  latest couldn't be loaded." While it retries it adds "Trying again in
+  the background; the page will update on its own."; only after the last
+  retry fails does it ask for a reload. `AutoRetry`, a client provider
+  each page wraps around its `Sheet` (`active` when anything failed),
+  calls `router.refresh()` after 3, 10, 20, and 30 seconds: the server
+  renders the page again and the result merges in place (no reload; typed
+  form input and scroll position stay), so a successful retry removes the
+  notice and swaps in the saved values and the project list. It pauses
+  while the tab is hidden and retries at once when it's shown again.
+  `FallbackNotice` and `ProjectsUnavailable` read whether it gave up
+  (`useRetriesGaveUp()`): the project list's message is a plain "trying
+  again" line until then, and only after giving up becomes an error with
+  the Try again button. A failure of only the project list retries too
+  (no notice). Rejected: hiding the button only while the notice shows
+  (a failure of only the project list would still get the manual button)
+  and pausing a hidden tab's wait to resume it later (someone returning
+  after minutes would wait up to 30 more seconds). Known gap: attempts
+  aren't reset if a page recovers and then fails again without a
+  navigation, so it gives up sooner then. On a cold start the first retry usually succeeds:
+  `/projects` has no timeout, so the page already waited for the backend
+  to wake. Rejected for retrying: fetching the content in the browser
+  (client components and zod in the bundle, duplicated loaders) and
+  holding a streamed response open until the backend answers (a Vercel
+  function open for up to a minute per visit). Not shown for "nothing saved" (a 404, a key with no saved
+  value), where the built-in value is current. `getContent()` returns
+  `{ content, fallback }` and now treats an HTTP error as a fallback
+  (reported to Sentry; before, it quietly merged nothing).
+  `getCharacterConfig()` returns `{ config, fallback }`. The package's
+  `loadConfig(sources, fallback)` now resolves to `{ config, source,
+  issues }` (`source` null for the fallback) instead of taking an
+  `onIssue` callback, and a source throws when it fails rather than
+  resolving to `undefined`, which now only means "nothing saved"; the
+  host throws a `BackendUnavailable` for an unreachable backend and keeps
+  it out of Sentry. The project list keeps its own error message: it has
+  no built-in copy and can fail while content loads. Rejected: a fixed
+  ribbon or corner badge (covers content; decorative), a sticky bar
+  (holds screen space all visit), and a request-scoped side channel for
+  the flag (call sites could miss it). Verified with Playwright on the
+  demo stack (9 asserted steps: backend up, down on home and contact,
+  back up, an invalid saved character sheet, and a fake backend answering
+  500; then 12 more for retrying: recovery on contact with typed input
+  kept and no reload, recovery on home with the project list,
+  giving up after 63 seconds with the button appearing only then, a
+  failure of only `/projects` recovering on its own, and a hidden tab
+  making no refreshes for 20 seconds, then one at once when shown).
 
-- Fallback notice (next; asked for 2026-11-05): tell visitors when the
-  page shows built-in values instead of the saved ones, so it's clear
-  whether what they see is current.
-  - Shows only when a load failed: the backend unreachable or past the
-    5-second timeout (Render cold starts), an HTTP error, or a saved
-    character sheet that fails the schema. Not for "nothing saved" (a
-    404, or a content key with no saved value): there the built-in value
-    is the current one, and a notice that never goes away gets ignored.
-  - One static line at the top of the page through `StatusMessage`,
-    tone `info` (signal blue, not oxide: for a visitor this is a delay,
-    not an error), e.g. "Showing built-in content while the server wakes
-    up. Reload in a minute for the latest." Rejected: a fixed ribbon or
-    corner badge (covers content, needs layout padding, and a diagonal
-    ribbon is the decorative style the design system avoids) and a sticky
-    bar (holds screen space all visit, mostly on mobile). A static line
-    scrolls away, which is fine because it matters at page load.
-  - `getContent()` and `getCharacterConfig()` report whether they fell
-    back alongside their data (e.g. `{ content, fallback: true }`) rather
-    than through a request-scoped side channel, so call sites can't miss
-    it. The character sheet's `loadConfig` returns only a config today,
-    so it needs to say which source it used: a small API change in the
-    package-to-be (`components/character-sheet/`), made in a way that
-    still suits other hosts. Pages pass the flags to one shared component
-    (`components/FallbackNotice.tsx`); the home page is the only one
-    using fallbacks so far. Decide when building whether the project
-    list's own unavailable message joins this notice.
-  - Testable with `scripts/fake-backend.py` (`/__mode/down`, `500`) and a
-    demo video of the notice appearing and clearing.
+## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
   - More jobs, such as AI development, plus slots like Education.

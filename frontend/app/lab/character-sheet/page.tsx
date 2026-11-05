@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
 import { resolveJob } from "@/components/character-sheet/resolve";
+import { AutoRetry } from "@/components/AutoRetry";
+import { FallbackNotice } from "@/components/FallbackNotice";
 import { Sheet } from "@/components/Sheet";
 import { getCharacterConfig } from "@/lib/character";
 import { renderLink, renderPortrait } from "@/lib/character-render";
@@ -18,7 +20,10 @@ export const dynamic = "force-dynamic";
 const BASE_PATH = "/lab/character-sheet";
 
 export default async function CharacterSheetLabPage({ searchParams }: PageProps<"/lab/character-sheet">) {
-  const [characterConfig, { job: jobParam }] = await Promise.all([getCharacterConfig(), searchParams]);
+  const [{ config: characterConfig, fallback }, { job: jobParam }] = await Promise.all([
+    getCharacterConfig(),
+    searchParams,
+  ]);
   const job = resolveJob(characterConfig, jobParam);
   const shared = {
     config: characterConfig,
@@ -31,21 +36,27 @@ export default async function CharacterSheetLabPage({ searchParams }: PageProps<
   };
 
   return (
-    <Sheet title="Character sheet themes" back={{ href: "/", label: "Home" }}>
-      <p className="intro lab-intro">
-        The home page&rsquo;s character sheet in each of its themes. Changing the job in either
-        panel changes both.
-      </p>
+    <AutoRetry active={fallback}>
+      <Sheet
+        title="Character sheet themes"
+        back={{ href: "/", label: "Home" }}
+        notice={fallback && <FallbackNotice />}
+      >
+        <p className="intro lab-intro">
+          The home page&rsquo;s character sheet in each of its themes. Changing the job in either
+          panel changes both.
+        </p>
 
-      <div className="section-rule">
-        <h2 className="section-rule__label">Document theme</h2>
-      </div>
-      <CharacterSheet {...shared} theme="document" label="Character sheet, document theme" />
+        <div className="section-rule">
+          <h2 className="section-rule__label">Document theme</h2>
+        </div>
+        <CharacterSheet {...shared} theme="document" label="Character sheet, document theme" />
 
-      <div className="section-rule">
-        <h2 className="section-rule__label">Game theme</h2>
-      </div>
-      <CharacterSheet {...shared} theme="game" label="Character sheet, game theme" />
-    </Sheet>
+        <div className="section-rule">
+          <h2 className="section-rule__label">Game theme</h2>
+        </div>
+        <CharacterSheet {...shared} theme="game" label="Character sheet, game theme" />
+      </Sheet>
+    </AutoRetry>
   );
 }

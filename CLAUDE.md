@@ -123,7 +123,10 @@ Frontend:
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
   `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
-  `components/PortraitPicker.tsx`,
+  `components/PortraitPicker.tsx`, `components/AutoRetry.tsx` (retries a
+  page whose loads failed with `router.refresh()`) and the messages that
+  read it, `components/FallbackNotice.tsx` and
+  `components/ProjectsUnavailable.tsx`,
   `components/character-sheet/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
@@ -146,7 +149,10 @@ Frontend:
   the edit. Project field rules (slug pattern, max lengths) live in
   `lib/project-rules.ts`, mirroring `schemas.ProjectCreate`.
 - Every page renders inside `Sheet` (`components/Sheet.tsx`: the sheet,
-  an optional back link and ruled header), and boxed status text is
+  an optional back link and ruled header, and a top `notice` slot, used for
+  `FallbackNotice` from the `fallback` flags of `getContent()` and
+  `getCharacterConfig()`; a page with loads that can fail wraps its
+  `Sheet` in `AutoRetry`), and boxed status text is
   `StatusMessage` (tone `error` | `success` | `info`, which sets the ARIA
   role). Spacing goes in `globals.css` classes, not inline styles.
 - Page titles are just the page's own name; `title.template` in

@@ -93,7 +93,7 @@ A config is plain JSON. Add `"$schema"` pointing at
 ## Usage
 
 ```tsx
-const { config, errors } = parseConfig(json);   // or: await loadConfig(sources, fallback, onIssue)
+const { config, errors } = parseConfig(json);   // or: const { config } = await loadConfig(sources, fallback)
 const job = resolveJob(config, searchParams.job);
 
 <CharacterSheet
@@ -109,12 +109,15 @@ const job = resolveJob(config, searchParams.job);
 />
 ```
 
-`loadConfig(sources, fallback, onIssue)` tries each `{ name, load }` source in
-order, such as an admin API, a CMS adapter, or a remote JSON file. It uses the
-first one that yields a usable config. A source whose `load` resolves to
-`undefined` has nothing yet (no save, an empty CMS entry) and is skipped
-without an issue. It never throws: problems go to `onIssue`, and when every
-source fails it returns `fallback`.
+`loadConfig(sources, fallback)` tries each `{ name, load }` source in order,
+such as an admin API, a CMS adapter, or a remote JSON file. It uses the first
+one that yields a usable config. A source whose `load` resolves to `undefined`
+has nothing yet (no save, an empty CMS entry) and is skipped without an issue;
+a `load` that throws (unreachable, an HTTP error) is an issue. It never throws.
+It resolves to `{ config, source, issues }`: `source` is the name of the source
+used, or `null` when no source had a usable config and `config` is
+`fallback`. `source === null` with issues means the page shows the fallback
+because something failed, which a host can tell visitors about.
 
 ## Behaviour
 

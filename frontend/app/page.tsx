@@ -4,9 +4,11 @@ import Link from "next/link";
 import Markdown from "react-markdown";
 import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
 import { resolveJob } from "@/components/character-sheet/resolve";
+import { AutoRetry } from "@/components/AutoRetry";
+import { FallbackNotice } from "@/components/FallbackNotice";
+import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
-import { StatusMessage } from "@/components/StatusMessage";
 import { api } from "@/lib/api";
 import { getCharacterConfig } from "@/lib/character";
 import { renderLink, renderPortrait } from "@/lib/character-render";
@@ -40,7 +42,7 @@ async function loadProjects() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const content = await getContent();
+  const { content } = await getContent();
   // ?job= only changes emphasis, so every variant points at the one URL.
   return { description: content["site.description"], alternates: { canonical: "/" } };
 }
@@ -48,7 +50,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   // Started together so the content and character sheet requests add no
   // wait of their own.
-  const [projects, content, characterConfig, { job: jobParam }] = await Promise.all([
+  const [
+    projects,
+    { content, fallback: contentFallback },
+    { config: characterConfig, fallback: characterFallback },
+    { job: jobParam },
+  ] = await Promise.all([
     loadProjects(),
     getContent(),
     getCharacterConfig(),
@@ -58,83 +65,80 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // The job's page sections, in slot order, labelled like their slots.
   const sections = characterConfig.slots.filter((slot) => job.sections?.[slot.id]);
 
+  const fallback = contentFallback || characterFallback;
+
   return (
-    <Sheet
-      lead={
-        <CharacterSheet
-          config={characterConfig}
-          job={job}
-          renderLink={renderLink}
-          renderPortrait={renderPortrait}
-          showSockets
-          showToolbar
-        />
-      }
-    >
-      <div className="title-block">
-        <div className="title-block__heading">
-          <h1 className="title-block__name">Alexander Le</h1>
-          <p className="title-block__role">{content["home.role"]}</p>
+    // One retry loop for everything that failed. The project list has its
+    // own message below: it has no built-in copy, so it says so where the
+    // list would be.
+    <AutoRetry active={fallback || projects === null}>
+      <Sheet
+        notice={fallback && <FallbackNotice />}
+        lead={
+          <CharacterSheet
+            config={characterConfig}
+            job={job}
+            renderLink={renderLink}
+            renderPortrait={renderPortrait}
+            showSockets
+            showToolbar
+          />
+        }
+      >
+        <div className="title-block">
+          <div className="title-block__heading">
+            <h1 className="title-block__name">Alexander Le</h1>
+            <p className="title-block__role">{content["home.role"]}</p>
+          </div>
+          <div className="title-block__facts">
+            {FACTS.map(({ label, key }) => (
+              <div className="title-block__fact" key={key}>
+                <div className="title-block__fact-label">{label}</div>
+                <div className="title-block__fact-value">{content[key]}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="title-block__facts">
-          {FACTS.map(({ label, key }) => (
-            <div className="title-block__fact" key={key}>
-              <div className="title-block__fact-label">{label}</div>
-              <div className="title-block__fact-value">{content[key]}</div>
+
+        <div className="intro home-intro">
+          <Markdown>{content["home.intro"]}</Markdown>
+        </div>
+
+        {sections.map((slot) => (
+          <section key={slot.id} aria-labelledby={`${slot.id}-heading`}>
+            <div className="section-rule" id={slot.id}>
+              <h2 className="section-rule__label" id={`${slot.id}-heading`}>
+                {slot.label}
+              </h2>
             </div>
-          ))}
+            <div className="intro job-section">
+              <Markdown>{job.sections?.[slot.id]}</Markdown>
+            </div>
+          </section>
+        ))}
+
+        <div className="section-rule" id="projects">
+          <h2 className="section-rule__label">Projects</h2>
         </div>
-      </div>
 
-      <div className="intro home-intro">
-        <Markdown>{content["home.intro"]}</Markdown>
-      </div>
-
-      {sections.map((slot) => (
-        <section key={slot.id} aria-labelledby={`${slot.id}-heading`}>
-          <div className="section-rule" id={slot.id}>
-            <h2 className="section-rule__label" id={`${slot.id}-heading`}>
-              {slot.label}
-            </h2>
-          </div>
-          <div className="intro job-section">
-            <Markdown>{job.sections?.[slot.id]}</Markdown>
-          </div>
-        </section>
-      ))}
-
-      <div className="section-rule" id="projects">
-        <h2 className="section-rule__label">Projects</h2>
-      </div>
-
-      {projects === null ? (
-        <>
-          <StatusMessage tone="error">
-            Couldn&rsquo;t load projects. The server may be waking up, so try again in a minute.
-          </StatusMessage>
-          {/* A full reload, not next/link: <Link> to the current URL may
-              be served from the client router cache, while a reload
-              always fetches again. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="form-button">
-            Try again
-          </a>
-        </>
-      ) : (
-        <ul className="project-list">
-          {projects.map((project) => (
-            <li key={project.slug} className="project-card">
-              <h3 className="project-card__title">
-                <Link href={`/projects/${project.slug}`} className="project-card__link">
-                  {project.title}
-                </Link>
-              </h3>
-              <p className="project-card__summary">{project.summary}</p>
-              <StackTags stack={project.stack} className="project-card__stack" />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Sheet>
+        {projects === null ? (
+          <ProjectsUnavailable />
+        ) : (
+          <ul className="project-list">
+            {projects.map((project) => (
+              <li key={project.slug} className="project-card">
+                <h3 className="project-card__title">
+                  <Link href={`/projects/${project.slug}`} className="project-card__link">
+                    {project.title}
+                  </Link>
+                </h3>
+                <p className="project-card__summary">{project.summary}</p>
+                <StackTags stack={project.stack} className="project-card__stack" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Sheet>
+    </AutoRetry>
   );
 }

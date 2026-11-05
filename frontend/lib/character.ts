@@ -35,11 +35,15 @@ export const characterConfig: CharacterSheetConfig = config;
 // is a fine stand-in, so a cold backend never holds the page.
 const CHARACTER_TIMEOUT_MS = 5000;
 
-// The copy saved through PUT /character-sheet. Resolves to undefined when
-// there's nothing to use: no save yet (404), or the backend is unreachable
-// or timed out, which is logged but not reported, since every cold start
-// would otherwise be a Sentry event. Anything else throws, so loadConfig
-// reports it.
+// Thrown when the backend is unreachable or timed out (a Render cold
+// start). It counts as a failed load, so the page says it shows the bundled
+// file, but it's logged rather than reported: every cold start would
+// otherwise be a Sentry event.
+class BackendUnavailable extends Error {}
+
+// The copy saved through PUT /character-sheet. Resolves to undefined only
+// when nothing is saved yet (404); any other failure throws, so loadConfig
+// lists it as an issue.
 const apiSource: ConfigSource = {
   name: "GET /character-sheet",
   load: async () => {
@@ -49,8 +53,7 @@ const apiSource: ConfigSource = {
         signal: AbortSignal.timeout(CHARACTER_TIMEOUT_MS),
       });
     } catch (error) {
-      console.error("Falling back to the bundled character sheet:", error);
-      return undefined;
+      throw new BackendUnavailable("Backend unreachable", { cause: error });
     }
     const { data, response } = result;
     if (data) return data.config;
@@ -59,15 +62,27 @@ const apiSource: ConfigSource = {
   },
 };
 
+export type CharacterConfigResult = {
+  config: CharacterSheetConfig;
+  // True when the bundled file is showing because loading the saved copy
+  // failed, not because nothing is saved. Pages pass it to FallbackNotice.
+  fallback: boolean;
+};
+
 // cache() memoizes per request, like getContent(). Never throws: on any
-// problem the page shows the bundled file. Issues reaching onIssue (an HTTP
-// error, or a saved copy that fails the zod schema, such as after the
-// schema changed) are real bugs, so they go to Sentry.
-export const getCharacterConfig = cache(
-  (): Promise<CharacterSheetConfig> =>
-    loadConfig([apiSource], characterConfig, ({ source, errors, error }) => {
-      Sentry.captureException(error ?? new Error(`Character sheet from ${source} has problems`), {
-        extra: { source, errors },
-      });
-    }),
-);
+// problem the page shows the bundled file. Issues other than an unreachable
+// backend (an HTTP error, or a saved copy that fails the zod schema, such
+// as after the schema changed) are real bugs, so they go to Sentry.
+export const getCharacterConfig = cache(async (): Promise<CharacterConfigResult> => {
+  const { config, source, issues } = await loadConfig([apiSource], characterConfig);
+  for (const { source, errors, error } of issues) {
+    if (error instanceof BackendUnavailable) {
+      console.error("Falling back to the bundled character sheet:", error.cause);
+      continue;
+    }
+    Sentry.captureException(error ?? new Error(`Character sheet from ${source} has problems`), {
+      extra: { source, errors },
+    });
+  }
+  return { config, fallback: source === null && issues.length > 0 };
+});

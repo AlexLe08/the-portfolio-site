@@ -95,7 +95,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 // an API, a CMS, or a remote JSON file implement this; the component never
 // knows which one it got. Resolving to undefined means the source has
 // nothing yet (no save, an empty CMS entry): not a problem to report, so
-// loadConfig moves on to the next source quietly.
+// loadConfig moves on to the next source quietly. Throwing means it failed
+// (unreachable, an HTTP error), which becomes an issue.
 export type ConfigSource = {
   name: string;
   load: () => Promise<unknown>;
@@ -103,24 +104,36 @@ export type ConfigSource = {
 
 export type LoadIssue = { source: string; errors: string[]; error?: unknown };
 
+export type LoadResult = {
+  config: CharacterSheetConfig;
+  // The name of the source used, or null for `fallback`.
+  source: string | null;
+  // Every problem met on the way, including in a source that was still
+  // used (a dropped job). With source null, a non-empty list means the
+  // fallback is showing because something failed, not because no source
+  // had anything yet.
+  issues: LoadIssue[];
+};
+
 // Tries each source in order and uses the first one that yields a usable
 // config, falling back to `fallback` (normally a bundled JSON file). Never
-// throws: problems go to onIssue (logging, Sentry) instead.
+// throws: the host decides what to do with the issues (logging, Sentry, a
+// notice that the page shows the fallback).
 export async function loadConfig(
   sources: ConfigSource[],
   fallback: CharacterSheetConfig,
-  onIssue?: (issue: LoadIssue) => void,
-): Promise<CharacterSheetConfig> {
+): Promise<LoadResult> {
+  const issues: LoadIssue[] = [];
   for (const source of sources) {
     try {
       const raw = await source.load();
       if (raw === undefined) continue;
       const { config, errors } = parseConfig(raw);
-      if (errors.length > 0) onIssue?.({ source: source.name, errors });
-      if (config) return config;
+      if (errors.length > 0) issues.push({ source: source.name, errors });
+      if (config) return { config, source: source.name, issues };
     } catch (error) {
-      onIssue?.({ source: source.name, errors: [String(error)], error });
+      issues.push({ source: source.name, errors: [String(error)], error });
     }
   }
-  return fallback;
+  return { config: fallback, source: null, issues };
 }
