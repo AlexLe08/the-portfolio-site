@@ -7,7 +7,10 @@ import { z } from "zod";
 //
 // Imports nothing but zod: this folder is meant to move to its own package.
 
-const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+// The hyphen is escaped so the pattern also works in an HTML pattern
+// attribute, which browsers compile with the v flag, where a bare "-" in a
+// class is a syntax error and the attribute is silently ignored.
+export const ID_PATTERN = /^[a-z0-9][a-z0-9\-]*$/;
 
 const id = z
   .string()

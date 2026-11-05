@@ -15,7 +15,7 @@
     "defaultJobId": {
       "type": "string",
       "maxLength": 40,
-      "pattern": "^[a-z0-9][a-z0-9-]*$"
+      "pattern": "^[a-z0-9][a-z0-9\\-]*$"
     },
     "slots": {
       "minItems": 1,
@@ -27,7 +27,7 @@
           "id": {
             "type": "string",
             "maxLength": 40,
-            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "pattern": "^[a-z0-9][a-z0-9\\-]*$",
             "description": "Stable id; jobs fill slots by this id."
           },
           "label": {
@@ -70,7 +70,7 @@
           "id": {
             "type": "string",
             "maxLength": 40,
-            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "pattern": "^[a-z0-9][a-z0-9\\-]*$",
             "description": "Used in the URL: ?job=<id>."
           },
           "name": {
@@ -174,7 +174,7 @@
             "propertyNames": {
               "type": "string",
               "maxLength": 40,
-              "pattern": "^[a-z0-9][a-z0-9-]*$"
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
             },
             "additionalProperties": {
               "type": "object",
@@ -277,7 +277,7 @@
                         "target": {
                           "type": "string",
                           "maxLength": 40,
-                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "pattern": "^[a-z0-9][a-z0-9\\-]*$",
                           "description": "Element id on the same page, without the #."
                         }
                       },
@@ -361,7 +361,7 @@
             "propertyNames": {
               "type": "string",
               "maxLength": 40,
-              "pattern": "^[a-z0-9][a-z0-9-]*$"
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
             },
             "additionalProperties": {
               "type": "string",

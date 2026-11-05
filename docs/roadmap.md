@@ -595,11 +595,34 @@
   giving up after 63 seconds with the button appearing only then, a
   failure of only `/projects` recovering on its own, and a hidden tab
   making no refreshes for 20 seconds, then one at once when shown).
+- Adding a job from the form: "Add a job" on `/admin/character-sheet`
+  (`components/CharacterJobAddForm.tsx`, folded in a `<details>`) takes
+  an id, name, and title and copies an existing job (level, portrait,
+  slots, sections; the current job is preselected), since jobs share
+  most slots. `addCharacterJob` re-reads the saved copy like
+  `updateCharacterJob`, refuses an id that exists, saves through
+  `saveConfig`, then redirects to the new job's form. The job is live as
+  soon as it's added. Rejected: a blank job (level is required and
+  tooltips are JSON-only, so it would start as an empty panel) and a
+  separate `/new` page. Found on the way: browsers compile an HTML
+  `pattern` with the `v` flag, where the bare `-` in `[a-z0-9-]` is a
+  syntax error and the attribute is silently ignored, so `ID_PATTERN`
+  now escapes it (`\-`, same meaning in zod, the JSON Schema, and
+  Python's `re`; the schema copies changed by that character only).
+  Verified with Playwright on the demo stack (7 asserted steps: the id
+  pattern blocking "AI Dev", an existing id refused with input kept, the
+  backend down on add, a copy of E-commerce opening in the form, editing
+  it, and the home page showing it with E-commerce unchanged).
 
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
-  - More jobs, such as AI development, plus slots like Education.
+  - Content, entered in production through the form (no code needed):
+    an AI development job, and Education sections (the `education` slot
+    already exists; it's empty in every job).
+  - Removing a job from the form, and a hidden/draft flag so a new job
+    isn't live before it's edited, if adding jobs becomes routine. Both
+    are JSON-only or missing today.
   - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
     note, stat; `items` mixes strings and label/value pairs, so it needs
     its own small list editor).

@@ -123,6 +123,7 @@ Frontend:
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
   `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
+  `components/CharacterJobAddForm.tsx`,
   `components/PortraitPicker.tsx`, `components/AutoRetry.tsx` (retries a
   page whose loads failed with `router.refresh()`) and the messages that
   read it, `components/FallbackNotice.tsx` and
