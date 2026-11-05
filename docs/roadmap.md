@@ -543,9 +543,38 @@
   (`framing: "face"`) so outages show it too. Only the portraits were
   copied; production's other differences from the bundled file were left
   alone. The delete guard doesn't see the bundled copy, so don't delete
-  that upload.
+  that upload. Merged as #60 (`20ddd96`).
 
 ## Next up (candidates, unordered)
+
+- Fallback notice (next; asked for 2026-11-05): tell visitors when the
+  page shows built-in values instead of the saved ones, so it's clear
+  whether what they see is current.
+  - Shows only when a load failed: the backend unreachable or past the
+    5-second timeout (Render cold starts), an HTTP error, or a saved
+    character sheet that fails the schema. Not for "nothing saved" (a
+    404, or a content key with no saved value): there the built-in value
+    is the current one, and a notice that never goes away gets ignored.
+  - One static line at the top of the page through `StatusMessage`,
+    tone `info` (signal blue, not oxide: for a visitor this is a delay,
+    not an error), e.g. "Showing built-in content while the server wakes
+    up. Reload in a minute for the latest." Rejected: a fixed ribbon or
+    corner badge (covers content, needs layout padding, and a diagonal
+    ribbon is the decorative style the design system avoids) and a sticky
+    bar (holds screen space all visit, mostly on mobile). A static line
+    scrolls away, which is fine because it matters at page load.
+  - `getContent()` and `getCharacterConfig()` report whether they fell
+    back alongside their data (e.g. `{ content, fallback: true }`) rather
+    than through a request-scoped side channel, so call sites can't miss
+    it. The character sheet's `loadConfig` returns only a config today,
+    so it needs to say which source it used: a small API change in the
+    package-to-be (`components/character-sheet/`), made in a way that
+    still suits other hosts. Pages pass the flags to one shared component
+    (`components/FallbackNotice.tsx`); the home page is the only one
+    using fallbacks so far. Decide when building whether the project
+    list's own unavailable message joins this notice.
+  - Testable with `scripts/fake-backend.py` (`/__mode/down`, `500`) and a
+    demo video of the notice appearing and clearing.
 
 - Character sheet follow-ups, roughly in order:
   - More jobs, such as AI development, plus slots like Education.
@@ -599,3 +628,11 @@
   Redis only if the service ever scales out).
 - Verify a domain in Resend to email anyone other than yourself, and
   switch `EMAIL_FROM` to it.
+- Low priority (decided 2026-11-05): keeping the built-in values
+  (`FALLBACK_CONTENT`, `lib/character-config.json`) in step with edits
+  saved in production, and cleaning up production's leftover test edits
+  (Healthcare's level "React guy", slot texts "truth" and "test text",
+  icons "HLC"/"ECM", the portrait alt text "lami's avatar sticker"). The
+  fallback notice makes it visible when built-in values are showing, so
+  they don't need to match production. Copy changes across only when they
+  matter during an outage, as with the portrait.
