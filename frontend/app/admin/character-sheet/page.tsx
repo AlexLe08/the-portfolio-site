@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { updateCharacterJob } from "./actions";
+import { addCharacterJob, updateCharacterJob } from "./actions";
 import { jobHref, resolveJob } from "@/components/character-sheet/resolve";
-import { jobSchema, portraitSchema } from "@/components/character-sheet/schema";
+import { ID_PATTERN, jobSchema, portraitSchema } from "@/components/character-sheet/schema";
+import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import type { PortraitUpload } from "@/components/PortraitPicker";
 import { Sheet } from "@/components/Sheet";
@@ -30,7 +31,7 @@ const LIMITS: JobFieldLimits = {
 };
 
 // One job at a time, picked with ?job= like the home page. The rest of the
-// config (slots, tooltips, actions, adding jobs) is edited as JSON.
+// config (slots, tooltips, actions, removing jobs) is edited as JSON.
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
@@ -81,8 +82,15 @@ export default async function AdminCharacterSheetPage({
         {jsonLink}
       </div>
       <p className="form-help admin-intro">
-        Slots, tooltips, links, and adding or removing jobs are edited as JSON.
+        Slots, tooltips, links, and removing jobs are edited as JSON.
       </p>
+      <CharacterJobAddForm
+        action={addCharacterJob}
+        jobs={config.jobs.map(({ id, name }) => ({ id, name }))}
+        currentJobId={job.id}
+        limits={{ id: jobFields.id.maxLength, name: LIMITS.name, title: LIMITS.title }}
+        idPattern={ID_PATTERN.source}
+      />
 
       {/* Keyed by job: the inputs are uncontrolled, so switching jobs has to
           remount them to show the new job's values. */}

@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { findUnknownKeys, parseConfig } from "@/components/character-sheet/parse";
 import { adminRequest } from "@/lib/admin-api";
 import type { components } from "@/lib/api-types";
@@ -56,6 +57,37 @@ export async function updateCharacterJob(
   if (!job) return { error: `The saved copy has no job "${jobId}" any more. Reload the page.` };
   applyJobForm(job, formData);
   return saveConfig(config);
+}
+
+// Adds a job as a copy of an existing one (level, portrait, slots,
+// sections), so it starts complete and the form only has to change what
+// differs. Saved at once, so it shows in the home page's job menu straight
+// away. The id's format and the job limit are checked by saveConfig.
+export async function addCharacterJob(
+  _previous: CharacterSheetFormState,
+  formData: FormData,
+): Promise<CharacterSheetFormState> {
+  const id = formText(formData, "id");
+  const copyFrom = formText(formData, "copy_from");
+  const loaded = await loadSavedConfig();
+  if ("error" in loaded) return loaded;
+  const { config } = loaded;
+
+  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
+  const findJob = (jobId: string) =>
+    jobs.find((entry): entry is JsonObject => isObject(entry) && entry.id === jobId);
+  if (findJob(id)) return { error: `A job with the id "${id}" already exists.` };
+  const source = findJob(copyFrom);
+  if (!source) return { error: `The saved copy has no job "${copyFrom}" any more. Reload the page.` };
+
+  // id first, as in the bundled file; spreading keeps the rest in order.
+  const job = { ...structuredClone(source), id, name: formText(formData, "name"), title: formText(formData, "title") };
+  config.jobs = [...jobs, job];
+  const result = await saveConfig(config);
+  if (!result || "error" in result) return result;
+
+  // Outside any try block: redirect() works by throwing.
+  redirect(`/admin/character-sheet?job=${encodeURIComponent(id)}`);
 }
 
 // Only a 404 (nothing saved yet) starts from the bundled file, as on the
