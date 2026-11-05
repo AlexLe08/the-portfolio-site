@@ -550,8 +550,30 @@
   the schema), the home, contact, and `/lab/character-sheet` pages show
   one plain `StatusMessage` (tone `info`) at the top through `Sheet`'s new
   `notice` slot: "Parts of this page show built-in content because the
-  latest couldn't be loaded. The server may be waking up, so reload in a
-  minute." Not shown for "nothing saved" (a 404, a key with no saved
+  latest couldn't be loaded." While it retries it adds "Trying again in
+  the background; the page will update on its own."; only after the last
+  retry fails does it ask for a reload. `AutoRetry`, a client provider
+  each page wraps around its `Sheet` (`active` when anything failed),
+  calls `router.refresh()` after 3, 10, 20, and 30 seconds: the server
+  renders the page again and the result merges in place (no reload; typed
+  form input and scroll position stay), so a successful retry removes the
+  notice and swaps in the saved values and the project list. It pauses
+  while the tab is hidden and retries at once when it's shown again.
+  `FallbackNotice` and `ProjectsUnavailable` read whether it gave up
+  (`useRetriesGaveUp()`): the project list's message is a plain "trying
+  again" line until then, and only after giving up becomes an error with
+  the Try again button. A failure of only the project list retries too
+  (no notice). Rejected: hiding the button only while the notice shows
+  (a failure of only the project list would still get the manual button)
+  and pausing a hidden tab's wait to resume it later (someone returning
+  after minutes would wait up to 30 more seconds). Known gap: attempts
+  aren't reset if a page recovers and then fails again without a
+  navigation, so it gives up sooner then. On a cold start the first retry usually succeeds:
+  `/projects` has no timeout, so the page already waited for the backend
+  to wake. Rejected for retrying: fetching the content in the browser
+  (client components and zod in the bundle, duplicated loaders) and
+  holding a streamed response open until the backend answers (a Vercel
+  function open for up to a minute per visit). Not shown for "nothing saved" (a 404, a key with no saved
   value), where the built-in value is current. `getContent()` returns
   `{ content, fallback }` and now treats an HTTP error as a fallback
   (reported to Sentry; before, it quietly merged nothing).
@@ -568,7 +590,11 @@
   the flag (call sites could miss it). Verified with Playwright on the
   demo stack (9 asserted steps: backend up, down on home and contact,
   back up, an invalid saved character sheet, and a fake backend answering
-  500).
+  500; then 12 more for retrying: recovery on contact with typed input
+  kept and no reload, recovery on home with the project list,
+  giving up after 63 seconds with the button appearing only then, a
+  failure of only `/projects` recovering on its own, and a hidden tab
+  making no refreshes for 20 seconds, then one at once when shown).
 
 ## Next up (candidates, unordered)
 
