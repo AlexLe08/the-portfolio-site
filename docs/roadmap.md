@@ -536,15 +536,18 @@
   image anywhere in a job count. Not covered: the frontend's bundled
   `lib/character-config.json`, which the backend can't see, so an image
   copied there can still be deleted. Mutation-checked (6 of 6 caught).
+  Merged as #59 and deployed 2026-11-04 (`61fce97`).
+- Real portrait: the avatar uploaded at `/admin/media`
+  (`portfolio/lami-s-avatar-sticker-910fc625e091`) is picked for both
+  jobs in production, and copied into `lib/character-config.json`
+  (`framing: "face"`) so outages show it too. Only the portraits were
+  copied; production's other differences from the bundled file were left
+  alone. The delete guard doesn't see the bundled copy, so don't delete
+  that upload.
 
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
-  - A real portrait (next). Upload it at `/admin/media` and pick it for
-    each job in the form, then copy the result into
-    `lib/character-config.json` (`framing: "face"` or `"full"`) so outages
-    show it too. The delete guard doesn't see that copy, so don't delete
-    the upload afterwards.
   - More jobs, such as AI development, plus slots like Education.
   - Admin editing, PR 3b: slot tooltips in the form (title, subtitle,
     note, stat; `items` mixes strings and label/value pairs, so it needs
