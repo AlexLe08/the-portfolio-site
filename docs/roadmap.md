@@ -860,7 +860,7 @@
   the menu, link falls back), publish (in the menu, opens), hide again,
   and a draft default refused as JSON.
 
-- Draft preview: `/admin/character-sheet/preview?job=…` renders the home
+- Draft preview (#82): `/admin/character-sheet/preview?job=…` renders the home
   page with the whole config, so a draft or hidden job can be checked as
   visitors would see it before publishing. The home page's body moved to
   `components/HomeView.tsx`, shared by `/` and the preview, so the two
