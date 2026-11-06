@@ -17,8 +17,8 @@ Monorepo:
   locally and in CI.
 - `frontend/`: Next.js App Router, React 19, TypeScript. Deployed to
   Vercel (Hobby).
-- `packages/`: npm workspace packages the frontend uses (none yet; the
-  character sheet moves here, see `docs/plans/character-sheet-package.md`).
+- `packages/`: npm workspace packages the frontend uses (currently
+  `eorzean-character-sheet`, see `docs/plans/character-sheet-package.md`).
   The root `package.json` declares the workspaces; the one
   `package-lock.json` and `node_modules/` are at the repo root.
 - `docs/`: one runbook per service, plus `roadmap.md`.
@@ -124,7 +124,7 @@ and imports nothing from them. Imports only point downward.
   shared by the public and admin routers, including the one list order;
   `media.py`: image upload checks, Cloudinary calls, and the `media` row;
   `character_sheet.py`: the one-row config document and its JSON Schema
-  check).
+  check, against a copy of the character sheet package's schema).
   Routers call services and turn results into HTTP (404, 409); services
   import from `core` but never from routers. Move logic there when a route
   handler starts doing more than HTTP handling plus a simple query.
@@ -144,7 +144,7 @@ Frontend:
   page whose loads failed with `router.refresh()`) and the messages that
   read it, `components/FallbackNotice.tsx` and
   `components/ProjectsUnavailable.tsx`,
-  `components/character-sheet/SlotHover.tsx`,
+  `packages/eorzean-character-sheet/src/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
@@ -174,13 +174,18 @@ Frontend:
   role). Spacing goes in `globals.css` classes, not inline styles.
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
-- The home page's character sheet (`components/character-sheet/`) is a
-  self-contained module meant to become its own package: it imports
-  nothing from `@/`, Next, or `globals.css` (the host passes `renderLink`
-  and `renderPortrait`, see `lib/character-render.tsx`). Its content is
-  `lib/character-config.json`, validated by `schema.ts` at build time.
-  After changing `schema.ts`, run `npm run generate:character-schema`:
-  it also copies the JSON Schema to `backend/app/services/`, which
+- The home page's character sheet is the workspace package
+  `@alexle08/eorzean-character-sheet` (`packages/eorzean-character-sheet/`),
+  meant to be published on its own later. Import it only through its
+  entries: `.` (data: `parseConfig`, `resolveJob`, types; no React),
+  `/react` (`CharacterSheet`), `/schema` (zod schemas and limits). It
+  imports nothing but React, zod and its own files, enforced by its
+  `eslint.config.mjs`, which the frontend's `lint` runs (the host passes
+  `renderLink` and `renderPortrait`, see `lib/character-render.tsx`). Its
+  content is `lib/character-config.json`, validated by `src/schema.ts` at
+  build time. After changing `src/schema.ts`, run
+  `npm run generate:character-schema` from `frontend/`: it writes the
+  package's JSON Schema and copies it to `backend/app/services/`, which
   validates admin saves against it (a backend test fails if the copies
   differ). Write rules the backend must enforce as zod checks that
   export to JSON Schema (`.regex()`, lengths), not refinements.
