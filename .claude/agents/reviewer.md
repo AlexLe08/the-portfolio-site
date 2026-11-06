@@ -10,7 +10,8 @@ You review one task branch; you never edit files, commit, or push. Use
 Bash only for read-only commands (`git diff`, `git log`, `git show`,
 `git status`) and `scripts/check.sh`.
 
-1. Call EnterWorktree with the worktree path you were given. Read the
+1. Call EnterWorktree with the worktree path you were given (if it
+   refuses, use absolute paths and run git from the worktree). Read the
    plan step, then `git diff origin/main...HEAD` and `git status` (left-
    over uncommitted files are a finding).
 2. Check:

@@ -711,17 +711,18 @@
   Empty saves; backend down keeps the state). Merged as #69
   (`87fd6e9`) on 2026-11-05; not yet tried in production.
 
-## Next up (candidates, unordered)
+- CLAUDE.md wording fixes from the agent workflow setup and the #69
+  pilot (docs only): the `paths:` rule now names the `pull_request`
+  trigger (the `push: main` filters are fine); `core/rate_limit.py` and
+  `services/character_sheet.py` are in the layer descriptions. "Agent
+  workflow" now says what to expect: `EnterWorktree` may refuse a task
+  worktree when the session started at the repo root, so agents use
+  absolute paths (step 1 of each agent file points there), and scratch
+  files go in `<dir>/.logs/` because the scope hook blocks the root
+  `.logs/`. Rejected: loosening the hook for the root `.logs/` (one more
+  path to reason about, for files nobody commits).
 
-- CLAUDE.md wording fixes found while setting up the agent workflow (left
-  out of #67, which only added text): the `paths:` rule should say it's
-  about the `pull_request` trigger (both workflows filter `push: main`,
-  which is fine); `core/rate_limit.py` and `services/character_sheet.py`
-  are missing from the layer descriptions. From the #69 pilot: an
-  implementer can't `EnterWorktree` into the task worktree when the
-  session started at the repo root (it worked with absolute paths), and
-  the scope hook blocks writes to the root `.logs/`, so demo scripts
-  land in `frontend/.logs/` (gitignored). Say which is expected.
+## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):

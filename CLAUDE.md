@@ -91,7 +91,7 @@ retyping the commands they wrap; each explains itself in its header:
 ## Architecture rules
 
 Backend layering: routers → schemas → models/database. `app/core/`
-(config, security, monitoring) is imported by other layers and imports nothing from
+(config, security, monitoring, rate_limit) is imported by other layers and imports nothing from
 them. Imports only point downward.
 - `schemas.py` (API contract) stays separate from `models.py` (storage).
   One model can back several schemas; `ProjectSummary` deliberately omits
@@ -114,7 +114,9 @@ them. Imports only point downward.
 - `app/services/` holds logic that isn't HTTP handling (currently
   `notifications.py`: Discord and email; `projects.py`: project queries
   shared by the public and admin routers, including the one list order;
-  `media.py`: image upload checks, Cloudinary calls, and the `media` row).
+  `media.py`: image upload checks, Cloudinary calls, and the `media` row;
+  `character_sheet.py`: the one-row config document and its JSON Schema
+  check).
   Routers call services and turn results into HTTP (404, 409); services
   import from `core` but never from routers. Move logic there when a route
   handler starts doing more than HTTP handling plus a simple query.
@@ -192,8 +194,9 @@ Frontend:
   Vercel preview URLs are not allowed origins.
 - CI required checks are the job ids `test` (`backend.yml`) and `build`
   (`frontend.yml`). Don't rename them without updating the GitHub ruleset.
-  Don't add `paths:` filters to workflow triggers: a required check that
-  never runs hangs as "Expected" forever. Don't add a standalone `tsc`
+  Don't add `paths:` filters to the `pull_request` trigger: a required
+  check that never runs hangs as "Expected" forever. (The `push: main`
+  filters are fine; nothing waits on those runs.) Don't add a standalone `tsc`
   step, because `next build` type-checks after generating Next's own types.
 - `next/font/google` needs network access at build time.
 - Dependency ranges are open upward, and changed defaults have already
@@ -242,6 +245,12 @@ task each. These rules add to everything above, for every agent.
   backend's schema copy). Anything else outside its directory, including
   `CLAUDE.md`, `.claude/`, `.github/`, `scripts/`, `docs/`, and root
   files, goes in its report for the orchestrator.
+- Working in the worktree: `EnterWorktree` may refuse the path when the
+  session started at the repo root. That's expected; use absolute paths
+  into the worktree for file tools and run commands from it. Scratch
+  files you write yourself (demo scripts) go in `<your dir>/.logs/`
+  (gitignored), because the scope hook blocks the root `.logs/`; the
+  scripts' own output still lands in the root `.logs/`.
 - Stay inside the task. No drive-by refactors, renames, or new
   dependencies unless the plan names them; report what you noticed.
 - Tests: never delete, skip, `xfail`, or loosen a test, or change its

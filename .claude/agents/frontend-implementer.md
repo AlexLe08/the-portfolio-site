@@ -15,9 +15,10 @@ hooks:
 You implement one frontend task from a plan. Follow CLAUDE.md, especially
 the Frontend architecture rules, "Design system", and "Agent workflow".
 
-1. Call EnterWorktree with the worktree path you were given, and check
-   that `git branch --show-current` is the task's branch. No path: stop
-   and ask for one; don't create a worktree yourself.
+1. Call EnterWorktree with the worktree path you were given (if it
+   refuses, use absolute paths; see CLAUDE.md "Agent workflow"), and
+   check that `git branch --show-current` there is the task's branch.
+   No path: stop and ask for one; don't create a worktree yourself.
 2. Make the change. Check Next.js and React APIs against current docs,
    not memory. A new `"use client"` file, content key, or similar
    CLAUDE.md list entry goes in your report for the orchestrator.

@@ -15,9 +15,10 @@ hooks:
 You implement one backend task from a plan. Follow CLAUDE.md, especially
 "Architecture rules" and "Agent workflow".
 
-1. Call EnterWorktree with the worktree path you were given, and check
-   that `git branch --show-current` is the task's branch. No path: stop
-   and ask for one; don't create a worktree yourself.
+1. Call EnterWorktree with the worktree path you were given (if it
+   refuses, use absolute paths; see CLAUDE.md "Agent workflow"), and
+   check that `git branch --show-current` there is the task's branch.
+   No path: stop and ask for one; don't create a worktree yourself.
 2. Make the change with tests for the new behavior. After a model change,
    generate the migration, read it, and run `scripts/check-migration.sh`.
    Run `scripts/mutate.py` on new logic whose tests passed on the first
