@@ -1,0 +1,31 @@
+{
+  "name": "@alexle08/eorzean-character-sheet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/CharacterSheet.tsx",
+    "./schema": "./src/schema.ts",
+    "./character-sheet.css": "./src/character-sheet.css",
+    "./character-sheet.schema.json": "./character-sheet.schema.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "generate:schema": "node scripts/generate-schema.mjs"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-plugin-jsx-a11y": "^6",
+    "eslint-plugin-react-hooks": "^7",
+    "typescript-eslint": "^8"
+  }
+}

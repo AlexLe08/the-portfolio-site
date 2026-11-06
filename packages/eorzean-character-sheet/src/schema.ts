@@ -5,7 +5,8 @@ import { z } from "zod";
 // can all feed the same component. Types are inferred from these schemas
 // (see types.ts), so the two can't drift apart.
 //
-// Imports nothing but zod: this folder is meant to move to its own package.
+// Imports nothing but zod, so plain Node (scripts/generate-schema.mjs) can
+// run it.
 
 // The hyphen is escaped so the pattern also works in an HTML pattern
 // attribute, which browsers compile with the v flag, where a bare "-" in a
