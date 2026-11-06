@@ -52,6 +52,19 @@ the host's bundler compiles it.
 A config is plain JSON. Add `"$schema"` pointing at
 `character-sheet.schema.json` to get autocomplete and validation in your editor.
 
+The schema's `$id` is
+`https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`.
+`scripts/generate-schema.mjs` builds it from `name` and the major part of
+`version` in `package.json`, so it names the contract, not a release:
+
+- A compatible schema change (a new optional field, a looser limit) keeps
+  `@1`.
+- A breaking change (a new required field, a tighter limit, a removed key)
+  bumps the major version in `package.json`, which changes the `$id` to `@2`.
+
+The URL opens once the package is published to npm; until then it is only an
+identifier.
+
 ```json
 {
   "title": "Character profile",
