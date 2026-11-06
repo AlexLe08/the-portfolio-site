@@ -97,6 +97,41 @@ export async function addCharacterJob(
   redirect(`/admin/character-sheet?job=${encodeURIComponent(id)}`);
 }
 
+// Removes a job from the saved copy, read at save time like the other
+// actions, so nothing else in the document changes. A job already gone
+// (removed in another tab or as JSON) counts as removed: same end state,
+// so it redirects without saving, as stale "empty" ids are ignored. The
+// default job is refused rather than picking a new default here: it's
+// what / shows, so changing it is a deliberate JSON edit. That also keeps
+// the last job, which has to be the default.
+export async function removeCharacterJob(
+  jobId: string,
+  _previous: CharacterSheetFormState,
+  _formData: FormData,
+): Promise<CharacterSheetFormState> {
+  const loaded = await loadSavedConfig();
+  if ("error" in loaded) return loaded;
+  const { config } = loaded;
+
+  const removedHref = `/admin/character-sheet?${new URLSearchParams({ removed: jobId })}`;
+  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
+  const isJob = (entry: unknown) => isObject(entry) && entry.id === jobId;
+  if (!jobs.some(isJob)) redirect(removedHref);
+  if (config.defaultJobId === jobId) {
+    return {
+      error: `Not removed: "${jobId}" is the default job, shown at / with no ?job=. Change defaultJobId in the JSON editor first.`,
+    };
+  }
+
+  // Entries that aren't objects stay as they are, for saveConfig to name.
+  config.jobs = jobs.filter((entry) => !isJob(entry));
+  const result = await saveConfig(config);
+  if (!result || "error" in result) return result;
+
+  // Outside any try block: redirect() works by throwing.
+  redirect(removedHref);
+}
+
 // Only a 404 (nothing saved yet) starts from the bundled file, as on the
 // page. Patching the bundled file after a failed read would save it over
 // the real copy.
