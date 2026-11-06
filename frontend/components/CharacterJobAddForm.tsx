@@ -11,7 +11,7 @@ type Props = {
   jobs: { id: string; name: string }[];
   // The job being edited, preselected as the one to copy.
   currentJobId: string;
-  // From the zod schema (see JobFieldLimits); the pattern is ID_PATTERN.
+  // From the package's LIMITS (see JobFieldLimits); the pattern is ID_PATTERN.
   limits: { id: number | null; name: number | null; title: number | null };
   idPattern: string;
 };

@@ -78,15 +78,21 @@ export function parseConfig(input: unknown): ParseResult {
 // have: usually a typo of an optional field, which the panel then leaves
 // out. Pass the config of a parseConfig() call without errors, so its jobs
 // line up with the input's by index.
-export function findUnknownKeys(raw: unknown, parsed: unknown, path = ""): string[] {
+export function findUnknownKeys(raw: unknown, parsed: unknown): string[] {
+  return unknownKeysAt(raw, parsed, "");
+}
+
+// The recursion, with the path so far. Internal, so a caller can't pass a
+// prefix by accident.
+function unknownKeysAt(raw: unknown, parsed: unknown, path: string): string[] {
   if (Array.isArray(raw) && Array.isArray(parsed)) {
-    return raw.flatMap((item, index) => findUnknownKeys(item, parsed[index], join(path, index)));
+    return raw.flatMap((item, index) => unknownKeysAt(item, parsed[index], join(path, index)));
   }
   if (!isPlainObject(raw) || !isPlainObject(parsed)) return [];
   return Object.entries(raw).flatMap(([key, value]) =>
     // hasOwn, not `in`: a stray "constructor" key would otherwise match
     // the prototype and pass unreported.
-    Object.hasOwn(parsed, key) ? findUnknownKeys(value, parsed[key], join(path, key)) : [join(path, key)],
+    Object.hasOwn(parsed, key) ? unknownKeysAt(value, parsed[key], join(path, key)) : [join(path, key)],
   );
 }
 

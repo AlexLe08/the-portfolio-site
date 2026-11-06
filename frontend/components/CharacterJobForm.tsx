@@ -9,8 +9,8 @@ import { SlotActionFields, type SlotActionLimits } from "@/components/SlotAction
 import { SlotTooltipFields, type TooltipFieldLimits } from "@/components/SlotTooltipFields";
 import { useSaveAction } from "@/lib/use-save-action";
 
-// Max lengths read from the zod schema by the page (null: no limit), so the
-// numbers live only in schema.ts and zod stays out of the browser bundle.
+// Max lengths the page reads from the package's LIMITS (null: no limit), so
+// the numbers live only in schema.ts and zod stays out of the browser bundle.
 export type JobFieldLimits = Record<
   "name" | "title" | "icon" | "levelLabel" | "levelValue" | "portraitSrc" | "portraitAlt" | "section",
   number | null

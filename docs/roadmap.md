@@ -827,6 +827,21 @@
   `npx tsc -p .` work in the package; the host's build still type-checks
   it with its own. Checked with probe snippets that both catch errors.
 
+- Package public API (#80): the config's limits are a plain `LIMITS` object
+  (grouped like the config, `LIMITS.job.name`) exported from `.` with
+  `ID_PATTERN`, and the zod checks are built from it, so each number is
+  written once. The admin page reads its form limits from `LIMITS` instead
+  of `jobSchema.shape.….unwrap().maxLength`, and `TOOLTIP_MAX_*` folded
+  into `LIMITS.tooltip`. `/schema` now exports only
+  `characterSheetConfigSchema` (through `src/schema-entry.ts`); the
+  sub-schemas are internal, so their shape can change without breaking a
+  host. `LIMITS` lives in `schema.ts` rather than its own file because the
+  generator runs `schema.ts` in plain Node, which only resolves relative
+  imports written with `.ts`, and the host's tsconfig doesn't allow that.
+  `findUnknownKeys` takes just `(raw, parsed)`; the path is an internal
+  helper's. Checked: the regenerated JSON Schema (and the backend's copy)
+  is byte-identical.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -867,9 +882,6 @@
     - The import allowlist doesn't see dynamic `import()` or `require()`;
       add a `no-restricted-syntax` rule if the package ever uses them
       (it doesn't today).
-    - Public API: a plain `LIMITS` object instead of exporting zod
-      sub-schemas (the admin form reads `jobSchema.shape` and others), and
-      `findUnknownKeys`'s recursion-only `path` argument.
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
