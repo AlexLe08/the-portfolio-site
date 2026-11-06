@@ -777,7 +777,7 @@
     frontend's `lint`. Nothing rendered differently: four pages
     pixel-identical before and after, the fifth differing only by the
     config's `$schema` path line.
-  - Versioned `$id` (this PR):
+  - Versioned `$id` (#76):
     `https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`,
     built from the package's `name` and major version. A compatible
     schema change keeps `@1`; a breaking one bumps the major version and
