@@ -138,7 +138,8 @@ Frontend:
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
   `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
   `components/CharacterJobAddForm.tsx`,
-  `components/CharacterJobRemoveForm.tsx`, `components/SlotTooltipFields.tsx`,
+  `components/CharacterJobRemoveForm.tsx`,
+  `components/CharacterDefaultJobForm.tsx`, `components/SlotTooltipFields.tsx`,
   `components/SlotActionFields.tsx`,
   `components/PortraitPicker.tsx`, `components/AutoRetry.tsx` (retries a
   page whose loads failed with `router.refresh()`) and the messages that

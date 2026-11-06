@@ -88,7 +88,7 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
             name="copy_from"
             defaultValue={currentJobId}
             aria-describedby="new-job-copy-from-help"
-            className="form-input form-input--short"
+            className="form-input form-input--fit"
           >
             {jobs.map((job) => (
               <option key={job.id} value={job.id}>

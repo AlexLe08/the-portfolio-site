@@ -801,6 +801,20 @@
   a `none` slot saved to the throwaway database (the built-in config has
   none): role, name, description, Tab reaches it, tooltip shows on focus.
 
+- The default job is set from the form: a "Default job: <name>" fold at
+  the top of `/admin/character-sheet` with a select of every job
+  (`CharacterDefaultJobForm`, `setDefaultCharacterJob`). One form for the
+  page rather than a button per job, since it's a setting of the whole
+  config and the folded summary shows the current default from any job's
+  page. The action reads the saved copy at save time like the others,
+  refuses an id that's gone, changes only `defaultJobId`, and refreshes
+  the page. The remove form's note for the default job now points there
+  instead of the JSON editor. Job selects use a new `form-input--fit`
+  (as wide as the longest option), which also fixes "Start from" in the
+  add form cutting off "E-commerce" at 8rem. Checked on the demo stack:
+  switching the default changes `/`, makes the old default removable, and
+  a stale id is refused without saving.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -811,9 +825,6 @@
     fine: keeping it in step is low priority (see the last item below).
   - A hidden/draft flag so a new job isn't live before it's edited, if
     adding jobs becomes routine. Missing today.
-  - Setting the default job from the form (JSON-only today). The remove
-    form refuses the default job and points to the JSON editor; a default
-    picker would let that note point here instead.
   - Anchor targets aren't checked against what the home page renders
     (a section the job doesn't have scrolls nowhere). A save-time
     warning, like unknown keys, if it ever bites.
