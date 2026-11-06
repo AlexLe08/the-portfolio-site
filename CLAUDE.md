@@ -26,6 +26,10 @@ Monorepo:
 Backend (run from `backend/`, always via venv binaries; there is no plain
 `python` on macOS):
 - Setup: `python3 -m venv .venv && ./.venv/bin/pip install -e ".[test]"`
+- If tests fail locally but pass in CI, rebuild the venv before
+  debugging: `rm -rf .venv`, then Setup. `pip install -e` adds missing
+  packages but never upgrades installed ones, while CI installs the
+  newest versions the open ranges allow.
 - Migrate: `./.venv/bin/alembic upgrade head`
 - Seed (empty database only, fails on duplicate slugs): `./.venv/bin/python seed.py`
 - Run: `./.venv/bin/uvicorn app.main:app --reload` (interactive docs at localhost:8000/docs)
@@ -223,3 +227,41 @@ its gold accent are allowed. The live site uses the `document` theme.
   `docs/vercel-runbook.md`, `docs/ci-cd-runbook.md`. Read the relevant one
   before changing deployment, CI, or database setup, and update it when
   that setup changes.
+
+## Agent workflow
+
+The main session orchestrates; subagents in `.claude/agents/` (planner,
+backend-implementer, frontend-implementer, reviewer) take one bounded
+task each. These rules add to everything above, for every agent.
+
+- Scope: an implementer edits only its own directory (`backend/` or
+  `frontend/`), in a worktree from `scripts/new-worktree.sh`, never in
+  the main checkout. The one crossing allowed: files written by a
+  generator it ran for its own change (`scripts/gen-types.sh` writes
+  `frontend/lib/api-types.ts`; `generate:character-schema` writes the
+  backend's schema copy). Anything else outside its directory, including
+  `CLAUDE.md`, `.claude/`, `.github/`, `scripts/`, `docs/`, and root
+  files, goes in its report for the orchestrator.
+- Stay inside the task. No drive-by refactors, renames, or new
+  dependencies unless the plan names them; report what you noticed.
+- Tests: never delete, skip, `xfail`, or loosen a test, or change its
+  expected values, to make a check pass. If a test looks wrong, stop and
+  report why. New behavior gets new tests.
+- Production is off limits: no requests to the live site, the backend
+  API, Neon, Render, Vercel, Cloudinary, Sentry, Resend, or Discord.
+  That includes `npm run test:smoke` without `BASE_URL`/`API_URL` and
+  `scripts/wait-for-backend.sh`. Use `scripts/local-stack.sh` or
+  `frontend/demo/stack.mjs`. Checking production is the owner's job
+  after a merge.
+- Secrets: never read, print, or edit `.env` or `.env.local` (copying
+  them is `setup-worktree.sh`'s job), and never put a secret in a
+  command line, log, or report.
+- Git: agents commit to their task branch and push it with an explicit
+  refspec (`git push -u origin <branch>`), never to `main` and never
+  with `--force`. The orchestrator opens the PR after the reviewer
+  passes it; only the owner approves and merges.
+- Done means `scripts/check.sh` passes in the worktree, for the side
+  that changed. The report lists files changed, the check output lines,
+  what was verified and how, what wasn't, and any migration's drop
+  operations. If a check still fails after two honest attempts, stop
+  and report instead of widening the change.
