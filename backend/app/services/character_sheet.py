@@ -1,11 +1,12 @@
 """The home page's character sheet config: one JSON document in one row.
 
-The document's shape is owned by the frontend's zod schema
-(frontend/components/character-sheet/schema.ts). `npm run
-generate:character-schema` exports it as JSON Schema and copies it next to
-this file, and tests/test_character_sheet.py fails if the two copies
-differ. So the backend enforces the same structure without a second,
-hand-written copy of the rules.
+The document's shape is owned by the character sheet package's zod schema
+(packages/eorzean-character-sheet/src/schema.ts). `npm run
+generate:character-schema` (from frontend/) exports it as the package's
+JSON Schema and copies that next to this file, and
+tests/test_character_sheet.py fails if the two copies differ. So the
+backend enforces the same structure without a second, hand-written copy
+of the rules.
 
 What JSON Schema can't express stays on the frontend: zod's trimming, and
 checks across fields (duplicate ids, a defaultJobId naming a real job).

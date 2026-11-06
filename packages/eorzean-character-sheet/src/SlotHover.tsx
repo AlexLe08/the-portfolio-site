@@ -23,6 +23,7 @@ export function SlotHover({ children }: { children: ReactNode }) {
   }, [hovered]);
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- not a control: it only hears Escape and pointer events from the slot's own focusable face inside it
     <div
       className="cs-slot__hover"
       data-dismissed={dismissed || undefined}

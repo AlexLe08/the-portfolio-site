@@ -9,9 +9,10 @@ from app.services import character_sheet
 from app.services.character_sheet import ConfigTooLarge, InvalidConfig
 from tests.helpers import ADMIN_HEADERS
 
-FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
+REPO = Path(__file__).resolve().parents[2]
+FRONTEND = REPO / "frontend"
 BUNDLED_CONFIG = json.loads((FRONTEND / "lib/character-config.json").read_text(encoding="utf-8"))
-FRONTEND_SCHEMA = FRONTEND / "components/character-sheet/character-sheet.schema.json"
+PACKAGE_SCHEMA = REPO / "packages/eorzean-character-sheet/character-sheet.schema.json"
 
 
 @pytest.fixture()
@@ -27,10 +28,10 @@ def issues_by_path(config):
     }
 
 
-def test_schema_copy_matches_frontend():
+def test_schema_copy_matches_package():
     # Fails when schema.ts changed without `npm run generate:character-schema`
-    # (which regenerates the frontend file and copies it here).
-    assert character_sheet.SCHEMA_PATH.read_bytes() == FRONTEND_SCHEMA.read_bytes()
+    # (which regenerates the package's file and copies it here).
+    assert character_sheet.SCHEMA_PATH.read_bytes() == PACKAGE_SCHEMA.read_bytes()
 
 
 def test_bundled_config_is_valid(config):

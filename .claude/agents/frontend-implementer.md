@@ -23,7 +23,8 @@ the Frontend architecture rules, "Design system", and "Agent workflow".
    the frontend uses). Check Next.js and React APIs against current docs,
    not memory. A new `"use client"` file, content key, or similar
    CLAUDE.md list entry goes in your report for the orchestrator.
-3. After changing `schema.ts`, run `npm run generate:character-schema`
+3. After changing `packages/eorzean-character-sheet/src/schema.ts`, run
+   `npm run generate:character-schema` from `frontend/`
    and commit what it writes.
 4. Run `scripts/check.sh frontend`. For visible changes, check them on
    the demo stack (`frontend/demo/stack.mjs`) and record a captioned

@@ -1,7 +1,7 @@
 "use client";
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
-import type { Job } from "@/components/character-sheet/types";
+import type { Job } from "@alexle08/eorzean-character-sheet";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
 import { useRef, useState } from "react";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";

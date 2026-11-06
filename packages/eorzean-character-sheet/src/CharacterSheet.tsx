@@ -60,11 +60,11 @@ type RenderLink = (props: LinkRendererProps) => ReactNode;
 
 function defaultLink({ intent, ...props }: LinkRendererProps) {
   void intent; // a plain link has no use for it
+  // eslint-disable-next-line jsx-a11y/anchor-has-content -- children come in through props
   return <a {...props} />;
 }
 
 function defaultPortrait(portrait: Portrait) {
-  // eslint-disable-next-line @next/next/no-img-element -- framework-neutral default; hosts pass their own
   return <img src={portrait.src} alt={portrait.alt} width={portrait.width} height={portrait.height} />;
 }
 
@@ -199,7 +199,6 @@ function SlotList({
 function SlotIcon({ slot, content }: { slot: SlotDef; content?: SlotContent }) {
   if (content?.iconSrc) {
     // Decorative: the slot's label is its accessible name.
-    // eslint-disable-next-line @next/next/no-img-element -- tiny, decorative, any host
     return <img className="cs-slot__img" src={content.iconSrc} alt="" />;
   }
   return <>{slot.icon ?? glyph(slot.label)}</>;
@@ -252,6 +251,7 @@ function Slot({
   if (href === null) {
     // Nothing to open, but still focusable so keyboard users get the tooltip.
     trigger = (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focus shows the tooltip it's described by
       <span {...common} tabIndex={0}>
         {face}
       </span>

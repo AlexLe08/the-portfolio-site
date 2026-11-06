@@ -1,5 +1,5 @@
 import "server-only";
-import { findUnknownKeys, parseConfig } from "@/components/character-sheet/parse";
+import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminApi } from "./admin-api";
 import bundledConfig from "./character-config.json";
 

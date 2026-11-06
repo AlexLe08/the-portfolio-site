@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SlotAction } from "@/components/character-sheet/types";
+import type { SlotAction } from "@alexle08/eorzean-character-sheet";
 import { openDetails } from "@/components/SlotTooltipFields";
 
 // Read from the zod schema by the page, like TooltipFieldLimits.

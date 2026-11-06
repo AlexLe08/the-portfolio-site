@@ -1,4 +1,4 @@
-# Character sheet
+# Character sheet (`@alexle08/eorzean-character-sheet`)
 
 A panel modelled on an RPG character/equipment screen:
 
@@ -14,22 +14,38 @@ compact item-card tooltip on hover or keyboard focus. Clicking it goes to a page
 section, another page, or an external site. Changing the job (`?job=<id>`) swaps the slots, tooltips, and
 portrait, and the host page can swap its own content too.
 
-This folder is meant to become its own package. It imports nothing from the site:
-only React and zod.
+An in-repo workspace package, used by the site as an installed dependency.
+It imports nothing but React and zod, enforced by `eslint.config.mjs` (the
+host's `lint` script runs it). It ships TypeScript source with no build step;
+the host's bundler compiles it.
+
+## Entries
+
+| Import | What it holds |
+| --- | --- |
+| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `resolveJob`, `jobHref`, `actionHref`, and the config types. No React or CSS, so server code and plain Node can use it |
+| `@alexle08/eorzean-character-sheet/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
+| `@alexle08/eorzean-character-sheet/schema` | The zod schemas and limits (`ID_PATTERN`, `TOOLTIP_MAX_*`) |
+| `@alexle08/eorzean-character-sheet/character-sheet.css` | The styles, for hosts that want to control CSS order |
+| `@alexle08/eorzean-character-sheet/character-sheet.schema.json` | The JSON Schema other backends validate against |
+
+`react` and `zod` are peer dependencies: the host provides them.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `schema.ts` | zod schemas: the config contract |
-| `types.ts` | Types inferred from the schemas |
-| `parse.ts` | `parseConfig` (drops invalid jobs, reports errors) and `loadConfig` (fallback chain of sources) |
-| `resolve.ts` | `resolveJob`, `jobHref`, `actionHref` |
-| `CharacterSheet.tsx` | The panel (a Server Component) |
-| `SlotHover.tsx` | The only client code: Escape dismisses a tooltip |
-| `character-sheet.css` | Styles and themes; everything themable is a `--cs-*` variable |
+| `src/index.ts` | The data-side entry (re-exports only) |
+| `src/schema.ts` | zod schemas: the config contract |
+| `src/types.ts` | Types inferred from the schemas |
+| `src/parse.ts` | `parseConfig` (drops invalid jobs, reports errors) and `loadConfig` (fallback chain of sources) |
+| `src/resolve.ts` | `resolveJob`, `jobHref`, `actionHref` |
+| `src/CharacterSheet.tsx` | The panel (a Server Component) |
+| `src/SlotHover.tsx` | The only client code: Escape dismisses a tooltip. Private: no entry exports it |
+| `src/character-sheet.css` | Styles and themes; everything themable is a `--cs-*` variable |
 | `character-sheet.schema.json` | Generated JSON Schema for editing a config file by hand |
-| `generate-schema.mjs` | Regenerates the JSON Schema (`npm run generate:character-schema`) |
+| `scripts/generate-schema.mjs` | Regenerates the JSON Schema (`npm run generate:schema`) |
+| `eslint.config.mjs` | Lint rules and the import allowlist (`npm run lint`) |
 
 ## Config
 
@@ -93,6 +109,9 @@ A config is plain JSON. Add `"$schema"` pointing at
 ## Usage
 
 ```tsx
+import { parseConfig, resolveJob } from "@alexle08/eorzean-character-sheet";
+import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
+
 const { config, errors } = parseConfig(json);   // or: const { config } = await loadConfig(sources, fallback)
 const job = resolveJob(config, searchParams.job);
 

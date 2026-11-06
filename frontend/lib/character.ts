@@ -4,15 +4,15 @@ import {
   findUnknownKeys,
   loadConfig,
   parseConfig,
+  type CharacterSheetConfig,
   type ConfigSource,
-} from "@/components/character-sheet/parse";
-import type { CharacterSheetConfig } from "@/components/character-sheet/types";
+} from "@alexle08/eorzean-character-sheet";
 import { api } from "./api";
 import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
 // and the per-job section text. Edit character-config.json; the JSON
-// Schema next to the component gives editors autocomplete.
+// Schema in packages/eorzean-character-sheet gives editors autocomplete.
 //
 // The bundled file is checked strictly: any problem, even one parseConfig
 // could recover from, fails the build here instead of quietly dropping a

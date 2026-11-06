@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { CharacterSheet } from "@/components/character-sheet/CharacterSheet";
-import { resolveJob } from "@/components/character-sheet/resolve";
+import { resolveJob } from "@alexle08/eorzean-character-sheet";
+import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
 import { AutoRetry } from "@/components/AutoRetry";
 import { FallbackNotice } from "@/components/FallbackNotice";
 import { Sheet } from "@/components/Sheet";

@@ -1,5 +1,5 @@
 {
-  "$schema": "../components/character-sheet/character-sheet.schema.json",
+  "$schema": "../../packages/eorzean-character-sheet/character-sheet.schema.json",
   "title": "Character profile",
   "defaultJobId": "healthcare",
   "slots": [
