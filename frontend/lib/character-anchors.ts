@@ -22,7 +22,7 @@ export function homeAnchorTargets(config: CharacterSheetConfig, job: Job): strin
 // Anchor actions whose target the home page doesn't render for their job,
 // so clicking the slot scrolls nowhere. Every job, drafts and hidden ones
 // included, so a link is fixed before the job is published. Reported
-// after saving rather than blocking it, like unknown keys: the config is
+// after saving rather than blocking it, unlike unknown keys: the config is
 // valid, and the missing section may be the next edit.
 export function findDeadAnchors(config: CharacterSheetConfig): string[] {
   return config.jobs.flatMap((job) => {
