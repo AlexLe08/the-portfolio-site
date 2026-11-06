@@ -860,7 +860,7 @@
   the menu, link falls back), publish (in the menu, opens), hide again,
   and a draft default refused as JSON.
 
-- Anchor target warning: a slot whose anchor action names a section the
+- Anchor target warning (#83): a slot whose anchor action names a section the
   home page doesn't render for its job (it scrolls nowhere) is listed
   after saving, like unknown keys, and on load until fixed, in both the
   form and the JSON editor. A warning rather than a refusal: the config
