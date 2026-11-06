@@ -801,7 +801,7 @@
   a `none` slot saved to the throwaway database (the built-in config has
   none): role, name, description, Tab reaches it, tooltip shows on focus.
 
-- The default job is set from the form: a "Default job: <name>" fold at
+- The default job is set from the form (#78): a "Default job: <name>" fold at
   the top of `/admin/character-sheet` with a select of every job
   (`CharacterDefaultJobForm`, `setDefaultCharacterJob`). One form for the
   page rather than a button per job, since it's a setting of the whole
