@@ -68,8 +68,9 @@ export async function updateCharacterJob(
 
 // Adds a job as a copy of an existing one (level, portrait, slots,
 // sections), so it starts complete and the form only has to change what
-// differs. Saved at once, so it shows in the home page's job menu straight
-// away. The id's format and the job limit are checked by saveConfig.
+// differs. Saved at once as a draft, whatever the copied job's status, so
+// it stays off the home page until its form sets it to published. The id's
+// format and the job limit are checked by saveConfig.
 export async function addCharacterJob(
   _previous: CharacterSheetFormState,
   formData: FormData,
@@ -88,7 +89,13 @@ export async function addCharacterJob(
   if (!source) return { error: `The saved copy has no job "${copyFrom}" any more. Reload the page.` };
 
   // id first, as in the bundled file; spreading keeps the rest in order.
-  const job = { ...structuredClone(source), id, name: formText(formData, "name"), title: formText(formData, "title") };
+  const job = {
+    ...structuredClone(source),
+    id,
+    name: formText(formData, "name"),
+    title: formText(formData, "title"),
+    status: "draft",
+  };
   config.jobs = [...jobs, job];
   const result = await saveConfig(config);
   if (!result || "error" in result) return result;
@@ -175,6 +182,12 @@ function applyJobForm(job: JsonObject, formData: FormData): string | null {
   const text = (name: string) => formText(formData, name);
   job.name = text("name");
   job.title = text("title");
+  // Absent means published, so the key is only written for the others,
+  // like the bundled file. A default job made a draft is refused by
+  // saveConfig.
+  const status = text("status");
+  if (status === "published") delete job.status;
+  else job.status = status;
   setOrDelete(job, "icon", text("icon"));
   job.level = { ...asObject(job.level), label: text("level_label"), value: text("level_value") };
 

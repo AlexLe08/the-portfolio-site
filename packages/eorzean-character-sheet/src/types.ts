@@ -19,4 +19,5 @@ export type Portrait = z.output<typeof portraitSchema>;
 
 export type Theme = "document" | "game";
 export type SlotPosition = SlotDef["position"];
+export type JobStatus = Job["status"];
 export type TooltipItem = NonNullable<Tooltip["items"]>[number];

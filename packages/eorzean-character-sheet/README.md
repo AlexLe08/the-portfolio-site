@@ -23,7 +23,7 @@ the host's bundler compiles it.
 
 | Import | What it holds |
 | --- | --- |
-| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `resolveJob`, `jobHref`, `actionHref`, the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config) and `ID_PATTERN`. No React or CSS, so server code and plain Node can use it |
+| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config) and `ID_PATTERN`. No React or CSS, so server code and plain Node can use it |
 | `@alexle08/eorzean-character-sheet/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
 | `@alexle08/eorzean-character-sheet/schema` | `characterSheetConfigSchema`, the whole config's zod schema. Its parts are internal |
 | `@alexle08/eorzean-character-sheet/character-sheet.css` | The styles, for hosts that want to control CSS order |
@@ -113,6 +113,14 @@ identifier.
   - `link`: a site path.
   - `external`: an http(s) URL, opening in the same tab unless `newTab` is set.
   - `none`: tooltip only.
+- **Status:** a job's `status` is `published` (the default when it's left
+  out), `draft` (not ready yet) or `hidden` (taken off the site). Pass the
+  config through `publicConfig()` before rendering it for visitors: it leaves
+  out drafts and hidden jobs, so they aren't in the job menu and a `?job=`
+  link to one falls back to the default job. Editors use the whole config.
+  The default job must be published, and a config needs at least one
+  published job: `parseConfig` reports both, falling back to the first
+  published job or, with none, rejecting the config.
 - **Sections** are data for the host page. The panel doesn't render them.
 - **Tooltips** hold `tags`, `title`, `subtitle` (which defaults to the slot's
   label), one `stat` line, and `items`. Plain strings render as a list; label

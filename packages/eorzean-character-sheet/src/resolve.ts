@@ -1,5 +1,14 @@
 import type { CharacterSheetConfig, Job, SlotAction } from "./types";
 
+// The config as visitors see it: only published jobs, so drafts and hidden
+// jobs are left out of the job menu and a ?job= link to one falls back to
+// the default like an unknown id, without saying the job exists.
+// parseConfig() guarantees the default job is published. Editors use the
+// whole config instead.
+export function publicConfig(config: CharacterSheetConfig): CharacterSheetConfig {
+  return { ...config, jobs: config.jobs.filter((job) => job.status === "published") };
+}
+
 // The job named in the URL, or the default one. An unknown or repeated
 // ?job= value falls back instead of failing, so an old shared link still
 // opens the page.

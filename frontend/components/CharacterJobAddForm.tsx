@@ -97,8 +97,8 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
             ))}
           </select>
           <p id="new-job-copy-from-help" className="form-help">
-            Copies its level, portrait, slots, and sections. The job shows on the home page as soon
-            as it&rsquo;s added, so edit what differs straight after.
+            Copies its level, portrait, slots, and sections. The new job starts as a draft, off the
+            home page: edit what differs, then set its status to published.
           </p>
         </div>
 

@@ -4,6 +4,7 @@ import {
   findUnknownKeys,
   loadConfig,
   parseConfig,
+  publicConfig,
   type CharacterSheetConfig,
   type ConfigSource,
 } from "@alexle08/eorzean-character-sheet";
@@ -73,6 +74,7 @@ export type CharacterConfigResult = {
 // problem the page shows the bundled file. Issues other than an unreachable
 // backend (an HTTP error, or a saved copy that fails the zod schema, such
 // as after the schema changed) are real bugs, so they go to Sentry.
+// Visitors' view: draft and hidden jobs are left out (publicConfig).
 export const getCharacterConfig = cache(async (): Promise<CharacterConfigResult> => {
   const { config, source, issues } = await loadConfig([apiSource], characterConfig);
   for (const { source, errors, error } of issues) {
@@ -84,5 +86,5 @@ export const getCharacterConfig = cache(async (): Promise<CharacterConfigResult>
       extra: { source, errors },
     });
   }
-  return { config, fallback: source === null && issues.length > 0 };
+  return { config: publicConfig(config), fallback: source === null && issues.length > 0 };
 });

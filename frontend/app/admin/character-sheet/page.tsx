@@ -102,6 +102,8 @@ export default async function AdminCharacterSheetPage({
                   aria-current={each.id === job.id ? "page" : undefined}
                 >
                   {each.name}
+                  {/* Off the home page, so said where the job is picked. */}
+                  {each.status !== "published" && ` (${each.status})`}
                 </Link>
               </li>
             ))}
@@ -114,7 +116,8 @@ export default async function AdminCharacterSheetPage({
       </p>
       <CharacterDefaultJobForm
         action={setDefaultCharacterJob}
-        jobs={config.jobs.map(({ id, name }) => ({ id, name }))}
+        // Only published jobs can be the default (parseConfig).
+        jobs={config.jobs.filter((each) => each.status === "published").map(({ id, name }) => ({ id, name }))}
         defaultJobId={config.defaultJobId}
       />
       <CharacterJobAddForm
@@ -131,6 +134,7 @@ export default async function AdminCharacterSheetPage({
         key={job.id}
         action={updateCharacterJob.bind(null, job.id)}
         job={job}
+        isDefault={job.id === config.defaultJobId}
         slots={config.slots.map(({ id, label }) => ({ id, label }))}
         limits={JOB_LIMITS}
         tooltipLimits={TOOLTIP_LIMITS}

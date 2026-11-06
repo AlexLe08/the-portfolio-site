@@ -86,6 +86,16 @@
             "maxLength": 80,
             "description": "The panel heading, e.g. \"Developer in healthcare\"."
           },
+          "status": {
+            "default": "published",
+            "description": "published: on the site. draft (not ready yet) and hidden (taken off the site) leave the job out of the public panel but keep it editable. The default job must be published.",
+            "type": "string",
+            "enum": [
+              "published",
+              "draft",
+              "hidden"
+            ]
+          },
           "icon": {
             "description": "Glyph in the job emblem beside the title. Defaults to the name's first two letters.",
             "type": "string",

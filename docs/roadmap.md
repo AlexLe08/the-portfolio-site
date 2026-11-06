@@ -842,6 +842,24 @@
   helper's. Checked: the regenerated JSON Schema (and the backend's copy)
   is byte-identical.
 
+- Job status: each job has `status: "published" | "draft" | "hidden"`
+  (left out means published, so every saved config stays valid and the
+  `$id` keeps `@1`). A `status` enum rather than one `hidden` boolean
+  (decided 2026-11-06): draft (not ready yet) and hidden (taken down)
+  render the same today, but the editor tells them apart and the enum has
+  room for more. `parseConfig` keeps every job, requires a published
+  default (falling back to the first published job) and rejects a config
+  with none published; the new `publicConfig()` drops the rest, applied
+  once in `getCharacterConfig()`, so the home and lab pages leave them out
+  of the job menu and a `?job=` link to one falls back to the default
+  without saying it exists. Admin: a status select in the job form (draft
+  and hidden disabled for the default job), status in the job picker
+  ("Teacher (draft)"), only published jobs offered as the default, and new
+  jobs added as drafts. The form only writes `status` for drafts and hidden
+  jobs, like the bundled file. Checked on the demo stack: add (draft, off
+  the menu, link falls back), publish (in the menu, opens), hide again,
+  and a draft default refused as JSON.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -850,8 +868,9 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - A hidden/draft flag so a new job isn't live before it's edited, if
-    adding jobs becomes routine. Missing today.
+  - A preview of a draft or hidden job as the home page would show it
+    (an admin-only page rendering the whole config), if checking the
+    form's fields stops being enough before publishing.
   - Anchor targets aren't checked against what the home page renders
     (a section the job doesn't have scrolls nowhere). A save-time
     warning, like unknown keys, if it ever bites.
