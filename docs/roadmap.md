@@ -722,7 +722,35 @@
   demo scripts sit next to the videos and screenshots they produce
   instead of in `frontend/.logs/`. Checked on 11 sample paths: `..`
   escapes, the main checkout's `.logs/`, and other directories are still
-  denied.
+  denied. Merged as #71 (`bc138fd`).
+- Removing a job from the form (#72; planner, frontend-implementer, and
+  reviewer, the second agent-workflow run): "Remove this job"
+  (`components/CharacterJobRemoveForm.tsx`, folded in a `<details>`
+  like "Add a job") on the job being edited, behind a `confirm()` that
+  names the job and suggests copying its JSON first. It saves at once
+  and lands on `?removed=<id>`, the default job's form with "Removed
+  the job …" (shown only when the id matches `ID_PATTERN` and is no
+  longer a job, so a stale link can't claim a removal).
+  `removeCharacterJob` re-reads the saved copy at save time: the default
+  job is refused, with a note linking to the JSON editor, which also
+  keeps the last job (always the default); a job already gone counts as
+  removed and nothing is written, as #69 ignores stale `empty` ids.
+  Rejected: reassigning the default automatically (silently changes what
+  `/` shows), a new-default select in the remove form (a second job for
+  that form; a default picker is a separate candidate), a two-step
+  button like Empty/Keep (the click is the save, so it's a home-made
+  confirm), and a typed confirmation (heavy for one admin). The media
+  delete guard needed nothing: it reads the saved copy, so an image used
+  only by a removed job becomes deletable. Verified with Playwright on
+  the demo stack (9 steps: default job shows the note; confirm
+  dismissed keeps the job; only that job leaves the stored copy;
+  `?job=<removed>` falls back on home and admin; removed in another tab
+  succeeds without a write; a stale tab's Save gets the existing "no
+  job" error; a default set through JSON in another tab is refused;
+  backend down keeps the form; `?removed=` with a live or invalid id
+  shows nothing). Not exercised: the media guard after a removal
+  (Cloudinary). Merged as #72 (`5c5cda9`) on 2026-11-06; not yet tried
+  in production.
 
 ## Next up (candidates, unordered)
 
