@@ -109,7 +109,11 @@ export default async function AdminCharacterSheetPage({
             ))}
           </ul>
         </nav>
-        {jsonLink}
+        <div className="admin-toolbar__links">
+          {/* The saved copy, so unsaved edits in the form below don't show. */}
+          <Link href={jobHref(config, job.id, `${BASE_PATH}/preview`)}>Preview</Link>
+          {jsonLink}
+        </div>
       </div>
       <p className="form-help admin-intro">
         The slots themselves (names, icons, order) are edited as JSON.
