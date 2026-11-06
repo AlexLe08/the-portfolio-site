@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr review *)"
+    ],
+    "ask": [
+      "Bash(npm run test:smoke*)",
+      "Bash(scripts/wait-for-backend.sh*)",
+      "Bash(curl *onrender.com*)",
+      "Bash(curl *vercel.app*)"
+    ]
+  }
+}
