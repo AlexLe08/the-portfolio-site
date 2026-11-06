@@ -105,7 +105,7 @@ export default async function AdminCharacterSheetPage({
     !config.jobs.some((each) => each.id === removedId);
   return (
     <Sheet title="Character sheet" back={{ href: "/admin", label: "Admin" }}>
-      {showRemoved && <StatusMessage tone="success">Removed the job &ldquo;{removedId}&rdquo;.</StatusMessage>}
+      {showRemoved && <StatusMessage tone="success">{`Removed the job "${removedId}".`}</StatusMessage>}
       <div className="admin-toolbar">
         <nav aria-label="Jobs">
           <ul className="job-picker">

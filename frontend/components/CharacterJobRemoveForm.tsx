@@ -35,7 +35,7 @@ export function CharacterJobRemoveForm({ action, job, isDefault }: Props) {
   }
 
   return (
-    <details className="form-more">
+    <details className="form-more form-more--after">
       <summary>Remove this job</summary>
       {isDefault ? (
         <p className="form-help">
