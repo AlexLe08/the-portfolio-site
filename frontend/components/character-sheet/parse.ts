@@ -37,10 +37,13 @@ export function parseConfig(input: unknown): ParseResult {
   }
 
   const jobs: Job[] = [];
+  // Ids of jobs dropped for their own problems, checked by defaultJobId below.
+  const droppedIds = new Set<unknown>();
   shell.data.jobs.forEach((raw, index) => {
     const result = jobSchema.safeParse(raw);
     if (!result.success) {
       errors.push(...describe(result.error, `jobs.${index}`));
+      if (isPlainObject(raw)) droppedIds.add(raw.id);
       return;
     }
     const job = result.data;
@@ -58,7 +61,11 @@ export function parseConfig(input: unknown): ParseResult {
 
   let { defaultJobId } = shell.data;
   if (!jobs.some((job) => job.id === defaultJobId)) {
-    errors.push(`defaultJobId: no valid job "${defaultJobId}", using "${jobs[0].id}"`);
+    // A default job dropped above already has its own errors listed; a
+    // second line for the same problem is only noise. The fallback stands.
+    if (!droppedIds.has(defaultJobId)) {
+      errors.push(`defaultJobId: no valid job "${defaultJobId}", using "${jobs[0].id}"`);
+    }
     defaultJobId = jobs[0].id;
   }
 
