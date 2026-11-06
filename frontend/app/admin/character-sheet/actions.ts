@@ -12,12 +12,11 @@ import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 
 // problems lists every issue by path, so a long document can be fixed in
 // one pass. A save returns the document it stored as compact JSON, so the
-// editor can compare it with the bundled file without re-fetching, any
-// keys the schema doesn't have, which are saved but ignored by the site,
-// and anchor actions the home page has no section for (findDeadAnchors).
+// editor can compare it with the bundled file without re-fetching, and
+// anchor actions the home page has no section for (findDeadAnchors).
 export type CharacterSheetFormState =
   | { error: string; problems?: string[] }
-  | { saved: string; unknownKeys: string[]; deadAnchors: string[] }
+  | { saved: string; deadAnchors: string[] }
   | null;
 
 type JsonObject = Record<string, unknown>;
@@ -44,8 +43,8 @@ export async function updateCharacterSheet(
 
 // The structured form: changes one job's form fields in the saved copy and
 // saves the result. Read at save time rather than sent from the page, so
-// whatever the form doesn't show (slots, other jobs, unknown keys, an edit
-// made in the JSON editor since this page loaded) is kept as it is.
+// whatever the form doesn't show (slots, other jobs, an edit made in the
+// JSON editor since this page loaded) is kept as it is.
 export async function updateCharacterJob(
   jobId: string,
   _previous: CharacterSheetFormState,
@@ -320,11 +319,23 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
     };
   }
 
-  // The document as written, not zod's parsed copy, which drops unknown
-  // keys: a typo should stay visible in the editor, not vanish on save.
-  // Unknown keys are reported after saving rather than blocking it: a typo
-  // in a required field already fails above as missing, so these can only
-  // be optional fields the panel leaves out.
+  // Keys the schema doesn't have are refused before sending, listed by
+  // full path like the on-load notice. The backend's JSON Schema refuses
+  // them too; this just answers first, in the same words. Most are typos
+  // of optional fields (a typo in a required one already fails above as
+  // missing), which the site would otherwise silently leave out. The form
+  // can't show them, so the message points at the JSON editor.
+  const unknownKeys = findUnknownKeys(config, parsed);
+  if (unknownKeys.length > 0) {
+    return {
+      error:
+        "Not saved. These keys aren't in the schema (typos?). Remove them, in the JSON editor if the form doesn't show them:",
+      problems: unknownKeys,
+    };
+  }
+
+  // The document as written, not zod's parsed copy, which would drop keys
+  // and fill in defaults the editor doesn't show.
   const body = { config: config as Record<string, components["schemas"]["JsonValue"]> };
   // adminRequest() checks the session: Server Actions can be POSTed to
   // directly, without the page that renders the form.
@@ -334,7 +345,6 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
   if (error) return describeRejection(response, error);
   return {
     saved: JSON.stringify(config),
-    unknownKeys: findUnknownKeys(config, parsed),
     deadAnchors: findDeadAnchors(parsed),
   };
 }

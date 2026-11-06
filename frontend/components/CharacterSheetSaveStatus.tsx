@@ -6,7 +6,8 @@ type Props = {
   state: CharacterSheetFormState;
   pending: boolean;
   // Keys in the stored copy that the schema doesn't have (see
-  // findUnknownKeys); a save replaces them with its own list.
+  // findUnknownKeys), from before saves refused them. Cleared by a save,
+  // which can only succeed without them.
   unknownKeys: string[];
   // Anchor actions with no section to scroll to (see findDeadAnchors),
   // replaced on save the same way.
@@ -17,16 +18,19 @@ type Props = {
 // editor, which save through the same checks (see actions.ts).
 export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnchors }: Props) {
   const saved = state && "saved" in state ? state : null;
-  const ignoredKeys = saved ? saved.unknownKeys : unknownKeys;
+  const problems = state && "problems" in state ? state.problems : undefined;
+  // Not repeated under a refused save that already lists every one.
+  const storedUnknownKeys =
+    saved || unknownKeys.every((key) => problems?.includes(key)) ? [] : unknownKeys;
   const brokenAnchors = saved ? saved.deadAnchors : deadAnchors;
   return (
     <>
       {/* The list goes inside the alert, so it's read out with the error. */}
-      {state && "problems" in state && state.problems ? (
+      {state && "error" in state && problems ? (
         <StatusMessage tone="error">
           {state.error}
           <ul className="json-editor__problems">
-            {state.problems.map((problem) => (
+            {problems.map((problem) => (
               <li key={problem}>{problem}</li>
             ))}
           </ul>
@@ -34,18 +38,19 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
       ) : (
         <SaveStatus state={state} pending={pending} />
       )}
-      {/* Saved anyway: the panel just leaves these out (see actions.ts). */}
-      {ignoredKeys.length > 0 && !pending && (
+      {/* Already stored: warned about here, refused by the next save. */}
+      {storedUnknownKeys.length > 0 && !pending && (
         <StatusMessage tone="info">
-          The site ignores these keys, which the schema doesn&rsquo;t have. Typos?
+          The saved copy has keys the schema doesn&rsquo;t have (typos?). The next save will be
+          refused until they&rsquo;re removed, in the JSON editor if the form doesn&rsquo;t show them:
           <ul className="json-editor__problems">
-            {ignoredKeys.map((key) => (
+            {storedUnknownKeys.map((key) => (
               <li key={key}>{key}</li>
             ))}
           </ul>
         </StatusMessage>
       )}
-      {/* Saved anyway too: the section may be the next edit. */}
+      {/* Saved anyway: the section may be the next edit. */}
       {brokenAnchors.length > 0 && !pending && (
         <StatusMessage tone="info">
           These slots link to a section the home page doesn&rsquo;t show for their job, so clicking
