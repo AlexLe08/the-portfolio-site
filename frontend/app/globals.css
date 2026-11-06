@@ -701,6 +701,11 @@ button:focus-visible {
   margin-bottom: 0.75rem;
 }
 
+.admin-toolbar__links {
+  display: flex;
+  gap: 1rem;
+}
+
 .admin-heading {
   font-size: 1.125rem;
   font-weight: 600;

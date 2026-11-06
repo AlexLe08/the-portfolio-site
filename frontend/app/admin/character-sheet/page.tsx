@@ -110,7 +110,11 @@ export default async function AdminCharacterSheetPage({
             ))}
           </ul>
         </nav>
-        {jsonLink}
+        <div className="admin-toolbar__links">
+          {/* The saved copy, so unsaved edits in the form below don't show. */}
+          <Link href={jobHref(config, job.id, `${BASE_PATH}/preview`)}>Preview</Link>
+          {jsonLink}
+        </div>
       </div>
       <p className="form-help admin-intro">
         The slots themselves (names, icons, order) are edited as JSON.
@@ -140,7 +144,7 @@ export default async function AdminCharacterSheetPage({
         limits={JOB_LIMITS}
         tooltipLimits={TOOLTIP_LIMITS}
         actionLimits={ACTION_LIMITS}
-        // The ids app/page.tsx renders for this job.
+        // The ids the home page renders for this job.
         anchorTargets={homeAnchorTargets(config, job)}
         uploads={uploads}
         bundled={bundled}

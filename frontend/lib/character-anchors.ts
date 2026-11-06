@@ -1,6 +1,6 @@
 import type { CharacterSheetConfig, Job, SlotDef } from "@alexle08/eorzean-character-sheet";
 
-// What app/page.tsx renders below the panel, kept here so the admin
+// What the home page (components/HomeView.tsx) renders below the panel, kept here so the admin
 // editor's anchor suggestions and its save-time check can't drift from it.
 // The package doesn't know these ids: the page sections and the project
 // list are this site's, not the character sheet's.

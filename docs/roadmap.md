@@ -860,6 +860,23 @@
   the menu, link falls back), publish (in the menu, opens), hide again,
   and a draft default refused as JSON.
 
+- Draft preview (#82): `/admin/character-sheet/preview?job=…` renders the home
+  page with the whole config, so a draft or hidden job can be checked as
+  visitors would see it before publishing. The home page's body moved to
+  `components/HomeView.tsx`, shared by `/` and the preview, so the two
+  can't drift (rather than a `?preview` flag on `/`, which would make the
+  public page read the session cookie, or a panel-only preview, which
+  couldn't show the job's sections or the `#projects` anchor target).
+  `loadProjects()` moved to `lib/projects.ts`. The preview reads the saved
+  copies the way the editors do (no fallbacks), with unset content keys
+  showing their built-in text; its job menu stays on the preview path, and
+  a notice says whether visitors see the job, with a link back to its
+  form. The editor's toolbar links to the preview of the job being edited
+  (the saved copy: unsaved form edits don't show). Checked on the demo
+  stack: add a draft, preview it (in the menu, renders with sections and
+  projects), switch to a published job, back to the form, and `/?job=`
+  still falls back.
+
 - Anchor target warning (#83): a slot whose anchor action names a section the
   home page doesn't render for its job (it scrolls nowhere) is listed
   after saving, like unknown keys, and on load until fixed, in both the
@@ -867,9 +884,10 @@
   is valid, and the missing section may be the next edit. Every job is
   checked, drafts and hidden ones included. What the home page renders
   (the job's sections in slot order, then `#projects`) now comes from
-  `lib/character-anchors.ts`, which `app/page.tsx`, the form's suggested
-  targets and the check all use, so they can't drift. Host code, not the
-  package's: the sections and project list are this site's. Checked on
+  `lib/character-anchors.ts`, which `components/HomeView.tsx` (so `/`
+  and the preview), the form's suggested targets and the check all use,
+  so they can't drift. Host code, not the package's: the sections and
+  project list are this site's. Checked on
   the demo stack: a `#nowhere` anchor saved as JSON is listed, still
   listed on the form page after a reload, and cleared by a form save
   pointing it at `projects`.
@@ -882,9 +900,6 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - A preview of a draft or hidden job as the home page would show it
-    (an admin-only page rendering the whole config), if checking the
-    form's fields stops being enough before publishing.
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
