@@ -1,7 +1,8 @@
 # Plan: character sheet as an in-repo workspace package
 
 Status: planned (planner agent, 2026-11-06), reviewed against the code the
-same day (fixes folded in below); PR A in progress. This is step 4
+same day (fixes folded in below). PR A done (#74, merged 2026-11-06);
+PR B in progress. This is step 4
 of the extraction path in `docs/roadmap.md` ("Extraction to its own
 repository"):
 
@@ -15,8 +16,9 @@ Step 4 changes no contract, so it can run alongside steps 1–3.
 
 ## How to continue
 
-This file rides on PR A's branch and stays until PR C's roadmap entry
-replaces it. Check the Vercel settings (risk 1) before PR A merges.
+This file stays until PR C's roadmap entry replaces it. PR A merged
+with the Vercel settings in risk 1 confirmed by the owner. The owner's
+decisions are recorded under "Decisions" at the end.
 
 Checked in Next 16's bundled docs (`node_modules/next/dist/docs/`):
 - `turbopack.md`: Turbopack resolves only files inside a root it infers
@@ -30,7 +32,7 @@ Checked in Next 16's bundled docs (`node_modules/next/dist/docs/`):
 ## Goal and out of scope
 
 **Goal:** `frontend/components/character-sheet/` becomes
-`packages/character-sheet`, with its own `package.json`, an `exports` map
+`packages/eorzean-character-sheet`, with its own `package.json`, an `exports` map
 and peer dependencies. The frontend uses it as an installed workspace
 dependency. The JSON Schema gets a versioned `$id`, and the backend copy is
 produced from the package. Rendering doesn't change at all.
@@ -48,7 +50,7 @@ produced from the package. Rendering doesn't change at all.
 **1. Where the workspace root goes: a root `package.json` with
 `"workspaces": ["frontend", "packages/*"]` and one root
 `package-lock.json`.**
-- The alternative is a `file:../packages/character-sheet` dependency,
+- The alternative is a `file:../packages/eorzean-character-sheet` dependency,
   keeping the lockfile in `frontend/`. With that, the package's real path
   sits outside any `node_modules` that has `react` or `zod`, so its peer
   imports don't resolve.
@@ -76,11 +78,11 @@ would pull `CharacterSheet.tsx` and its CSS into server actions
 (`app/admin/character-sheet/actions.ts`, `lib/character-admin.ts`), and
 break the plain-Node `generate-schema` script and future CMS adapters.
 
-Proposed `packages/character-sheet/package.json`:
+Proposed `packages/eorzean-character-sheet/package.json`:
 
 ```json
 {
-  "name": "@alexle08/character-sheet",
+  "name": "@alexle08/eorzean-character-sheet",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -128,12 +130,18 @@ Flagged:
 - **`LinkRendererProps` and `Portrait`** (used in
   `lib/character-render.tsx`) are rightly public.
 
-**4. Package name: `@alexle08/character-sheet`.** npm scopes are lowercase
-and must match an npm user or org you own. Nothing is reserved while the
-package is private; check the scope is free before step 5.
+**4. Package name: `@alexle08/eorzean-character-sheet`** (owner's
+choice), in `packages/eorzean-character-sheet/` so the folder matches the
+name. The files inside keep their names (`character-sheet.css`,
+`character-sheet.schema.json`). npm scopes are lowercase and must match an
+npm user or org you own. Nothing is reserved while the package is
+private; check the scope is free before step 5.
+- "Eorzea" is Final Fantasy XIV's setting and a Square Enix trademark.
+  Harmless in a private package; before publishing, check Square Enix's
+  fan-content terms or choose a neutral published name.
 
 **5. `$id` form:
-`https://cdn.jsdelivr.net/npm/@alexle08/character-sheet@1/character-sheet.schema.json`.**
+`https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`.**
 `generate-schema.mjs` builds it from `name` and the major part of
 `version` in `package.json`.
 - A URL on the Vercel site would tie the contract to this site's
@@ -146,7 +154,7 @@ package is private; check the scope is free before step 5.
 
 **6. Where the generator lives.**
 - `generate-schema.mjs` moves to
-  `packages/character-sheet/scripts/generate-schema.mjs`, runs as the
+  `packages/eorzean-character-sheet/scripts/generate-schema.mjs`, runs as the
   package's `generate:schema`, and writes only the package's own
   `character-sheet.schema.json`. The package doesn't know `../backend`
   exists. With `"type": "module"`, the
@@ -157,7 +165,7 @@ package is private; check the scope is free before step 5.
   comment's command stays `npm run generate:character-schema` (from
   `frontend/`).
 - `generate:character-schema` stays in `frontend/package.json`:
-  `npm --prefix ../packages/character-sheet run generate:schema && cp ../packages/character-sheet/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json`.
+  `npm --prefix ../packages/eorzean-character-sheet run generate:schema && cp ../packages/eorzean-character-sheet/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json`.
   Copying into the backend is the site's wiring, and implementers then
   never touch root files. After step 5, the `cp` source becomes the
   installed package in `node_modules`.
@@ -179,7 +187,7 @@ the frontend's `lint` script.**
   gets them through `eslint-config-next`; without them the package, which
   renders all the sheet's markup, would lose its accessibility checks.
 - Frontend `lint` becomes
-  `"eslint && npm --prefix ../packages/character-sheet run lint"`, so CI
+  `"eslint && npm --prefix ../packages/eorzean-character-sheet run lint"`, so CI
   and `scripts/check.sh` cover the package unchanged.
 - The `exports` map also stops the site from reaching inside the package.
 - **Gotcha:** `CharacterSheet.tsx:67` and `:202` have
@@ -269,9 +277,9 @@ branch (moving the JSON breaks the backend test until its path changes).
 **B1, frontend-implementer:**
 1. **Move with history:** `git mv` `CharacterSheet.tsx`, `SlotHover.tsx`,
    `parse.ts`, `resolve.ts`, `schema.ts`, `types.ts`,
-   `character-sheet.css` into `packages/character-sheet/src/`;
+   `character-sheet.css` into `packages/eorzean-character-sheet/src/`;
    `character-sheet.schema.json` and `README.md` to the package root;
-   `generate-schema.mjs` to `packages/character-sheet/scripts/`. The
+   `generate-schema.mjs` to `packages/eorzean-character-sheet/scripts/`. The
    schema JSON stays byte-identical.
 2. **New files:** the package's `package.json` (decision 3),
    `src/index.ts` (re-exports only), `eslint.config.mjs` (decision 7).
@@ -285,14 +293,14 @@ branch (moving the JSON breaks the backend test until its path changes).
 3. **Remove the two `@next/next/no-img-element` comments**
    (`CharacterSheet.tsx:67,202`).
 4. **`frontend/package.json`:**
-   - Add `"@alexle08/character-sheet": "^1.0.0"` (npm has no
+   - Add `"@alexle08/eorzean-character-sheet": "^1.0.0"` (npm has no
      `workspace:` protocol; a matching range links the local copy).
    - Keep `react` and `zod` as the host's copies of the peers; say so in
      the PR.
    - Update `lint` and `generate:character-schema` (decisions 6 and 7).
 5. **`frontend/next.config.ts`:** nothing required; Next transpiles
    workspace packages itself (see "How to continue"). Add
-   `transpilePackages: ["@alexle08/character-sheet"]` only if the build
+   `transpilePackages: ["@alexle08/eorzean-character-sheet"]` only if the build
    fails to compile the package's TypeScript.
 6. **Rewrite imports** to package entries in:
    - `app/page.tsx:5-6`
@@ -308,9 +316,9 @@ branch (moving the JSON breaks the backend test until its path changes).
    - Comments naming the old path: `lib/character.ts:14-15`, and
      `schema.ts:8` ("this package").
 7. **`frontend/lib/character-config.json:2`:**
-   `"$schema": "../../packages/character-sheet/character-sheet.schema.json"`.
+   `"$schema": "../../packages/eorzean-character-sheet/character-sheet.schema.json"`.
 8. **Package README:** file table, usage imports
-   (`@alexle08/character-sheet`, `/react`), the `exports` list, and
+   (`@alexle08/eorzean-character-sheet`, `/react`), the `exports` list, and
    "imports nothing but react and zod, enforced by `eslint.config.mjs`".
 
 New behaviour gets a test: the frontend has no unit-test runner, so show
@@ -320,7 +328,7 @@ the package, then remove it.
 **B2, backend-implementer** (same branch, after B1):
 - `backend/tests/test_character_sheet.py:12-14`: rename `FRONTEND_SCHEMA`
   to `PACKAGE_SCHEMA`, pointing at
-  `REPO / "packages/character-sheet/character-sheet.schema.json"` (repo
+  `REPO / "packages/eorzean-character-sheet/character-sheet.schema.json"` (repo
   path, not `node_modules`: backend CI never runs npm). Rename the test to
   `test_schema_copy_matches_package`; the assertion doesn't change.
 - Update the docstring at `backend/app/services/character_sheet.py:3-8`.
@@ -354,7 +362,7 @@ rule to the README.
 
 **C2, backend-implementer** (same branch): new test
 `test_schema_has_versioned_id`, asserting `$id` matches
-`^https://cdn\.jsdelivr\.net/npm/@alexle08/character-sheet@\d+/character-sheet\.schema\.json$`.
+`^https://cdn\.jsdelivr\.net/npm/@alexle08/eorzean-character-sheet@\d+/character-sheet\.schema\.json$`.
 All existing validation tests must still pass. (The generated schema has
 no `$defs` or `$ref`s, because zod inlines everything, so an absolute
 `$id` can't change reference resolution today. If a later zod version
@@ -367,7 +375,7 @@ emits `$ref`s, add a test that validation fetches nothing.) `scripts/check.sh` (
 ## Orchestrator's docs updates (after PRs B and C)
 
 - **CLAUDE.md "Frontend":** client list gets
-  `packages/character-sheet/src/SlotHover.tsx`; the module paragraph gets
+  `packages/eorzean-character-sheet/src/SlotHover.tsx`; the module paragraph gets
   the package path, entries, ESLint enforcement, and that
   `generate:character-schema` (run from `frontend/`) also writes the
   backend copy.
@@ -375,11 +383,11 @@ emits `$ref`s, add a test that validation fetches nothing.) `scripts/check.sh` (
   validates against a copy of the package's schema.
 - **`.claude/agents/frontend-implementer.md`** (grep for `schema.ts`;
   the line number has drifted): "after changing
-  `packages/character-sheet/src/schema.ts`".
+  `packages/eorzean-character-sheet/src/schema.ts`".
 - **`docs/roadmap.md`:** record the in-repo package as done (with the PR
   links), the `$id` form and versioning rule, and the install change.
   What's left for step 5: its own repo, a build step for publishing, the
-  npm scope, CMS adapters, the demo site, `LIMITS` instead of exported
+  npm scope, the "Eorzean" trademark check (decision 4), CMS adapters, the demo site, `LIMITS` instead of exported
   sub-schemas, and `findUnknownKeys`'s `path` argument.
 - Delete this plan file once it's recorded in the roadmap.
 
@@ -422,15 +430,12 @@ emits `$ref`s, add a test that validation fetches nothing.) `scripts/check.sh` (
    `backend/app/services/character_sheet.schema.json`. PRs B and C each
    trigger a no-op Render redeploy.
 
-## Open decisions for the owner
+## Decisions (owner, 2026-11-06)
 
-1. **npm scope and name:** `@alexle08/character-sheet`? Check it's free on
-   npm before step 5.
-2. **Starting version and `$id`:** recommended `1.0.0` and the jsDelivr
-   form. Alternatives: `0.1.0` (`@0`) or a domain you control.
-3. **Zod sub-schemas through `./schema`:** keep public for now
-   (recommended), or add a `LIMITS` object first (changes the admin page).
-4. **`frontend-implementer` owning `packages/`:** agree, or keep
-   `packages/` orchestrator-only.
-5. **Vercel settings:** confirm the four checks in risk 1 before PR A
-   merges.
+1. **Name:** `@alexle08/eorzean-character-sheet`. Check the scope is free
+   and the trademark question (decision 4) before step 5.
+2. **Starting version and `$id`:** `1.0.0` and the jsDelivr form.
+3. **Zod sub-schemas through `./schema`:** public for now; `LIMITS` is a
+   step-5 question.
+4. **`frontend-implementer` owns `packages/`:** done in PR A.
+5. **Vercel settings:** confirmed before PR A merged.
