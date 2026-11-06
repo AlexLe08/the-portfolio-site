@@ -148,7 +148,18 @@ function applyJobForm(job: JsonObject, formData: FormData): string | null {
   // so a slot emptied as JSON since the page loaded stays empty.
   const slots = asObject(job.slots);
   const fill = formData.getAll("fill").map(String);
+  const empty = formData.getAll("empty").map(String);
+  // The form can't send both, but a Server Action can be posted directly.
+  const both = fill.find((slotId) => empty.includes(slotId));
+  if (both) return `The slot "${both}" can't be both filled and emptied.`;
   for (const [slotId, content] of Object.entries(slots)) {
+    // Emptied with the form's button. This wins over any JSON edit to the
+    // slot made since the page loaded, because removing it is the stated
+    // intent. An id the saved copy no longer fills is never reached here.
+    if (empty.includes(slotId)) {
+      delete slots[slotId];
+      continue;
+    }
     if (!isObject(content)) continue;
     // Filled as JSON since the page loaded: neither copy wins silently.
     if (fill.includes(slotId)) return `The slot "${slotId}" was filled since this page loaded. Reload the page.`;

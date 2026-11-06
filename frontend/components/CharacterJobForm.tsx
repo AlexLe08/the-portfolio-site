@@ -55,16 +55,44 @@ export function CharacterJobForm({
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
   const max = (limit: number | null) => limit ?? undefined;
 
-  // Empty slots the admin chose to fill. They save with the rest of the
-  // form; until then "Don't fill" puts the button back.
+  // Empty slots the admin chose to fill, and filled ones they chose to
+  // empty. Both save with the rest of the form; until then "Don't fill"
+  // and "Keep" undo them.
   const [filling, setFilling] = useState<string[]>([]);
+  const [emptying, setEmptying] = useState<string[]>([]);
+  // A save re-renders the page from the saved copy (refresh() in the
+  // action), which changes job.slots. Then a slot just filled is filled
+  // and one just emptied is empty, so drop them from the lists; kept, a
+  // slot filled then emptied would come back as new and be re-filled by
+  // the next save. A rejected save doesn't refresh, so the lists stay.
+  const [seenSlots, setSeenSlots] = useState(job.slots);
+  if (seenSlots !== job.slots) {
+    setSeenSlots(job.slots);
+    setFilling((current) => current.filter((id) => !job.slots[id]));
+    setEmptying((current) => current.filter((id) => job.slots[id]));
+  }
   const empty = slots.filter((slot) => !job.slots[slot.id] && !filling.includes(slot.id));
-  // The Fill button to focus once it's back, since "Don't fill" removes
-  // the button that had focus.
-  const focusSlot = useRef<string | null>(null);
+
+  // The button to focus once it renders, since each of these buttons
+  // removes itself: "fill:<id>", "keep:<id>", or "empty:<id>".
+  const focusTarget = useRef<string | null>(null);
+  const focusWhen = (key: string) => (button: HTMLButtonElement | null) => {
+    if (button && focusTarget.current === key) {
+      focusTarget.current = null;
+      button.focus();
+    }
+  };
   function unfill(slotId: string) {
-    focusSlot.current = slotId;
+    focusTarget.current = `fill:${slotId}`;
     setFilling((current) => current.filter((id) => id !== slotId));
+  }
+  function emptySlot(slotId: string) {
+    focusTarget.current = `keep:${slotId}`;
+    setEmptying((current) => [...current, slotId]);
+  }
+  function keepSlot(slotId: string) {
+    focusTarget.current = `empty:${slotId}`;
+    setEmptying((current) => current.filter((id) => id !== slotId));
   }
 
   // Slots without a section are folded away, so the page shows what the
@@ -207,7 +235,8 @@ export function CharacterJobForm({
       <fieldset className="form-group">
         <legend className="admin-heading">Slots</legend>
         <p className="form-help">
-          Each filled slot&rsquo;s tooltip and what clicking it opens. Emptying a slot is done as JSON.
+          Each filled slot&rsquo;s tooltip and what clicking it opens. Emptying a slot keeps its page
+          section; clear that below.
         </p>
         {/* Closed by default: open each slot you want to change. Closed
             fields still submit, so saving never drops a tooltip. */}
@@ -215,6 +244,24 @@ export function CharacterJobForm({
           const content = job.slots[slot.id];
           const isNew = !content && filling.includes(slot.id);
           if (!content && !isNew) return null;
+          // No fields while emptying, so a required title left blank
+          // can't block the save that removes the slot.
+          if (content && emptying.includes(slot.id)) {
+            return (
+              <details key={slot.id} className="form-more">
+                <summary>{slot.label}: emptied on save</summary>
+                <input type="hidden" name="empty" value={slot.id} />
+                <button
+                  type="button"
+                  ref={focusWhen(`keep:${slot.id}`)}
+                  className="form-button form-button--small"
+                  onClick={() => keepSlot(slot.id)}
+                >
+                  Keep {slot.label}
+                </button>
+              </details>
+            );
+          }
           return (
             <details key={slot.id} className="form-more" open={isNew || undefined}>
               <summary>
@@ -233,9 +280,18 @@ export function CharacterJobForm({
                 limits={tooltipLimits}
                 autoFocus={isNew}
               />
-              {isNew && (
+              {isNew ? (
                 <button type="button" className="form-button form-button--small" onClick={() => unfill(slot.id)}>
                   Don&rsquo;t fill {slot.label}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  ref={focusWhen(`empty:${slot.id}`)}
+                  className="form-button form-button--small"
+                  onClick={() => emptySlot(slot.id)}
+                >
+                  Empty {slot.label}
                 </button>
               )}
             </details>
@@ -251,12 +307,7 @@ export function CharacterJobForm({
                 <li key={slot.id}>
                   <button
                     type="button"
-                    ref={(button) => {
-                      if (button && focusSlot.current === slot.id) {
-                        focusSlot.current = null;
-                        button.focus();
-                      }
-                    }}
+                    ref={focusWhen(`fill:${slot.id}`)}
                     className="form-button form-button--small"
                     onClick={() => setFilling((current) => [...current, slot.id])}
                   >
