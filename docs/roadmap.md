@@ -687,8 +687,29 @@
   CLAUDE.md now says to rebuild when local results differ from CI.
   Backend suite is 240 tests. The hook was tested on 11 sample inputs;
   the agents, hook, and deny rules haven't run live yet (they load in a
-  session started after the merge). First pilot candidate: emptying a
-  filled slot from the job form.
+  session started after the merge). The pilot ran on the next item.
+- Emptying a filled slot from the job form (#69, the agent workflow's
+  first pilot: planner, then frontend-implementer, then reviewer). Each
+  saved slot gets an "Empty {label}" button; while marked, the slot shows
+  "emptied on save", a hidden `empty` field, and "Keep {label}" to undo,
+  with no fields rendered (so the `required` title can't block the
+  save). `applyJobForm` deletes `empty` ids before any merge, refuses an
+  id sent as both `fill` and `empty`, and ignores ids the saved copy no
+  longer fills. Emptying keeps the slot's page section (owner decision:
+  they're stored and rendered separately). No confirm dialog: Keep
+  undoes until Save. Keep restores the saved values, so edits made
+  before Empty are lost (accepted). Also fixed: `filling` was never
+  cleared, so fill, save, empty, save re-sent `fill`; both lists are now
+  pruned against `job.slots` when it changes after a save. Rejected:
+  all-blank fields mean empty (a cleared title would silently delete),
+  a checkbox per slot (fields still render), and a schema change (a
+  missing key already means empty). Verified with Playwright on the
+  demo stack (7 steps: stored copy loses only that key and keeps the
+  section; home page empty slot; refreshed to the Fill button; fill,
+  save, empty, save stays empty, and fails with the prune removed;
+  Empty then Keep stores the bundled file exactly; cleared title then
+  Empty saves; backend down keeps the state). Merged as #69
+  (`87fd6e9`) on 2026-11-05; not yet tried in production.
 
 ## Next up (candidates, unordered)
 
@@ -696,7 +717,11 @@
   out of #67, which only added text): the `paths:` rule should say it's
   about the `pull_request` trigger (both workflows filter `push: main`,
   which is fine); `core/rate_limit.py` and `services/character_sheet.py`
-  are missing from the layer descriptions.
+  are missing from the layer descriptions. From the #69 pilot: an
+  implementer can't `EnterWorktree` into the task worktree when the
+  session started at the repo root (it worked with absolute paths), and
+  the scope hook blocks writes to the root `.logs/`, so demo scripts
+  land in `frontend/.logs/` (gitignored). Say which is expected.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
@@ -707,8 +732,6 @@
   - Removing a job from the form, and a hidden/draft flag so a new job
     isn't live before it's edited, if adding jobs becomes routine. Both
     are JSON-only or missing today.
-  - Emptying a filled slot from the form (still JSON only), if it's
-    needed.
   - Anchor targets aren't checked against what the home page renders
     (a section the job doesn't have scrolls nowhere). A save-time
     warning, like unknown keys, if it ever bites.
