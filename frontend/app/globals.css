@@ -589,6 +589,12 @@ button:focus-visible {
   max-width: 8rem;
 }
 
+/* A select as wide as its longest option, such as a job name. */
+.form-input--fit {
+  width: auto;
+  max-width: 100%;
+}
+
 .form-check {
   display: flex;
   align-items: center;

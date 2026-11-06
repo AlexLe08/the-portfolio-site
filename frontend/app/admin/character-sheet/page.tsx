@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addCharacterJob, removeCharacterJob, updateCharacterJob } from "./actions";
+import { addCharacterJob, removeCharacterJob, setDefaultCharacterJob, updateCharacterJob } from "./actions";
 import { jobHref, resolveJob } from "@alexle08/eorzean-character-sheet";
 import {
   ID_PATTERN,
@@ -11,6 +11,7 @@ import {
   TOOLTIP_MAX_TAGS,
   tooltipSchema,
 } from "@alexle08/eorzean-character-sheet/schema";
+import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import { CharacterJobRemoveForm } from "@/components/CharacterJobRemoveForm";
@@ -63,8 +64,8 @@ const ACTION_LIMITS: SlotActionLimits = {
   href: Math.min(linkAction.shape.href.maxLength ?? Infinity, externalAction.shape.href.maxLength ?? Infinity),
 };
 
-// One job at a time, picked with ?job= like the home page. The rest of the
-// config (slot definitions, which job is the default) is edited as JSON.
+// One job at a time, picked with ?job= like the home page, plus which job
+// is the default. The slot definitions are edited as JSON.
 // ?removed= is where removeCharacterJob lands, on the default job's form.
 export default async function AdminCharacterSheetPage({
   searchParams,
@@ -124,8 +125,13 @@ export default async function AdminCharacterSheetPage({
         {jsonLink}
       </div>
       <p className="form-help admin-intro">
-        The slots themselves (names, icons, order) and which job is the default are edited as JSON.
+        The slots themselves (names, icons, order) are edited as JSON.
       </p>
+      <CharacterDefaultJobForm
+        action={setDefaultCharacterJob}
+        jobs={config.jobs.map(({ id, name }) => ({ id, name }))}
+        defaultJobId={config.defaultJobId}
+      />
       <CharacterJobAddForm
         action={addCharacterJob}
         jobs={config.jobs.map(({ id, name }) => ({ id, name }))}

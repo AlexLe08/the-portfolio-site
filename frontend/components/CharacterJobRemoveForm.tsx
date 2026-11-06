@@ -40,8 +40,7 @@ export function CharacterJobRemoveForm({ action, job, isDefault }: Props) {
       {isDefault ? (
         <p className="form-help">
           {job.name} is the default job, shown at / with no ?job=, so it can&rsquo;t be removed
-          here. To remove it, first make another job the default (defaultJobId) in the{" "}
-          <Link href="/admin/character-sheet/json">JSON editor</Link>.
+          here. To remove it, first pick another default job at the top of this page.
         </p>
       ) : (
         <form onSubmit={confirmFirst} className="form-group">

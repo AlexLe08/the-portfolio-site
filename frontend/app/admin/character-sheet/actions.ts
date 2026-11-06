@@ -97,13 +97,36 @@ export async function addCharacterJob(
   redirect(`/admin/character-sheet?job=${encodeURIComponent(id)}`);
 }
 
+// Makes another job the one / shows with no ?job=. Read at save time like
+// the other actions, so only defaultJobId changes; re-rendered afterwards,
+// so the form's summary names the new default.
+export async function setDefaultCharacterJob(
+  _previous: CharacterSheetFormState,
+  formData: FormData,
+): Promise<CharacterSheetFormState> {
+  const jobId = formText(formData, "job_id");
+  const loaded = await loadSavedConfig();
+  if ("error" in loaded) return loaded;
+  const { config } = loaded;
+
+  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
+  if (!jobs.some((entry) => isObject(entry) && entry.id === jobId)) {
+    return { error: `The saved copy has no job "${jobId}" any more. Reload the page.` };
+  }
+  config.defaultJobId = jobId;
+  const result = await saveConfig(config);
+  if (result && "saved" in result) refresh();
+  return result;
+}
+
 // Removes a job from the saved copy, read at save time like the other
 // actions, so nothing else in the document changes. A job already gone
 // (removed in another tab or as JSON) counts as removed: same end state,
 // so it redirects without saving, as stale "empty" ids are ignored. The
 // default job is refused rather than picking a new default here: it's
-// what / shows, so changing it is a deliberate JSON edit. That also keeps
-// the last job, which has to be the default.
+// what / shows, so changing it is a deliberate choice, made with the
+// default job form first. That also keeps the last job, which has to be
+// the default.
 export async function removeCharacterJob(
   jobId: string,
   _previous: CharacterSheetFormState,
@@ -119,7 +142,7 @@ export async function removeCharacterJob(
   if (!jobs.some(isJob)) redirect(removedHref);
   if (config.defaultJobId === jobId) {
     return {
-      error: `Not removed: "${jobId}" is the default job, shown at / with no ?job=. Change defaultJobId in the JSON editor first.`,
+      error: `Not removed: "${jobId}" is the default job, shown at / with no ?job=. Make another job the default first.`,
     };
   }
 
