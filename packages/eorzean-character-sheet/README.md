@@ -45,7 +45,8 @@ the host's bundler compiles it.
 | `src/character-sheet.css` | Styles and themes; everything themable is a `--cs-*` variable |
 | `character-sheet.schema.json` | Generated JSON Schema for editing a config file by hand |
 | `scripts/generate-schema.mjs` | Regenerates the JSON Schema (`npm run generate:schema`) |
-| `eslint.config.mjs` | Lint rules and the import allowlist (`npm run lint`) |
+| `eslint.config.mjs` | Lint rules (React, hooks, jsx-a11y, TypeScript) and the import allowlist (`npm run lint`) |
+| `tsconfig.json` | Compiler options for editors and `npx tsc -p .`; the host builds with its own |
 
 ## Config
 
