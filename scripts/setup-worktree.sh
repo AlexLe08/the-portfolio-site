@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Prepares a fresh checkout (usually a git worktree under .claude/worktrees/)
-# to run: backend venv with test extras, frontend node_modules, and copies of
-# the gitignored env files from the main checkout. Safe to re-run: existing
-# venvs and env files are kept.
+# to run: backend venv with test extras, node_modules (npm workspaces, at the
+# repo root), and copies of the gitignored env files from the main checkout.
+# Safe to re-run: existing venvs and env files are kept.
 #
 # Usage: scripts/setup-worktree.sh
 set -euo pipefail
@@ -18,8 +18,9 @@ fi
 echo "backend: installing dependencies"
 (cd "$root/backend" && PIP_DISABLE_PIP_VERSION_CHECK=1 ./.venv/bin/pip install -q -e ".[test]")
 
-echo "frontend: npm ci"
-(cd "$root/frontend" && npm ci --silent --no-audit --no-fund)
+# One lockfile at the repo root covers frontend/ and packages/ (npm workspaces).
+echo "npm ci (workspaces)"
+(cd "$root" && npm ci --silent --no-audit --no-fund)
 
 # Each worktree needs its own copies: .env files are gitignored.
 if [[ "$main" != "$root" ]]; then

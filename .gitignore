@@ -1,5 +1,8 @@
 .DS_Store
 
+# npm workspaces install at the repo root (package.json)
+node_modules/
+
 # Claude Code personal files
 CLAUDE.local.md
 .claude/settings.local.json
