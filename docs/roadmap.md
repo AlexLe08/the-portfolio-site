@@ -751,6 +751,42 @@
   shows nothing). Not exercised: the media guard after a removal
   (Cloudinary). Merged as #72 (`5c5cda9`) on 2026-11-06; not yet tried
   in production.
+- The character sheet as an in-repo workspace package (step 4 of its
+  extraction path; planner, then reviewed against the code, then three
+  PRs, each through implementers and the reviewer):
+  - npm workspace root (#74, `24b67f2`): a root `package.json` with
+    workspaces `frontend` and `packages/*`, and one `package-lock.json` at
+    the repo root (moved with `git mv`; the same 587 `name@version` pairs
+    before and after). Why: Turbopack resolves only files under the root
+    it infers from the lockfile, so `packages/` needed the lockfile above
+    it; a `file:` dependency would also have left the package's `react`
+    and `zod` imports unresolvable. CI, `setup-worktree.sh` and the
+    Vercel install run `npm ci` at the root (npm, run in `frontend/`,
+    finds the root itself); `demo/stack.mjs` resolves `next` instead of
+    `./node_modules/.bin`. The frontend implementer owns `packages/`.
+    Owner checked the Vercel settings (Root Directory `frontend`, files
+    outside it included, default install, no Ignored Build Step).
+  - The move (#75, `717a23d`): `packages/eorzean-character-sheet/`
+    (`@alexle08/eorzean-character-sheet`, 1.0.0, private), TypeScript
+    source with no build step (Next transpiles workspace packages itself,
+    so no `transpilePackages`). Entries `.` (data, no React), `/react`,
+    `/schema`, plus the CSS and JSON Schema files, so server code never
+    loads React or CSS. The boundary is the package's own ESLint config
+    (only `react`, `zod` and its own files; `next build` wouldn't catch an
+    `@/` import, since the frontend's `paths` apply to it), run by the
+    frontend's `lint`. Nothing rendered differently: four pages
+    pixel-identical before and after, the fifth differing only by the
+    config's `$schema` path line.
+  - Versioned `$id` (this PR):
+    `https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`,
+    built from the package's `name` and major version. A compatible
+    schema change keeps `@1`; a breaking one bumps the major version and
+    so the `$id`. An npm CDN URL survives the repo move and opens once
+    published; a site URL would tie the contract to this subdomain.
+    `test_schema_has_versioned_id` checks the format (the copy-match test
+    alone would pass a wrong URL regenerated into both copies). The
+    schema has no `$ref`s, so the absolute `$id` changes no validation;
+    the admin JSON save was checked on the demo stack.
 
 ## Next up (candidates, unordered)
 
@@ -782,11 +818,28 @@
     (decided with PR #54): the package ships the JSON Schema as the
     contract, which any backend can validate against in its own language,
     and this site's FastAPI storage stays here as one example of a backend
-    using it. The schema gets a versioned `$id`, and `backend/` then copies
-    it from the installed package instead of the frontend folder. A Python
-    validator package (`find_issues` and its `oneOf` explanation) only if
-    someone asks, and then in the same repository, so it ships with the
-    schema version it checks.
+    using it. A Python validator package (`find_issues` and its `oneOf`
+    explanation) only if someone asks, and then in the same repository, so
+    it ships with the schema version it checks. Done so far: the in-repo
+    package with its versioned `$id` (see Done). Left for the move:
+    - Its own repository and a build step for publishing (keeping
+      `SlotHover`'s `"use client"`); `generate:character-schema`'s `cp`
+      then reads the installed package.
+    - The npm scope `@alexle08` (check it's free), and "Eorzea" is a
+      Square Enix trademark: check their fan-content terms or publish
+      under a neutral name.
+    - Accessibility, before publishing: the non-link slot face
+      (`<span tabIndex={0}>`) is a focus stop with no role. Give it one
+      (`role="group"` with `aria-labelledby`, or a `<button type="button">`)
+      and drop its `no-noninteractive-tabindex` disable.
+    - Package lint: add `eslint-plugin-react` (`react/jsx-key` and others
+      `eslint-config-next` applied); the import allowlist doesn't see
+      dynamic `import()`, which the package doesn't use.
+    - Public API: a plain `LIMITS` object instead of exporting zod
+      sub-schemas (the admin form reads `jobSchema.shape` and others), and
+      `findUnknownKeys`'s recursion-only `path` argument.
+    - A `tsconfig.json` in the package, so editors opening it alone get
+      the site's settings.
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
