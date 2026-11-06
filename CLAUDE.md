@@ -18,7 +18,7 @@ Monorepo:
 - `frontend/`: Next.js App Router, React 19, TypeScript. Deployed to
   Vercel (Hobby).
 - `packages/`: npm workspace packages the frontend uses (currently
-  `eorzean-character-sheet`, see `docs/plans/character-sheet-package.md`).
+  `eorzean-character-sheet`; see its README and the roadmap).
   The root `package.json` declares the workspaces; the one
   `package-lock.json` and `node_modules/` are at the repo root.
 - `docs/`: one runbook per service, plus `roadmap.md`.

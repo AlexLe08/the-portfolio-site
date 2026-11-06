@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -12,7 +13,8 @@ from tests.helpers import ADMIN_HEADERS
 REPO = Path(__file__).resolve().parents[2]
 FRONTEND = REPO / "frontend"
 BUNDLED_CONFIG = json.loads((FRONTEND / "lib/character-config.json").read_text(encoding="utf-8"))
-PACKAGE_SCHEMA = REPO / "packages/eorzean-character-sheet/character-sheet.schema.json"
+PACKAGE = REPO / "packages/eorzean-character-sheet"
+PACKAGE_SCHEMA = PACKAGE / "character-sheet.schema.json"
 
 
 @pytest.fixture()
@@ -32,6 +34,23 @@ def test_schema_copy_matches_package():
     # Fails when schema.ts changed without `npm run generate:character-schema`
     # (which regenerates the package's file and copies it here).
     assert character_sheet.SCHEMA_PATH.read_bytes() == PACKAGE_SCHEMA.read_bytes()
+
+
+def test_schema_has_versioned_id():
+    # The package's README promises this URL, pinned to a major version, so
+    # other tools can fetch the schema. The schema has no $refs (zod inlines
+    # everything), so an absolute $id doesn't change how validation resolves.
+    schema = json.loads(character_sheet.SCHEMA_PATH.read_text(encoding="utf-8"))
+    package = json.loads((PACKAGE / "package.json").read_text(encoding="utf-8"))
+
+    match = re.fullmatch(
+        r"https://cdn\.jsdelivr\.net/npm/@alexle08/eorzean-character-sheet@(\d+)"
+        r"/character-sheet\.schema\.json",
+        schema["$id"],
+    )
+    assert match
+    # A major version bump without regenerating would leave the old @N.
+    assert match.group(1) == package["version"].split(".")[0]
 
 
 def test_bundled_config_is_valid(config):

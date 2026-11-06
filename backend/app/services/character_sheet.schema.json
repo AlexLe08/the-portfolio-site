@@ -1,6 +1,7 @@
 {
   "title": "Character sheet config",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json",
   "type": "object",
   "properties": {
     "$schema": {
