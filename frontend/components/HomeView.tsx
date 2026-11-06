@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
-import type { CharacterSheetConfig, Job } from "@alexle08/eorzean-character-sheet";
+import { jobHref, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
 import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
@@ -88,7 +88,7 @@ export function HomeView({ config, job, content, projects, basePath, notice }: P
       </div>
 
       {projects === null ? (
-        <ProjectsUnavailable />
+        <ProjectsUnavailable retryHref={jobHref(config, job.id, basePath)} />
       ) : (
         <ul className="project-list">
           {projects.map((project) => (

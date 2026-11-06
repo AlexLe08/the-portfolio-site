@@ -7,7 +7,8 @@ import { StatusMessage } from "./StatusMessage";
 // There's no built-in copy to show, so it says so where the list would be.
 // While AutoRetry is still trying it's a plain line; only once the retries
 // are used up does it become an error with a button to reload.
-export function ProjectsUnavailable() {
+// retryHref is the page to reload: the current one, ?job= included.
+export function ProjectsUnavailable({ retryHref = "/" }: { retryHref?: string }) {
   if (!useRetriesGaveUp()) {
     return (
       <StatusMessage tone="info">
@@ -24,7 +25,7 @@ export function ProjectsUnavailable() {
           be served from the client router cache, while a reload
           always fetches again. */}
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-      <a href="/" className="form-button">
+      <a href={retryHref} className="form-button">
         Try again
       </a>
     </>
