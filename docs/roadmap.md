@@ -815,7 +815,7 @@
   switching the default changes `/`, makes the old default removable, and
   a stale id is refused without saving.
 
-- Package lint and tsconfig: the character sheet package's lint now runs
+- Package lint and tsconfig (#79): the character sheet package's lint now runs
   `eslint-plugin-react`'s `recommended` and `jsx-runtime` configs
   (`jsx-key`, `no-unescaped-entities` and the rest), a declared
   devDependency rather than the one `eslint-config-next` brings. Stricter
