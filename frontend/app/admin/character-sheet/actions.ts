@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { findUnknownKeys, parseConfig } from "@/components/character-sheet/parse";
+import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminRequest } from "@/lib/admin-api";
 import type { components } from "@/lib/api-types";
 import bundledConfig from "@/lib/character-config.json";

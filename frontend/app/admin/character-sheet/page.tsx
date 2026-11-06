@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addCharacterJob, removeCharacterJob, updateCharacterJob } from "./actions";
-import { jobHref, resolveJob } from "@/components/character-sheet/resolve";
+import { jobHref, resolveJob } from "@alexle08/eorzean-character-sheet";
 import {
   ID_PATTERN,
   jobSchema,
@@ -10,7 +10,7 @@ import {
   TOOLTIP_MAX_ITEMS,
   TOOLTIP_MAX_TAGS,
   tooltipSchema,
-} from "@/components/character-sheet/schema";
+} from "@alexle08/eorzean-character-sheet/schema";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import { CharacterJobRemoveForm } from "@/components/CharacterJobRemoveForm";
