@@ -815,6 +815,18 @@
   switching the default changes `/`, makes the old default removable, and
   a stale id is refused without saving.
 
+- Package lint and tsconfig: the character sheet package's lint now runs
+  `eslint-plugin-react`'s `recommended` and `jsx-runtime` configs
+  (`jsx-key`, `no-unescaped-entities` and the rest), a declared
+  devDependency rather than the one `eslint-config-next` brings. Stricter
+  than the site, which turns off `prop-types`, `no-unknown-property` and
+  `jsx-no-target-blank` for Next's sake; the package passes all three, and
+  TypeScript props satisfy `prop-types`. A standalone `tsconfig.json`
+  (the site's compiler options minus the Next-only ones, not `extends`, so
+  it moves with the package) gives editors the right settings and makes
+  `npx tsc -p .` work in the package; the host's build still type-checks
+  it with its own. Checked with probe snippets that both catch errors.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -852,16 +864,12 @@
     - The npm scope `@alexle08` (check it's free), and "Eorzea" is a
       Square Enix trademark: check their fan-content terms or publish
       under a neutral name.
-    - Package lint: add `eslint-plugin-react` (`react/jsx-key`,
-      `react/no-unescaped-entities` and others `eslint-config-next`
-      applied). The import allowlist doesn't see dynamic `import()` or
-      `require()`; add a `no-restricted-syntax` rule if the package ever
-      uses them.
+    - The import allowlist doesn't see dynamic `import()` or `require()`;
+      add a `no-restricted-syntax` rule if the package ever uses them
+      (it doesn't today).
     - Public API: a plain `LIMITS` object instead of exporting zod
       sub-schemas (the admin form reads `jobSchema.shape` and others), and
       `findUnknownKeys`'s recursion-only `path` argument.
-    - A `tsconfig.json` in the package, so editors opening it alone get
-      the site's settings.
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a
