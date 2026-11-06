@@ -877,6 +877,13 @@
   projects), switch to a published job, back to the form, and `/?job=`
   still falls back.
 
+- Retry link keeps the page: `ProjectsUnavailable`'s "Try again" took
+  `href="/"`, which dropped `?job=` on the home page and left the admin
+  preview. `HomeView` now passes the current job's address
+  (`jobHref(config, job.id, basePath)`) as `retryHref`. Checked on the
+  demo stack with the backend stopped: once the retries gave up, the link
+  on `/?job=ecommerce` was `/?job=ecommerce`, and on `/` it was `/`.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
