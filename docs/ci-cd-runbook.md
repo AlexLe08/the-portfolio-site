@@ -11,7 +11,7 @@ required (see "Smoke tests against production" below).
 | File | Job name | Runs | Checks |
 |---|---|---|---|
 | `.github/workflows/backend.yml` | `test` | every PR and push to `main` | installs backend deps, runs `alembic upgrade head` against a throwaway SQLite file, runs `pytest` |
-| `.github/workflows/frontend.yml` | `build` | every PR and push to `main` | `npm ci`, `npm run lint`, `npm run build` (which includes a full TypeScript check — see note below) |
+| `.github/workflows/frontend.yml` | `build` | every PR and push to `main` | `npm ci` at the repo root (npm workspaces), `npm run lint`, `npm run build` (which includes a full TypeScript check — see note below) |
 
 Both workflows run on **every** PR, regardless of which half of the
 monorepo it touches. See "Why no path filters" below for why that's

@@ -19,7 +19,17 @@ static/dynamic rendering) are first-class here without extra config.
    Next.js app at the repo root and won't find one.
 3. Add an environment variable: `NEXT_PUBLIC_API_URL` = the Render backend
    URL (`https://portfolio-backend-leto.onrender.com`, no trailing slash).
-4. Deploy.
+4. Under Settings > Build and Deployment, check the npm workspace setup
+   (all free-tier):
+   - "Include files outside the root directory in the Build Step" is
+     Enabled. The lockfile (`package-lock.json`), the root `package.json`
+     and `packages/` live outside `frontend/`.
+   - Install Command is the default. npm, run in `frontend/`, finds the
+     workspace root and installs from the root lockfile. An override like
+     `cd frontend && npm ci` would bypass that.
+   - No custom Ignored Build Step that only diffs `frontend/`: changes in
+     `packages/` must rebuild too.
+5. Deploy.
 
 ## Environment variables
 

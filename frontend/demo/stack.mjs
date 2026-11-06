@@ -34,6 +34,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdtempSync, renameSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -145,7 +146,10 @@ export async function startStack({ build = true } = {}) {
   };
   await backend.start();
 
-  const next = spawn("./node_modules/.bin/next", ["start", "-p", "3000"], {
+  // Resolved, not ./node_modules/.bin: npm workspaces hoist next to the
+  // repo root's node_modules.
+  const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
+  const next = spawn(process.execPath, [nextBin, "start", "-p", "3000"], {
     cwd: FRONTEND,
     env: { ...process.env, ...frontendEnv },
     stdio: "ignore",

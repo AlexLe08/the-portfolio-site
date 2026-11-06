@@ -17,6 +17,10 @@ Monorepo:
   locally and in CI.
 - `frontend/`: Next.js App Router, React 19, TypeScript. Deployed to
   Vercel (Hobby).
+- `packages/`: npm workspace packages the frontend uses (none yet; the
+  character sheet moves here, see `docs/plans/character-sheet-package.md`).
+  The root `package.json` declares the workspaces; the one
+  `package-lock.json` and `node_modules/` are at the repo root.
 - `docs/`: one runbook per service, plus `roadmap.md`.
 - `render.yaml`: Render Blueprint. `docker-compose.yml`: optional local
   Postgres.
@@ -42,6 +46,10 @@ Backend (run from `backend/`, always via venv binaries; there is no plain
 
 Frontend (run from `frontend/`; expects the backend at
 `NEXT_PUBLIC_API_URL`, default `http://localhost:8000`):
+- Install: `npm ci` at the repo root (npm workspaces; run from
+  `frontend/`, npm finds the root itself). Packages are hoisted to the
+  root `node_modules/`, so Next's bundled docs are at
+  `node_modules/next/dist/docs/` there.
 - `npm run dev`, `npm run lint`, `npm run build`
 - `npm run test:smoke`: Playwright against production by default
   (`BASE_URL`/`API_URL` override it). Run `npx playwright install chromium`
@@ -55,8 +63,8 @@ These are exactly what CI runs.
 
 Scripts (`scripts/`, run from anywhere in the checkout). Prefer these to
 retyping the commands they wrap; each explains itself in its header:
-- `scripts/setup-worktree.sh`: venv, `npm ci`, and `.env` copies from the
-  main checkout. Run first in every new worktree.
+- `scripts/setup-worktree.sh`: venv, `npm ci` at the repo root, and
+  `.env` copies from the main checkout. Run first in every new worktree.
 - `scripts/check.sh [backend|frontend]`: the pre-PR checks above, one line
   per step; full logs in `.logs/`.
 - `scripts/gen-types.sh`: export `openapi.json` and regenerate
@@ -238,12 +246,13 @@ The main session orchestrates; subagents in `.claude/agents/` (planner,
 backend-implementer, frontend-implementer, reviewer) take one bounded
 task each. These rules add to everything above, for every agent.
 
-- Scope: an implementer edits only its own directory (`backend/` or
-  `frontend/`), in a worktree from `scripts/new-worktree.sh`, never in
-  the main checkout. The one crossing allowed: files written by a
-  generator it ran for its own change (`scripts/gen-types.sh` writes
-  `frontend/lib/api-types.ts`; `generate:character-schema` writes the
-  backend's schema copy). Anything else outside its directory, including
+- Scope: an implementer edits only its own directories (`backend/`, or
+  `frontend/` and `packages/`), in a worktree from
+  `scripts/new-worktree.sh`, never in the main checkout. The one crossing
+  allowed: files written by a generator it ran for its own change
+  (`scripts/gen-types.sh` writes `frontend/lib/api-types.ts`;
+  `generate:character-schema` writes the backend's schema copy; npm
+  writes the root `package-lock.json`). Anything else outside its directory, including
   `CLAUDE.md`, `.claude/`, `.github/`, `scripts/`, `docs/`, and root
   files, goes in its report for the orchestrator.
 - Working in the worktree: `EnterWorktree` may refuse the path when the
