@@ -10,6 +10,12 @@ import { z } from "zod";
 // the host's tsconfig doesn't allow, so LIMITS lives here too. Public: LIMITS
 // and ID_PATTERN (from "."), characterSheetConfigSchema (from "/schema", see
 // schema-entry.ts). The parts are internal.
+//
+// Unknown keys: these zod objects strip them, so a reader keeps a config
+// with an extra key instead of dropping the job (or the whole config). The
+// exported JSON Schema (generate-schema.mjs) closes every object instead, so
+// writers (editors, the backend's admin save) reject them. The difference is
+// intentional; keep these plain z.object, not strict.
 
 // The hyphen is escaped so the pattern also works in an HTML pattern
 // attribute, which browsers compile with the v flag, where a bare "-" in a
