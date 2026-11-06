@@ -842,7 +842,7 @@
   helper's. Checked: the regenerated JSON Schema (and the backend's copy)
   is byte-identical.
 
-- Job status: each job has `status: "published" | "draft" | "hidden"`
+- Job status (#81): each job has `status: "published" | "draft" | "hidden"`
   (left out means published, so every saved config stays valid and the
   `$id` keeps `@1`). A `status` enum rather than one `hidden` boolean
   (decided 2026-11-06): draft (not ready yet) and hidden (taken down)
