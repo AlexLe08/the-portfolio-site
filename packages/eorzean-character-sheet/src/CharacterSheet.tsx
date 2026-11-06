@@ -188,6 +188,7 @@ function SlotList({
           slot={slot}
           content={job.slots[slot.id]}
           tipId={`${idPrefix}tip-${slot.id}`}
+          labelId={`${idPrefix}label-${slot.id}`}
           renderLink={renderLink}
           showSockets={showSockets}
         />
@@ -208,12 +209,14 @@ function Slot({
   slot,
   content,
   tipId,
+  labelId,
   renderLink,
   showSockets,
 }: {
   slot: SlotDef;
   content: SlotContent | undefined;
   tipId: string;
+  labelId: string;
   renderLink: RenderLink;
   showSockets: boolean;
 }) {
@@ -228,7 +231,9 @@ function Slot({
           </span>
         )}
       </span>
-      <span className="cs-slot__label">{slot.label}</span>
+      <span className="cs-slot__label" id={labelId}>
+        {slot.label}
+      </span>
     </>
   );
 
@@ -250,9 +255,10 @@ function Slot({
   let trigger: ReactNode;
   if (href === null) {
     // Nothing to open, but still focusable so keyboard users get the tooltip.
+    // A named group, not a button: a button would promise an action.
     trigger = (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focus shows the tooltip it's described by
-      <span {...common} tabIndex={0}>
+      <span {...common} role="group" aria-labelledby={labelId} tabIndex={0}>
         {face}
       </span>
     );
