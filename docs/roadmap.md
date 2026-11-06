@@ -788,6 +788,19 @@
     schema has no `$ref`s, so the absolute `$id` changes no validation;
     the admin JSON save was checked on the demo stack.
 
+- Slot faces with no action (`kind: "none"`) are named groups (#77): the
+  focusable `<span>` gets `role="group"` and `aria-labelledby` its visible
+  label, so a screen reader announces "Core stack, group" and then the
+  tooltip as its description. Before, it was a focus stop with the
+  `generic` role, which can't be named. A `<button type="button">` was the
+  other option, but it would announce an action that does nothing and
+  need style resets in both themes. jsx-a11y's
+  `no-noninteractive-tabindex` still flags a focusable group (its
+  allowlist is only `tabpanel`), so the disable stays, now with that
+  reason. Checked in Chromium's accessibility tree on the demo stack, with
+  a `none` slot saved to the throwaway database (the built-in config has
+  none): role, name, description, Tab reaches it, tooltip shows on focus.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -828,10 +841,6 @@
     - The npm scope `@alexle08` (check it's free), and "Eorzea" is a
       Square Enix trademark: check their fan-content terms or publish
       under a neutral name.
-    - Accessibility, before publishing: the non-link slot face
-      (`<span tabIndex={0}>`) is a focus stop with no role. Give it one
-      (`role="group"` with `aria-labelledby`, or a `<button type="button">`)
-      and drop its `no-noninteractive-tabindex` disable.
     - Package lint: add `eslint-plugin-react` (`react/jsx-key`,
       `react/no-unescaped-entities` and others `eslint-config-next`
       applied). The import allowlist doesn't see dynamic `import()` or
