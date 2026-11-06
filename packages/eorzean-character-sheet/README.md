@@ -53,6 +53,9 @@ the host's bundler compiles it.
 
 A config is plain JSON. Add `"$schema"` pointing at
 `character-sheet.schema.json` to get autocomplete and validation in your editor.
+The JSON Schema rejects unknown keys, so a typo like `subtitel` is an error
+when writing a config, while `parseConfig` strips unknown keys when reading one
+(`findUnknownKeys` lists them).
 
 The schema's `$id` is
 `https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`.

@@ -58,7 +58,8 @@
           "id",
           "label",
           "position"
-        ]
+        ],
+        "additionalProperties": false
       }
     },
     "jobs": {
@@ -120,7 +121,8 @@
             "required": [
               "label",
               "value"
-            ]
+            ],
+            "additionalProperties": false
           },
           "portrait": {
             "type": "object",
@@ -158,7 +160,8 @@
             "required": [
               "src",
               "alt"
-            ]
+            ],
+            "additionalProperties": false
           },
           "badge": {
             "description": "A figure in the portrait's top corner.",
@@ -178,7 +181,8 @@
             "required": [
               "label",
               "value"
-            ]
+            ],
+            "additionalProperties": false
           },
           "slots": {
             "type": "object",
@@ -231,7 +235,8 @@
                       "required": [
                         "label",
                         "value"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     "items": {
                       "description": "Listed in order, most relevant first. Label/value pairs render as a two-column table.",
@@ -261,7 +266,8 @@
                             "required": [
                               "label",
                               "value"
-                            ]
+                            ],
+                            "additionalProperties": false
                           }
                         ]
                       }
@@ -274,7 +280,8 @@
                   },
                   "required": [
                     "title"
-                  ]
+                  ],
+                  "additionalProperties": false
                 },
                 "action": {
                   "oneOf": [
@@ -295,7 +302,8 @@
                       "required": [
                         "kind",
                         "target"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -314,7 +322,8 @@
                       "required": [
                         "kind",
                         "href"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -336,7 +345,8 @@
                       "required": [
                         "kind",
                         "href"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -348,7 +358,8 @@
                       },
                       "required": [
                         "kind"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 },
@@ -362,7 +373,8 @@
               "required": [
                 "tooltip",
                 "action"
-              ]
+              ],
+              "additionalProperties": false
             },
             "description": "Content per slot id. A slot without an entry renders empty."
           },
@@ -386,7 +398,8 @@
           "title",
           "level",
           "slots"
-        ]
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -394,5 +407,6 @@
     "defaultJobId",
     "slots",
     "jobs"
-  ]
+  ],
+  "additionalProperties": false
 }

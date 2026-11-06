@@ -12,7 +12,21 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const major = pkg.version.split(".")[0];
 const id = `https://cdn.jsdelivr.net/npm/${pkg.name}@${major}/character-sheet.schema.json`;
 
-const schema = z.toJSONSchema(characterSheetConfigSchema, { io: "input" });
+// io "input": output mode would make defaulted fields (status,
+// portrait.framing) required, though a config may leave them out.
+// Input mode leaves objects open, so the override closes every plain
+// z.object: writers (editors, the backend's admin save) reject unknown
+// keys like a typo'd `subtitel`, while zod still strips them on read. An
+// object meant to stay open uses z.looseObject (it has a catchall, so it's
+// skipped here). Records have def type "record", not "object", so they
+// keep their additionalProperties schema.
+const schema = z.toJSONSchema(characterSheetConfigSchema, {
+  io: "input",
+  override: ({ zodSchema, jsonSchema }) => {
+    const def = zodSchema._zod.def;
+    if (def.type === "object" && !def.catchall) jsonSchema.additionalProperties = false;
+  },
+});
 const out = new URL("../character-sheet.schema.json", import.meta.url);
 // Spelling out $schema keeps the order title, $schema, $id; the spread
 // fills in the rest without moving those keys.
