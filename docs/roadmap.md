@@ -631,6 +631,39 @@
   tooltip; half a stat refused by path; an emptied title in a closed
   `<details>` reopens it). Merged as #64 (`b6c3272`) on
   2026-11-05 and deployed (Vercel); not yet tried in production.
+- Slot actions and filling empty slots in the job form (admin editing,
+  PR 3c): an action picker per slot
+  (`components/SlotActionFields.tsx`: none, anchor, link, external
+  with a new-tab box; only the chosen kind's inputs render, so only
+  they submit; anchors suggest the job's section ids plus `projects`
+  through a `<datalist>`; a leading # is stripped), and a Fill button
+  per empty slot that adds the same fields, open and focused, with
+  "Don't fill" to undo before saving. A kept kind keeps the saved
+  action's other keys; a changed kind starts clean. New slots send a
+  hidden `fill` field; if the saved copy fills that slot by save time,
+  the save is refused ("reload") rather than either copy winning.
+  `updateCharacterJob` calls `refresh()` after a save so a just-filled
+  slot counts as filled (otherwise the next save would resend `fill`
+  and be refused). Rejected: always-rendered fields for every empty
+  slot (no `required` title, doubles the form). Verified with
+  Playwright on the demo stack (10 steps: untouched save stores the
+  bundled file exactly; new tab; fill with focus and a `#` target;
+  refreshed to filled; second save; Don't fill; kind change drops
+  `href`; empty path in a closed `<details>` reopens it; bad path
+  refused by path; home page link; fill conflict refused). Merged as
+  #65 (`91004ae`) on 2026-11-05 and deployed (Vercel, 21:08 UTC); not
+  yet tried in production.
+- `parseConfig` no longer adds `defaultJobId: no valid job ...` when the
+  default job was dropped for its own errors (a rejected save listed the
+  same problem twice). It remembers dropped jobs' ids and skips only that
+  follow-on line; a `defaultJobId` typo is still reported, even beside an
+  unrelated broken job. The lenient read still falls back to the first
+  job, its log now without the `using "..."` note. Rejected: skipping the
+  line whenever any job has errors (hides a real typo); filtering it in
+  `saveConfig` (the build check and admin load would keep the noise).
+  Checked with a throwaway Node script on the bundled file (default job
+  broken, typo, typo plus another broken job); on `fix/default-job-noise`,
+  not merged.
 
 ## Next up (candidates, unordered)
 
@@ -643,35 +676,11 @@
   - Removing a job from the form, and a hidden/draft flag so a new job
     isn't live before it's edited, if adding jobs becomes routine. Both
     are JSON-only or missing today.
-  - Admin editing, PR 3c (in progress on `feat/slot-actions-form`, not
-    merged): an action picker per slot
-    (`components/SlotActionFields.tsx`: none, anchor, link, external
-    with a new-tab box; only the chosen kind's inputs render, so only
-    they submit; anchors suggest the job's section ids plus `projects`
-    through a `<datalist>`; a leading # is stripped), and a Fill
-    button per empty slot that adds the same fields, open and focused,
-    with "Don't fill" to undo before saving. A kept kind keeps the
-    saved action's other keys; a changed kind starts clean. New slots
-    send a hidden `fill` field; if the saved copy fills that slot by
-    save time, the save is refused ("reload") rather than either copy
-    winning. `updateCharacterJob` calls `refresh()` after a save so a
-    just-filled slot counts as filled (otherwise the next save would
-    resend `fill` and be refused). Rejected: always-rendered fields for
-    every empty slot (no `required` title, doubles the form). Verified
-    with Playwright on the demo stack (10 steps: untouched save stores
-    the bundled file exactly; new tab; fill with focus and a `#`
-    target; refreshed to filled; second save; Don't fill; kind change
-    drops `href`; empty path in a closed `<details>` reopens it; bad
-    path refused by path; home page link; fill conflict refused).
   - Emptying a filled slot from the form (still JSON only), if it's
     needed.
   - Anchor targets aren't checked against what the home page renders
     (a section the job doesn't have scrolls nowhere). A save-time
     warning, like unknown keys, if it ever bites.
-  - A rejected form save also lists `defaultJobId: no valid job ...`:
-    strict `parseConfig` drops the invalid job and then misses the
-    default. Noise, not wrong; skip that follow-on error when the job
-    itself has problems.
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.
