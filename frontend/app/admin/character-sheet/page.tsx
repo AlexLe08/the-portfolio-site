@@ -63,8 +63,7 @@ const ACTION_LIMITS: SlotActionLimits = {
 };
 
 // One job at a time, picked with ?job= like the home page. The rest of the
-// config (slot definitions, emptying slots, removing jobs) is edited as
-// JSON.
+// config (slot definitions, removing jobs) is edited as JSON.
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
