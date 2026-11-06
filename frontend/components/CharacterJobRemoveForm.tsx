@@ -49,7 +49,7 @@ export function CharacterJobRemoveForm({ action, job, isDefault }: Props) {
             <Link href="/admin/character-sheet/json">JSON editor</Link> first.
           </p>
 
-          <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={[]} />
+          <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={[]} deadAnchors={[]} />
 
           <div className="form-actions">
             <button type="submit" className="form-button" disabled={pending}>

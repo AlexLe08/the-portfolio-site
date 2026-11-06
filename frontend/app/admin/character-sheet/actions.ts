@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminRequest } from "@/lib/admin-api";
+import { findDeadAnchors } from "@/lib/character-anchors";
 import type { components } from "@/lib/api-types";
 import bundledConfig from "@/lib/character-config.json";
 import { formText } from "@/lib/form-data";
@@ -11,11 +12,12 @@ import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 
 // problems lists every issue by path, so a long document can be fixed in
 // one pass. A save returns the document it stored as compact JSON, so the
-// editor can compare it with the bundled file without re-fetching, and any
-// keys the schema doesn't have, which are saved but ignored by the site.
+// editor can compare it with the bundled file without re-fetching, any
+// keys the schema doesn't have, which are saved but ignored by the site,
+// and anchor actions the home page has no section for (findDeadAnchors).
 export type CharacterSheetFormState =
   | { error: string; problems?: string[] }
-  | { saved: string; unknownKeys: string[] }
+  | { saved: string; unknownKeys: string[]; deadAnchors: string[] }
   | null;
 
 type JsonObject = Record<string, unknown>;
@@ -311,7 +313,7 @@ function applyTooltipForm(saved: JsonObject, formData: FormData, prefix: string)
 // would make the home page quietly drop a job or fall back.
 async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> {
   const { config: parsed, errors } = parseConfig(config);
-  if (errors.length > 0) {
+  if (!parsed || errors.length > 0) {
     return {
       error: "Not saved. Fix these problems first:",
       problems: errors.map((error) => error.replace(LENIENT_OUTCOME, "")),
@@ -330,7 +332,11 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
   if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
   if (error) return describeRejection(response, error);
-  return { saved: JSON.stringify(config), unknownKeys: findUnknownKeys(config, parsed) };
+  return {
+    saved: JSON.stringify(config),
+    unknownKeys: findUnknownKeys(config, parsed),
+    deadAnchors: findDeadAnchors(parsed),
+  };
 }
 
 // The backend's 422 items carry the full path ["body", "config", "jobs", 1,
