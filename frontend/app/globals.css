@@ -876,6 +876,11 @@ button:focus-visible {
   margin-bottom: 1.25rem;
 }
 
+/* Folded away under another form, clear of its Save button. */
+.form-more--after {
+  margin-top: 2.5rem;
+}
+
 .form-more > summary:focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 2px;

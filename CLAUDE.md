@@ -91,8 +91,8 @@ retyping the commands they wrap; each explains itself in its header:
 ## Architecture rules
 
 Backend layering: routers → schemas → models/database. `app/core/`
-(config, security, monitoring, rate_limit) is imported by other layers and imports nothing from
-them. Imports only point downward.
+(config, security, monitoring, rate_limit) is imported by other layers
+and imports nothing from them. Imports only point downward.
 - `schemas.py` (API contract) stays separate from `models.py` (storage).
   One model can back several schemas; `ProjectSummary` deliberately omits
   `case_study_md`.
@@ -129,7 +129,8 @@ Frontend:
   `components/MediaAltTextForm.tsx`, `components/MediaDeleteButton.tsx`,
   `components/MediaDeleteNotice.tsx`, `components/CopyButton.tsx`,
   `components/CharacterSheetEditor.tsx`, `components/CharacterJobForm.tsx`,
-  `components/CharacterJobAddForm.tsx`, `components/SlotTooltipFields.tsx`,
+  `components/CharacterJobAddForm.tsx`,
+  `components/CharacterJobRemoveForm.tsx`, `components/SlotTooltipFields.tsx`,
   `components/SlotActionFields.tsx`,
   `components/PortraitPicker.tsx`, `components/AutoRetry.tsx` (retries a
   page whose loads failed with `router.refresh()`) and the messages that
@@ -196,8 +197,8 @@ Frontend:
   (`frontend.yml`). Don't rename them without updating the GitHub ruleset.
   Don't add `paths:` filters to the `pull_request` trigger: a required
   check that never runs hangs as "Expected" forever. (The `push: main`
-  filters are fine; nothing waits on those runs.) Don't add a standalone `tsc`
-  step, because `next build` type-checks after generating Next's own types.
+  filters are fine; nothing waits on those runs.) Don't add a standalone
+  `tsc` step, because `next build` type-checks after generating Next's own types.
 - `next/font/google` needs network access at build time.
 - Dependency ranges are open upward, and changed defaults have already
   broken things twice (Starlette's TestClient moving to `httpx2`,

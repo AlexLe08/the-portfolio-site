@@ -7,8 +7,8 @@ export const metadata = {
   title: "Character sheet JSON",
 };
 
-// Everything the form doesn't cover: slots, actions, tooltips, adding or
-// removing jobs.
+// Everything the form doesn't cover, such as which job is the default
+// and keys the form has no field for.
 export default async function AdminCharacterSheetJsonPage() {
   const { config, bundled, stored, unknownKeys } = await loadCharacterSheetForAdmin();
   return (

@@ -732,9 +732,11 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Removing a job from the form, and a hidden/draft flag so a new job
-    isn't live before it's edited, if adding jobs becomes routine. Both
-    are JSON-only or missing today.
+  - A hidden/draft flag so a new job isn't live before it's edited, if
+    adding jobs becomes routine. Missing today.
+  - Setting the default job from the form (JSON-only today). The remove
+    form refuses the default job and points to the JSON editor; a default
+    picker would let that note point here instead.
   - Anchor targets aren't checked against what the home page renders
     (a section the job doesn't have scrolls nowhere). A save-time
     warning, like unknown keys, if it ever bites.
