@@ -43,6 +43,7 @@ type Props = {
   bundled: string;
   stored: string | null;
   unknownKeys: string[];
+  deadAnchors: string[];
 };
 
 // The fields of one job edited most. updateCharacterJob writes them into
@@ -60,6 +61,7 @@ export function CharacterJobForm({
   bundled,
   stored,
   unknownKeys,
+  deadAnchors,
 }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
@@ -368,7 +370,12 @@ export function CharacterJobForm({
         )}
       </fieldset>
 
-      <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={unknownKeys} />
+      <CharacterSheetSaveStatus
+        state={state}
+        pending={pending}
+        unknownKeys={unknownKeys}
+        deadAnchors={deadAnchors}
+      />
       {note && <p className="form-help">{note}</p>}
 
       <div className="form-actions">

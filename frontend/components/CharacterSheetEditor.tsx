@@ -13,11 +13,12 @@ type Props = {
   bundled: string;
   stored: string | null;
   unknownKeys: string[];
+  deadAnchors: string[];
 };
 
 // The whole config as raw JSON, matching PUT /character-sheet, which
 // replaces the document. CharacterJobForm covers the common edits.
-export function CharacterSheetEditor({ action, value, bundled, stored, unknownKeys }: Props) {
+export function CharacterSheetEditor({ action, value, bundled, stored, unknownKeys, deadAnchors }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
 
@@ -45,7 +46,12 @@ export function CharacterSheetEditor({ action, value, bundled, stored, unknownKe
         </p>
       </div>
 
-      <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={unknownKeys} />
+      <CharacterSheetSaveStatus
+        state={state}
+        pending={pending}
+        unknownKeys={unknownKeys}
+        deadAnchors={deadAnchors}
+      />
 
       <div className="form-actions">
         <button type="submit" className="form-button" disabled={pending}>

@@ -6,6 +6,7 @@ import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
+import { homeSections, PROJECTS_ANCHOR } from "@/lib/character-anchors";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 import type { ContentKey, SiteContent } from "@/lib/content";
 import type { ProjectSummary } from "@/lib/projects";
@@ -32,7 +33,8 @@ type Props = {
 // the admin preview (every job), so the preview can't drift from it.
 export function HomeView({ config, job, content, projects, basePath, notice }: Props) {
   // The job's page sections, in slot order, labelled like their slots.
-  const sections = config.slots.filter((slot) => job.sections?.[slot.id]);
+  // Their ids are the anchor targets the admin editor checks against.
+  const sections = homeSections(config, job);
 
   return (
     <Sheet
@@ -81,7 +83,7 @@ export function HomeView({ config, job, content, projects, basePath, notice }: P
         </section>
       ))}
 
-      <div className="section-rule" id="projects">
+      <div className="section-rule" id={PROJECTS_ANCHOR}>
         <h2 className="section-rule__label">Projects</h2>
       </div>
 

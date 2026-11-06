@@ -1,6 +1,7 @@
 import "server-only";
 import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminApi } from "./admin-api";
+import { findDeadAnchors } from "./character-anchors";
 import bundledConfig from "./character-config.json";
 
 // The character sheet as the admin pages edit it. Not getCharacterConfig():
@@ -29,5 +30,7 @@ export async function loadCharacterSheetForAdmin() {
     // Typos saved earlier stay flagged, not just on the save that made
     // them. Skipped if the stored copy has errors: its jobs wouldn't line up.
     unknownKeys: parsed.errors.length === 0 ? findUnknownKeys(config, parsed.config) : [],
+    // Likewise for anchors to sections the home page doesn't render.
+    deadAnchors: parsed.config && parsed.errors.length === 0 ? findDeadAnchors(parsed.config) : [],
   };
 }

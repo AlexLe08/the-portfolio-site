@@ -10,7 +10,7 @@ export const metadata = {
 // Everything the form doesn't cover, such as which job is the default
 // and keys the form has no field for.
 export default async function AdminCharacterSheetJsonPage() {
-  const { config, bundled, stored, unknownKeys } = await loadCharacterSheetForAdmin();
+  const { config, bundled, stored, unknownKeys, deadAnchors } = await loadCharacterSheetForAdmin();
   return (
     <Sheet title="Character sheet JSON" back={{ href: "/admin/character-sheet", label: "Character sheet" }}>
       <CharacterSheetEditor
@@ -19,6 +19,7 @@ export default async function AdminCharacterSheetJsonPage() {
         bundled={bundled}
         stored={stored}
         unknownKeys={unknownKeys}
+        deadAnchors={deadAnchors}
       />
     </Sheet>
   );
