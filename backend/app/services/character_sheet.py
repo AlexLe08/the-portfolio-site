@@ -75,7 +75,9 @@ class InvalidConfig(Exception):
 
 def find_issues(config: dict[str, JsonValue]) -> list[ConfigIssue]:
     # In path order, so problems read top to bottom; list indexes compare
-    # as numbers (jobs.2 before jobs.10), keys alphabetically.
+    # as numbers (jobs.2 before jobs.10), keys alphabetically. Sorted before
+    # _explain expands them, so an object's unknown keys come first, in
+    # document order, ahead of errors on its other keys.
     errors = sorted(
         _validator.iter_errors(config),
         key=lambda e: [(0, p, "") if isinstance(p, int) else (1, 0, p) for p in e.absolute_path],
