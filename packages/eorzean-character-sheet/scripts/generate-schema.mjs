@@ -18,8 +18,8 @@ const id = `https://cdn.jsdelivr.net/npm/${pkg.name}@${major}/character-sheet.sc
 // z.object: writers (editors, the backend's admin save) reject unknown
 // keys like a typo'd `subtitel`, while zod still strips them on read. An
 // object meant to stay open uses z.looseObject (it has a catchall, so it's
-// skipped here). Records also have a catchall-free def of type "record",
-// not "object", so they keep their additionalProperties schema.
+// skipped here). Records have def type "record", not "object", so they
+// keep their additionalProperties schema.
 const schema = z.toJSONSchema(characterSheetConfigSchema, {
   io: "input",
   override: ({ zodSchema, jsonSchema }) => {
