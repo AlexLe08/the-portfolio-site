@@ -662,10 +662,41 @@
   line whenever any job has errors (hides a real typo); filtering it in
   `saveConfig` (the build check and admin load would keep the noise).
   Checked with a throwaway Node script on the bundled file (default job
-  broken, typo, typo plus another broken job); on `fix/default-job-noise`,
-  not merged.
+  broken, typo, typo plus another broken job). Merged as #66
+  (`f4d48f2`).
+- Agent workflow (#67): the main session orchestrates and delegates to
+  four project subagents in `.claude/agents/`. `planner` (read-only)
+  writes the plan; `backend-implementer` and `frontend-implementer` each
+  work in a worktree from `scripts/new-worktree.sh`, commit, and push;
+  `reviewer` (read-only) reports `path:line` findings before the PR.
+  Rules are in CLAUDE.md "Agent workflow", which subagents load; the
+  agent files point there instead of copying rules. Agents may commit
+  and push task branches; only the owner approves and merges. Scope
+  enforcement: a `PreToolUse` hook in each implementer's frontmatter
+  (`.claude/hooks/scope-edits.py`) denies Edit/Write outside its
+  directory of a task worktree; Bash writes aren't seen, so the reviewer
+  checks the diff's paths too. `.claude/settings.json` denies reading or
+  editing `.env`/`.env.local`, force pushes, and `gh pr merge`/`review`,
+  and asks before smoke tests, `wait-for-backend.sh`, and `curl` to the
+  production hosts. Rejected: `isolation: worktree` in frontmatter (skips
+  the branch naming, `--no-track`, and `setup-worktree.sh`), and
+  session-wide `Edit` deny rules for scope (they can't differ per agent).
+  Found on the way: the main checkout's backend venv was stale
+  (FastAPI 0.141, SQLAlchemy 2.0, no `jsonschema`), because
+  `pip install -e` never upgrades installed packages; rebuilt, and
+  CLAUDE.md now says to rebuild when local results differ from CI.
+  Backend suite is 240 tests. The hook was tested on 11 sample inputs;
+  the agents, hook, and deny rules haven't run live yet (they load in a
+  session started after the merge). First pilot candidate: emptying a
+  filled slot from the job form.
 
 ## Next up (candidates, unordered)
+
+- CLAUDE.md wording fixes found while setting up the agent workflow (left
+  out of #67, which only added text): the `paths:` rule should say it's
+  about the `pull_request` trigger (both workflows filter `push: main`,
+  which is fine); `core/rate_limit.py` and `services/character_sheet.py`
+  are missing from the layer descriptions.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
