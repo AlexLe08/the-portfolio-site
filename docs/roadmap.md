@@ -788,7 +788,7 @@
     schema has no `$ref`s, so the absolute `$id` changes no validation;
     the admin JSON save was checked on the demo stack.
 
-- Slot faces with no action (`kind: "none"`) are named groups: the
+- Slot faces with no action (`kind: "none"`) are named groups (#77): the
   focusable `<span>` gets `role="group"` and `aria-labelledby` its visible
   label, so a screen reader announces "Core stack, group" and then the
   tooltip as its description. Before, it was a focus stop with the
