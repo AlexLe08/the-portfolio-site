@@ -102,7 +102,7 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
           </p>
         </div>
 
-        <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={[]} />
+        <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={[]} deadAnchors={[]} />
 
         <div className="form-actions">
           <button type="submit" className="form-button" disabled={pending}>

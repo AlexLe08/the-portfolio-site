@@ -12,6 +12,7 @@ import { Sheet } from "@/components/Sheet";
 import { StatusMessage } from "@/components/StatusMessage";
 import { adminRequest } from "@/lib/admin-api";
 import { loadCharacterSheetForAdmin } from "@/lib/character-admin";
+import { homeAnchorTargets } from "@/lib/character-anchors";
 
 export const metadata = {
   title: "Character sheet",
@@ -55,7 +56,7 @@ const ACTION_LIMITS: SlotActionLimits = {
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
-  const [{ parsed, bundled, stored, unknownKeys }, { job: jobParam, removed }, uploads] = await Promise.all([
+  const [{ parsed, bundled, stored, unknownKeys, deadAnchors }, { job: jobParam, removed }, uploads] = await Promise.all([
     loadCharacterSheetForAdmin(),
     searchParams,
     loadUploads(),
@@ -139,16 +140,13 @@ export default async function AdminCharacterSheetPage({
         limits={JOB_LIMITS}
         tooltipLimits={TOOLTIP_LIMITS}
         actionLimits={ACTION_LIMITS}
-        // The ids app/page.tsx renders for this job: its sections, in
-        // slot order, then the project list.
-        anchorTargets={[
-          ...config.slots.filter((slot) => job.sections?.[slot.id]).map((slot) => slot.id),
-          "projects",
-        ]}
+        // The ids app/page.tsx renders for this job.
+        anchorTargets={homeAnchorTargets(config, job)}
         uploads={uploads}
         bundled={bundled}
         stored={stored}
         unknownKeys={unknownKeys}
+        deadAnchors={deadAnchors}
       />
 
       {/* A separate form: nested in the job's form, it would submit it. */}

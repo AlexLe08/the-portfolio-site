@@ -8,12 +8,17 @@ type Props = {
   // Keys in the stored copy that the schema doesn't have (see
   // findUnknownKeys); a save replaces them with its own list.
   unknownKeys: string[];
+  // Anchor actions with no section to scroll to (see findDeadAnchors),
+  // replaced on save the same way.
+  deadAnchors: string[];
 };
 
 // What a character sheet save reports, shared by the form and the raw JSON
 // editor, which save through the same checks (see actions.ts).
-export function CharacterSheetSaveStatus({ state, pending, unknownKeys }: Props) {
-  const ignoredKeys = state && "saved" in state ? state.unknownKeys : unknownKeys;
+export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnchors }: Props) {
+  const saved = state && "saved" in state ? state : null;
+  const ignoredKeys = saved ? saved.unknownKeys : unknownKeys;
+  const brokenAnchors = saved ? saved.deadAnchors : deadAnchors;
   return (
     <>
       {/* The list goes inside the alert, so it's read out with the error. */}
@@ -36,6 +41,18 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys }: Props)
           <ul className="json-editor__problems">
             {ignoredKeys.map((key) => (
               <li key={key}>{key}</li>
+            ))}
+          </ul>
+        </StatusMessage>
+      )}
+      {/* Saved anyway too: the section may be the next edit. */}
+      {brokenAnchors.length > 0 && !pending && (
+        <StatusMessage tone="info">
+          These slots link to a section the home page doesn&rsquo;t show for their job, so clicking
+          them goes nowhere. Add the section, or link somewhere else:
+          <ul className="json-editor__problems">
+            {brokenAnchors.map((anchor) => (
+              <li key={anchor}>{anchor}</li>
             ))}
           </ul>
         </StatusMessage>

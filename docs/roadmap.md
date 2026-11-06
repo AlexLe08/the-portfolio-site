@@ -860,6 +860,20 @@
   the menu, link falls back), publish (in the menu, opens), hide again,
   and a draft default refused as JSON.
 
+- Anchor target warning: a slot whose anchor action names a section the
+  home page doesn't render for its job (it scrolls nowhere) is listed
+  after saving, like unknown keys, and on load until fixed, in both the
+  form and the JSON editor. A warning rather than a refusal: the config
+  is valid, and the missing section may be the next edit. Every job is
+  checked, drafts and hidden ones included. What the home page renders
+  (the job's sections in slot order, then `#projects`) now comes from
+  `lib/character-anchors.ts`, which `app/page.tsx`, the form's suggested
+  targets and the check all use, so they can't drift. Host code, not the
+  package's: the sections and project list are this site's. Checked on
+  the demo stack: a `#nowhere` anchor saved as JSON is listed, still
+  listed on the form page after a reload, and cleared by a form save
+  pointing it at `projects`.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -871,9 +885,6 @@
   - A preview of a draft or hidden job as the home page would show it
     (an admin-only page rendering the whole config), if checking the
     form's fields stops being enough before publishing.
-  - Anchor targets aren't checked against what the home page renders
-    (a section the job doesn't have scrolls nowhere). A save-time
-    warning, like unknown keys, if it ever bites.
   - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
     and the backend. Strict zod objects would reject them in both places,
     but the lenient read would then drop a whole job over one stray key.

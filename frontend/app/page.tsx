@@ -11,6 +11,7 @@ import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { api } from "@/lib/api";
 import { getCharacterConfig } from "@/lib/character";
+import { homeSections, PROJECTS_ANCHOR } from "@/lib/character-anchors";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 import { getContent, type ContentKey } from "@/lib/content";
 
@@ -63,7 +64,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   ]);
   const job = resolveJob(characterConfig, jobParam);
   // The job's page sections, in slot order, labelled like their slots.
-  const sections = characterConfig.slots.filter((slot) => job.sections?.[slot.id]);
+  // Their ids are the anchor targets the admin editor checks against.
+  const sections = homeSections(characterConfig, job);
 
   const fallback = contentFallback || characterFallback;
 
@@ -117,7 +119,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           </section>
         ))}
 
-        <div className="section-rule" id="projects">
+        <div className="section-rule" id={PROJECTS_ANCHOR}>
           <h2 className="section-rule__label">Projects</h2>
         </div>
 
