@@ -144,7 +144,7 @@ Frontend:
   page whose loads failed with `router.refresh()`) and the messages that
   read it, `components/FallbackNotice.tsx` and
   `components/ProjectsUnavailable.tsx`,
-  `packages/eorzean-character-sheet/src/SlotHover.tsx`,
+  the character sheet package's `src/SlotHover.tsx`,
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).

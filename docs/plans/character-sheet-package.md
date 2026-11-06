@@ -387,8 +387,20 @@ emits `$ref`s, add a test that validation fetches nothing.) `scripts/check.sh` (
 - **`docs/roadmap.md`:** record the in-repo package as done (with the PR
   links), the `$id` form and versioning rule, and the install change.
   What's left for step 5: its own repo, a build step for publishing, the
-  npm scope, the "Eorzean" trademark check (decision 4), CMS adapters, the demo site, `LIMITS` instead of exported
-  sub-schemas, and `findUnknownKeys`'s `path` argument.
+  npm scope, the "Eorzean" trademark check (decision 4), CMS adapters,
+  the demo site, `LIMITS` instead of exported sub-schemas, and
+  `findUnknownKeys`'s `path` argument. Also from PR B's review:
+  - Accessibility: the non-link slot face (`CharacterSheet.tsx`, the
+    `<span tabIndex={0}>`) is a focus stop with no role. Give it one
+    (`role="group"` with `aria-labelledby` its label, or a
+    `<button type="button">`), then drop its `no-noninteractive-tabindex`
+    disable. Do this before publishing.
+  - The package lint dropped `eslint-plugin-react` rules (`react/jsx-key`,
+    `react/no-unescaped-entities`) that `eslint-config-next` applied; add
+    the plugin (already in the tree) at extraction.
+  - The import allowlist (`no-restricted-imports`) doesn't see dynamic
+    `import()` or `require()`; add a `no-restricted-syntax` rule if the
+    package ever uses them.
 - Delete this plan file once it's recorded in the roadmap.
 
 ## Dependencies and migrations
