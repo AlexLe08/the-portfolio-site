@@ -58,15 +58,24 @@ export function parseConfig(input: unknown): ParseResult {
   });
 
   if (jobs.length === 0) return { config: null, errors: [...errors, "jobs: no valid job"] };
+  // Drafts and hidden jobs stay in the config, so an editor can work on
+  // them, but publicConfig() leaves them out: with none published, the
+  // public panel would have nothing to show.
+  const published = jobs.filter((job) => job.status === "published");
+  if (published.length === 0) return { config: null, errors: [...errors, "jobs: no published job"] };
 
   let { defaultJobId } = shell.data;
-  if (!jobs.some((job) => job.id === defaultJobId)) {
+  const defaultJob = jobs.find((job) => job.id === defaultJobId);
+  if (!defaultJob) {
     // A default job dropped above already has its own errors listed; a
     // second line for the same problem is only noise. The fallback stands.
     if (!droppedIds.has(defaultJobId)) {
-      errors.push(`defaultJobId: no valid job "${defaultJobId}", using "${jobs[0].id}"`);
+      errors.push(`defaultJobId: no valid job "${defaultJobId}", using "${published[0].id}"`);
     }
-    defaultJobId = jobs[0].id;
+    defaultJobId = published[0].id;
+  } else if (defaultJob.status !== "published") {
+    errors.push(`defaultJobId: "${defaultJobId}" is ${defaultJob.status}, not published, using "${published[0].id}"`);
+    defaultJobId = published[0].id;
   }
 
   return { config: { ...shell.data, defaultJobId, jobs }, errors };

@@ -12,10 +12,11 @@ export {
   type ParseResult,
 } from "./parse";
 export { ID_PATTERN, LIMITS } from "./schema";
-export { actionHref, jobHref, resolveJob } from "./resolve";
+export { actionHref, jobHref, publicConfig, resolveJob } from "./resolve";
 export type {
   CharacterSheetConfig,
   Job,
+  JobStatus,
   Portrait,
   SlotAction,
   SlotContent,

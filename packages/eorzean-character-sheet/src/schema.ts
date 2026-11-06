@@ -43,7 +43,11 @@ const id = z
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
-export const SLOT_POSITIONS = ["header-start", "left", "right", "header-end"] as const;
+// Draft and hidden render the same (not at all, see publicConfig); the
+// difference is for the editor: not live yet, or taken down.
+export const JOB_STATUSES = ["published", "draft", "hidden"] as const;
+
+export const SLOT_POSITIONS =["header-start", "left", "right", "header-end"] as const;
 
 export const slotDefSchema = z.object({
   id: id.describe("Stable id; jobs fill slots by this id."),
@@ -126,6 +130,12 @@ export const jobSchema = z.object({
   id: id.describe("Used in the URL: ?job=<id>."),
   name: text(LIMITS.job.name).describe('Short name for the job menu, e.g. "Healthcare".'),
   title: text(LIMITS.job.title).describe('The panel heading, e.g. "Developer in healthcare".'),
+  status: z
+    .enum(JOB_STATUSES)
+    .default("published")
+    .describe(
+      "published: on the site. draft (not ready yet) and hidden (taken off the site) leave the job out of the public panel but keep it editable. The default job must be published.",
+    ),
   icon: text(LIMITS.job.icon).optional().describe("Glyph in the job emblem beside the title. Defaults to the name's first two letters."),
   level: z.object({
     label: text(LIMITS.job.levelLabel).describe('e.g. "Lv." or "Experience".'),

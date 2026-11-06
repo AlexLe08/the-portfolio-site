@@ -1,7 +1,7 @@
 "use client";
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
-import type { Job } from "@alexle08/eorzean-character-sheet";
+import type { Job, JobStatus } from "@alexle08/eorzean-character-sheet";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
 import { useRef, useState } from "react";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
@@ -16,10 +16,19 @@ export type JobFieldLimits = Record<
   number | null
 >;
 
+// Typed by the status, so a new one in the schema fails the build here.
+const STATUS_LABELS: Record<JobStatus, string> = {
+  published: "Published (on the site)",
+  draft: "Draft (not on the site yet)",
+  hidden: "Hidden (taken off the site)",
+};
+
 type Props = {
   // updateCharacterJob bound to the job's id.
   action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
   job: Job;
+  // The default job has to stay published.
+  isDefault: boolean;
   // In panel order: one markdown field per slot, labelled like the slot,
   // the way the home page renders a job's sections.
   slots: { id: string; label: string }[];
@@ -41,6 +50,7 @@ type Props = {
 export function CharacterJobForm({
   action,
   job,
+  isDefault,
   slots,
   limits,
   tooltipLimits,
@@ -119,6 +129,30 @@ export function CharacterJobForm({
     <form onSubmit={onSubmit}>
       <fieldset className="form-group">
         <legend className="admin-heading">Job</legend>
+        <div className="form-field">
+          <label htmlFor="status" className="form-label">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={job.status}
+            aria-describedby="status-help"
+            className="form-input form-input--fit"
+          >
+            {(Object.keys(STATUS_LABELS) as JobStatus[]).map((status) => (
+              <option key={status} value={status} disabled={isDefault && status !== "published"}>
+                {STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+          <p id="status-help" className="form-help">
+            {isDefault
+              ? "This is the default job, so it stays published. Make another job the default to take this one off the site."
+              : "Drafts and hidden jobs are left out of the home page's job menu, and a link to one shows the default job."}
+          </p>
+        </div>
+
         <div className="form-field">
           <label htmlFor="name" className="form-label">
             Name

@@ -180,7 +180,10 @@ Frontend:
   meant to be published on its own later. Import it only through its
   entries: `.` (data: `parseConfig`, `resolveJob`, `LIMITS`, types; no
   React), `/react` (`CharacterSheet`), `/schema` (the config's zod
-  schema). Forms read max lengths from `LIMITS`, never from zod. It
+  schema). Forms read max lengths from `LIMITS`, never from zod. Public
+  pages get the config from `getCharacterConfig()`, which applies
+  `publicConfig()` (published jobs only); admin code uses the whole
+  config, drafts and hidden jobs included. It
   imports nothing but React, zod and its own files, enforced by its
   `eslint.config.mjs`, which the frontend's `lint` runs (the host passes
   `renderLink` and `renderPortrait`, see `lib/character-render.tsx`). Its

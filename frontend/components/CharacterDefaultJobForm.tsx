@@ -7,7 +7,8 @@ import { useSaveAction } from "@/lib/use-save-action";
 type Props = {
   // setDefaultCharacterJob, which re-renders the page once it's saved.
   action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
-  // Every job, in menu order.
+  // The published jobs, in menu order: drafts and hidden jobs can't be
+  // the default.
   jobs: { id: string; name: string }[];
   defaultJobId: string;
 };
@@ -41,8 +42,9 @@ export function CharacterDefaultJobForm({ action, jobs, defaultJobId }: Props) {
             ))}
           </select>
           <p id="default-job-help" className="form-help">
-            The job the home page shows at / with no ?job=. The default job can&rsquo;t be removed,
-            so pick another one here first.
+            The job the home page shows at / with no ?job=. Only published jobs are listed. The
+            default job can&rsquo;t be removed or taken off the site, so pick another one here
+            first.
           </p>
         </div>
 
