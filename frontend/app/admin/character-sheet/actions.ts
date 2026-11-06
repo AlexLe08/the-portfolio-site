@@ -38,7 +38,12 @@ export async function updateCharacterSheet(
     return { error: `This isn't valid JSON: ${(error as Error).message}` };
   }
   if (!isObject(config)) return { error: "The config must be a JSON object." };
-  return saveConfig(config);
+  const result = await saveConfig(config);
+  // Re-reads the saved copy, so the on-load notices (unknown keys, dead
+  // anchors) describe what's stored now, not what was stored at page load.
+  // The textarea is uncontrolled, so its text stays.
+  if (result && "saved" in result) refresh();
+  return result;
 }
 
 // The structured form: changes one job's form fields in the saved copy and
@@ -321,7 +326,7 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
 
   // Keys the schema doesn't have are refused before sending, listed by
   // full path like the on-load notice. The backend's JSON Schema refuses
-  // them too; this just answers first, in the same words. Most are typos
+  // them too; this just answers first, in similar words. Most are typos
   // of optional fields (a typo in a required one already fails above as
   // missing), which the site would otherwise silently leave out. The form
   // can't show them, so the message points at the JSON editor.

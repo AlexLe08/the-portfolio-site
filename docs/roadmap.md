@@ -467,8 +467,8 @@
   would then be saved over the real copy. A note says when the saved copy
   differs from `lib/character-config.json`, which shows during outages.
   Unknown keys (typos like `subtitel`) are saved but listed as likely
-  typos, after each save and on load (since #85-#87, refused on save
-  instead; see that entry). `findUnknownKeys` in
+  typos, after each save and on load (since #85, #86, #87, refused on
+  save instead; see that entry). `findUnknownKeys` in
   `components/character-sheet/parse.ts` compares the raw document with
   zod's output, since `z.object` strips keys it doesn't know; that follows
   union branches with no second copy of the schema. Rejected: deep-strict
@@ -928,7 +928,7 @@
     JSON-editor typo refused with the edit kept, saved once removed, and
     a stored copy with an unknown key (written into the throwaway
     database) listed on load and refused on a form save. Production had
-    no unknown keys before the deploy (checked by the owner).
+    no unknown keys before merging (checked by the owner).
 
 ## Next up (candidates, unordered)
 
