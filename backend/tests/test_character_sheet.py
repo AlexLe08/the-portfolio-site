@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from app import models
 from app.services import character_sheet
@@ -108,6 +109,134 @@ def test_external_https_link_is_valid(config):
     }
 
     assert character_sheet.find_issues(config) == []
+
+
+def test_schema_closes_every_object():
+    # Closed objects are what make a typo in an admin save an error rather
+    # than a key the frontend silently drops. Records (propertyNames) keep
+    # a schema for their values instead of false.
+    schema = json.loads(character_sheet.SCHEMA_PATH.read_text(encoding="utf-8"))
+    objects = records = 0
+
+    def walk(node):
+        nonlocal objects, records
+        if isinstance(node, dict):
+            if "properties" in node:
+                objects += 1
+                assert node.get("additionalProperties") is False, node
+            if "propertyNames" in node:
+                records += 1
+                assert isinstance(node.get("additionalProperties"), dict), node
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(schema)
+    assert objects > 0 and records > 0
+
+
+def test_unknown_key_is_reported_at_its_own_path(config):
+    config["jobs"][0]["slots"]["core"]["tooltip"]["subtitel"] = "Core stack"
+
+    issues = character_sheet.find_issues(config)
+
+    assert issues_by_path(config) == {
+        "jobs.0.slots.core.tooltip.subtitel": "not in the schema (a typo?)"
+    }
+    assert [issue.kind for issue in issues] == ["additionalProperties"]
+
+
+def test_each_unknown_key_in_one_object_is_its_own_issue_in_document_order(config):
+    level = config["jobs"][0]["level"]
+    level["valeu"] = "4 years"
+    level["lable"] = "Lv."
+
+    paths = [issue.path for issue in character_sheet.find_issues(config)]
+
+    assert paths == [["jobs", 0, "level", "valeu"], ["jobs", 0, "level", "lable"]]
+
+
+def test_unknown_top_level_key_is_reported(config):
+    config["$schema"] = "./character-sheet.schema.json"
+    config["titel"] = "Character"
+
+    assert issues_by_path(config) == {"titel": "not in the schema (a typo?)"}
+
+
+def test_top_level_schema_key_is_allowed(config):
+    config["$schema"] = "./character-sheet.schema.json"
+
+    assert character_sheet.find_issues(config) == []
+
+
+def test_slot_action_with_a_key_from_another_kind_names_the_key(config):
+    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "none", "href": "/"}
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [
+        (["jobs", 0, "slots", "core", "action", "href"], "additionalProperties")
+    ]
+
+
+def test_slot_action_without_kind_keeps_the_oneof_error(config):
+    # Every branch is still possible without a "kind", so none is picked.
+    config["jobs"][0]["slots"]["core"]["action"] = {"href": "/"}
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path[-1], issue.kind) for issue in issues] == [("action", "oneOf")]
+
+
+def test_unknown_keys_respect_pattern_properties_and_missing_properties():
+    # The exported schema has neither case today; z.object({}) or a zod
+    # record with a key pattern would produce them.
+    schema = {"type": "object", "patternProperties": {"^x-": {}}, "additionalProperties": False}
+    [error] = Draft202012Validator(schema).iter_errors({"x-note": 1, "extra": 2})
+
+    issues = character_sheet._explain(error)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [(["extra"], "additionalProperties")]
+
+
+def test_tooltip_pair_item_with_unknown_key_names_the_key(config):
+    items = config["jobs"][0]["slots"]["skills"]["tooltip"]["items"]
+    items[1]["years"] = "4"
+
+    assert issues_by_path(config) == {
+        "jobs.0.slots.skills.tooltip.items.1.years": "not in the schema (a typo?)"
+    }
+
+
+def test_tooltip_pair_item_reports_errors_from_the_pair_branch(config):
+    # A wrong type inside the pair is not a type error on the item itself,
+    # so the pair branch is still the one that matched.
+    items = config["jobs"][0]["slots"]["skills"]["tooltip"]["items"]
+    items[0]["label"] = 5
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [
+        (["jobs", 0, "slots", "skills", "tooltip", "items", 0, "label"], "type")
+    ]
+
+
+def test_tooltip_string_item_reports_errors_from_the_string_branch(config):
+    config["jobs"][0]["slots"]["skills"]["tooltip"]["items"] = [""]
+
+    assert issues_by_path(config) == {
+        "jobs.0.slots.skills.tooltip.items.0": "'' should be non-empty"
+    }
+
+
+def test_tooltip_item_of_neither_type_keeps_the_anyof_error(config):
+    config["jobs"][0]["slots"]["skills"]["tooltip"]["items"] = [5]
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path[-1], issue.kind) for issue in issues] == [(0, "anyOf")]
 
 
 def test_issues_are_in_path_order_with_numeric_indexes(config):
@@ -219,6 +348,35 @@ def test_put_reports_invalid_config_like_fastapi_validation_errors(client, confi
         ]
     }
     assert client.get("/character-sheet").status_code == 404
+
+
+def test_put_rejects_an_unknown_config_key_at_its_path(client, config):
+    config["jobs"][0]["slots"]["core"]["tooltip"]["subtitel"] = "Core stack"
+
+    response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "additionalProperties",
+                "loc": ["body", "config", "jobs", 0, "slots", "core", "tooltip", "subtitel"],
+                "msg": "not in the schema (a typo?)",
+            }
+        ]
+    }
+    assert client.get("/character-sheet").status_code == 404
+
+
+def test_put_with_an_unknown_key_keeps_the_saved_config(client, config):
+    client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+    changed = copy.deepcopy(config)
+    changed["titel"] = "Character"
+
+    response = client.put("/character-sheet", json={"config": changed}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
+    assert client.get("/character-sheet").json()["config"] == config
 
 
 def test_put_rejects_a_config_that_is_not_an_object(client):

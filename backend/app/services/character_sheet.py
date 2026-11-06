@@ -8,6 +8,12 @@ tests/test_character_sheet.py fails if the two copies differ. So the
 backend enforces the same structure without a second, hand-written copy
 of the rules.
 
+Every object in the schema is closed (additionalProperties: false), so a
+save with a key the schema doesn't name (a typo like "subtitel") is refused
+here, with the key in the issue's path. zod still strips unknown keys when
+the frontend reads the document, so a stray key that got stored before
+this check costs nothing on the page.
+
 What JSON Schema can't express stays on the frontend: zod's trimming, and
 checks across fields (duplicate ids, a defaultJobId naming a real job).
 The frontend reads the document leniently and falls back to its bundled
@@ -16,7 +22,9 @@ page.
 """
 
 import json
+import re
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -77,7 +85,7 @@ def find_issues(config: dict[str, JsonValue]) -> list[ConfigIssue]:
 
 
 def _explain(error: ValidationError) -> list[ConfigIssue]:
-    """The error itself, or for a failed oneOf, the errors that matter.
+    """The error itself, or the errors that matter for a union or an extra key.
 
     Slot actions are a oneOf with one branch per "kind" (zod's
     discriminatedUnion). jsonschema reports only "is not valid under any of
@@ -85,16 +93,36 @@ def _explain(error: ValidationError) -> list[ConfigIssue]:
     {"kind": "link", "href": "//x"} it blames the anchor branch's missing
     "target". The branch whose "kind" matched is the one with no const
     error, so report that branch's errors instead.
+
+    Tooltip items are an anyOf (zod's union): a string or a label/value
+    pair. The branch to report is the one whose type matched the item, the
+    one with no "type" error on the item itself.
+
+    jsonschema reports every unknown key in an object as one error on the
+    object; each key becomes its own issue, at its own path.
     """
+    if error.validator == "additionalProperties":
+        return [
+            ConfigIssue(
+                path=[*error.absolute_path, key],
+                message="not in the schema (a typo?)",
+                kind="additionalProperties",
+            )
+            for key in _extra_keys(error.instance, error.schema)
+        ] or [_issue(error)]
+
+    if error.validator == "anyOf" and error.context:
+        branch = _only_branch(error, lambda sub: sub.validator == "type" and not sub.path)
+        if branch is not None:
+            return [issue for sub in branch for issue in _explain(sub)]
+        return [_issue(error)]
+
     if error.validator != "oneOf" or not error.context:
         return [_issue(error)]
 
-    branches: dict[int, list[ValidationError]] = defaultdict(list)
-    for sub in error.context:
-        branches[sub.schema_path[0]].append(sub)
-    matched = [subs for subs in branches.values() if not any(s.validator == "const" for s in subs)]
-    if len(matched) == 1:
-        return [issue for sub in matched[0] for issue in _explain(sub)]
+    branch = _only_branch(error, lambda sub: sub.validator == "const")
+    if branch is not None:
+        return [issue for sub in branch for issue in _explain(sub)]
 
     # No branch matched its discriminator: list what it could have been.
     consts = [sub for sub in error.context if sub.validator == "const"]
@@ -102,6 +130,28 @@ def _explain(error: ValidationError) -> list[ConfigIssue]:
         allowed = ", ".join(json.dumps(sub.validator_value) for sub in consts)
         return [_issue(consts[0], f"must be one of {allowed}")]
     return [_issue(error)]
+
+
+def _only_branch(
+    error: ValidationError, rules_out: Callable[[ValidationError], bool]
+) -> list[ValidationError] | None:
+    """The errors of the one failed branch none of whose errors rule it out."""
+    branches: dict[int, list[ValidationError]] = defaultdict(list)
+    for sub in error.context:
+        branches[sub.schema_path[0]].append(sub)
+    matched = [subs for subs in branches.values() if not any(rules_out(s) for s in subs)]
+    return matched[0] if len(matched) == 1 else None
+
+
+def _extra_keys(instance: dict[str, JsonValue], schema: dict) -> list[str]:
+    """The instance's keys the schema doesn't name, in document order."""
+    named = schema.get("properties", {})
+    patterns = schema.get("patternProperties", {})
+    return [
+        key
+        for key in instance
+        if key not in named and not any(re.search(pattern, key) for pattern in patterns)
+    ]
 
 
 def _issue(error: ValidationError, message: str | None = None) -> ConfigIssue:
