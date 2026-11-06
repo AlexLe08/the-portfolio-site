@@ -1,16 +1,6 @@
 import Link from "next/link";
 import { addCharacterJob, removeCharacterJob, setDefaultCharacterJob, updateCharacterJob } from "./actions";
-import { jobHref, resolveJob } from "@alexle08/eorzean-character-sheet";
-import {
-  ID_PATTERN,
-  jobSchema,
-  pairSchema,
-  portraitSchema,
-  slotActionSchema,
-  TOOLTIP_MAX_ITEMS,
-  TOOLTIP_MAX_TAGS,
-  tooltipSchema,
-} from "@alexle08/eorzean-character-sheet/schema";
+import { ID_PATTERN, jobHref, LIMITS, resolveJob } from "@alexle08/eorzean-character-sheet";
 import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
@@ -29,39 +19,34 @@ export const metadata = {
 
 const BASE_PATH = "/admin/character-sheet";
 
-// From the zod schema, so the form's limits can't drift from the checks.
-const jobFields = jobSchema.shape;
-const portraitFields = portraitSchema.shape;
-const LIMITS: JobFieldLimits = {
-  name: jobFields.name.maxLength,
-  title: jobFields.title.maxLength,
-  icon: jobFields.icon.unwrap().maxLength,
-  levelLabel: jobFields.level.shape.label.maxLength,
-  levelValue: jobFields.level.shape.value.maxLength,
-  portraitSrc: portraitFields.src.maxLength,
-  portraitAlt: portraitFields.alt.maxLength,
-  section: jobFields.sections.unwrap().valueType.maxLength,
+// From the package's LIMITS, which its zod schema is built from, so the
+// form's limits can't drift from the checks.
+const JOB_LIMITS: JobFieldLimits = {
+  name: LIMITS.job.name,
+  title: LIMITS.job.title,
+  icon: LIMITS.job.icon,
+  levelLabel: LIMITS.job.levelLabel,
+  levelValue: LIMITS.job.levelValue,
+  portraitSrc: LIMITS.portrait.src,
+  portraitAlt: LIMITS.portrait.alt,
+  section: LIMITS.job.section,
 };
-const tooltipFields = tooltipSchema.shape;
-const [lineItem] = tooltipFields.items.unwrap().element.options;
 const TOOLTIP_LIMITS: TooltipFieldLimits = {
-  title: tooltipFields.title.maxLength,
-  tag: tooltipFields.tags.unwrap().element.maxLength,
-  subtitle: tooltipFields.subtitle.unwrap().maxLength,
-  statLabel: pairSchema.shape.label.maxLength,
-  statValue: pairSchema.shape.value.maxLength,
-  itemLabel: pairSchema.shape.label.maxLength,
+  title: LIMITS.tooltip.title,
+  tag: LIMITS.tooltip.tag,
+  subtitle: LIMITS.tooltip.subtitle,
+  statLabel: LIMITS.pair.label,
+  statValue: LIMITS.pair.value,
+  itemLabel: LIMITS.pair.label,
   // One input holds a plain line's text or a pair's value: the tighter limit.
-  itemValue: Math.min(lineItem.maxLength ?? Infinity, pairSchema.shape.value.maxLength ?? Infinity),
-  note: tooltipFields.note.unwrap().maxLength,
-  maxTags: TOOLTIP_MAX_TAGS,
-  maxItems: TOOLTIP_MAX_ITEMS,
+  itemValue: Math.min(LIMITS.tooltip.item, LIMITS.pair.value),
+  note: LIMITS.tooltip.note,
+  maxTags: LIMITS.tooltip.tags,
+  maxItems: LIMITS.tooltip.items,
 };
-const [anchorAction, linkAction, externalAction] = slotActionSchema.options;
 const ACTION_LIMITS: SlotActionLimits = {
-  target: anchorAction.shape.target.maxLength,
-  // One input holds a link's path or an external URL: the tighter limit.
-  href: Math.min(linkAction.shape.href.maxLength ?? Infinity, externalAction.shape.href.maxLength ?? Infinity),
+  target: LIMITS.id,
+  href: LIMITS.action.href,
 };
 
 // One job at a time, picked with ?job= like the home page, plus which job
@@ -136,7 +121,7 @@ export default async function AdminCharacterSheetPage({
         action={addCharacterJob}
         jobs={config.jobs.map(({ id, name }) => ({ id, name }))}
         currentJobId={job.id}
-        limits={{ id: jobFields.id.maxLength, name: LIMITS.name, title: LIMITS.title }}
+        limits={{ id: LIMITS.id, name: LIMITS.job.name, title: LIMITS.job.title }}
         idPattern={ID_PATTERN.source}
       />
 
@@ -147,7 +132,7 @@ export default async function AdminCharacterSheetPage({
         action={updateCharacterJob.bind(null, job.id)}
         job={job}
         slots={config.slots.map(({ id, label }) => ({ id, label }))}
-        limits={LIMITS}
+        limits={JOB_LIMITS}
         tooltipLimits={TOOLTIP_LIMITS}
         actionLimits={ACTION_LIMITS}
         // The ids app/page.tsx renders for this job: its sections, in
