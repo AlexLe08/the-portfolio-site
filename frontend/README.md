@@ -6,7 +6,7 @@ client generated from its OpenAPI schema.
 ## Setup
 
 ```bash
-npm install   # installs the whole npm workspace; the lockfile is at the repo root
+(cd .. && npm install)   # at the repo root: npm workspaces, one lockfile
 cp .env.local.example .env.local
 ```
 

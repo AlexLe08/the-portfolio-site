@@ -46,10 +46,10 @@ Backend (run from `backend/`, always via venv binaries; there is no plain
 
 Frontend (run from `frontend/`; expects the backend at
 `NEXT_PUBLIC_API_URL`, default `http://localhost:8000`):
-- Install: `npm ci` at the repo root (npm workspaces; run from
-  `frontend/`, npm finds the root itself). Packages are hoisted to the
-  root `node_modules/`, so Next's bundled docs are at
-  `node_modules/next/dist/docs/` there.
+- Install: `npm ci` at the repo root (npm workspaces: one lockfile for
+  `frontend/` and `packages/`). Other npm commands still run from
+  `frontend/`. Packages are hoisted to the root `node_modules/`, so
+  Next's bundled docs are at `node_modules/next/dist/docs/` there.
 - `npm run dev`, `npm run lint`, `npm run build`
 - `npm run test:smoke`: Playwright against production by default
   (`BASE_URL`/`API_URL` override it). Run `npx playwright install chromium`
@@ -252,9 +252,10 @@ task each. These rules add to everything above, for every agent.
   allowed: files written by a generator it ran for its own change
   (`scripts/gen-types.sh` writes `frontend/lib/api-types.ts`;
   `generate:character-schema` writes the backend's schema copy; npm
-  writes the root `package-lock.json`). Anything else outside its directory, including
-  `CLAUDE.md`, `.claude/`, `.github/`, `scripts/`, `docs/`, and root
-  files, goes in its report for the orchestrator.
+  writes the root `package-lock.json`). Anything else outside its
+  directories, including `CLAUDE.md`, `.claude/`, `.github/`,
+  `scripts/`, `docs/`, and root files, goes in its report for the
+  orchestrator.
 - Working in the worktree: `EnterWorktree` may refuse the path when the
   session started at the repo root. That's expected; use absolute paths
   into the worktree for file tools and run commands from it. Scratch
