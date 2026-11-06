@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addCharacterJob, updateCharacterJob } from "./actions";
+import { addCharacterJob, removeCharacterJob, updateCharacterJob } from "./actions";
 import { jobHref, resolveJob } from "@/components/character-sheet/resolve";
 import {
   ID_PATTERN,
@@ -13,6 +13,7 @@ import {
 } from "@/components/character-sheet/schema";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
+import { CharacterJobRemoveForm } from "@/components/CharacterJobRemoveForm";
 import type { PortraitUpload } from "@/components/PortraitPicker";
 import type { SlotActionLimits } from "@/components/SlotActionFields";
 import type { TooltipFieldLimits } from "@/components/SlotTooltipFields";
@@ -63,11 +64,12 @@ const ACTION_LIMITS: SlotActionLimits = {
 };
 
 // One job at a time, picked with ?job= like the home page. The rest of the
-// config (slot definitions, removing jobs) is edited as JSON.
+// config (slot definitions, which job is the default) is edited as JSON.
+// ?removed= is where removeCharacterJob lands, on the default job's form.
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
-  const [{ parsed, bundled, stored, unknownKeys }, { job: jobParam }, uploads] = await Promise.all([
+  const [{ parsed, bundled, stored, unknownKeys }, { job: jobParam, removed }, uploads] = await Promise.all([
     loadCharacterSheetForAdmin(),
     searchParams,
     loadUploads(),
@@ -94,8 +96,16 @@ export default async function AdminCharacterSheetPage({
 
   const config = parsed.config;
   const job = resolveJob(config, jobParam);
+  // Only a well-formed id that really is gone, so a hand-edited or stale
+  // link can't claim a removal that didn't happen.
+  const removedId = typeof removed === "string" ? removed : undefined;
+  const showRemoved =
+    removedId !== undefined &&
+    ID_PATTERN.test(removedId) &&
+    !config.jobs.some((each) => each.id === removedId);
   return (
     <Sheet title="Character sheet" back={{ href: "/admin", label: "Admin" }}>
+      {showRemoved && <StatusMessage tone="success">Removed the job &ldquo;{removedId}&rdquo;.</StatusMessage>}
       <div className="admin-toolbar">
         <nav aria-label="Jobs">
           <ul className="job-picker">
@@ -114,7 +124,7 @@ export default async function AdminCharacterSheetPage({
         {jsonLink}
       </div>
       <p className="form-help admin-intro">
-        The slots themselves (names, icons, order) and removing jobs are edited as JSON.
+        The slots themselves (names, icons, order) and which job is the default are edited as JSON.
       </p>
       <CharacterJobAddForm
         action={addCharacterJob}
@@ -144,6 +154,14 @@ export default async function AdminCharacterSheetPage({
         bundled={bundled}
         stored={stored}
         unknownKeys={unknownKeys}
+      />
+
+      {/* A separate form: nested in the job's form, it would submit it. */}
+      <CharacterJobRemoveForm
+        key={`remove-${job.id}`}
+        action={removeCharacterJob.bind(null, job.id)}
+        job={{ id: job.id, name: job.name }}
+        isDefault={job.id === config.defaultJobId}
       />
     </Sheet>
   );
