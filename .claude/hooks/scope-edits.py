@@ -3,8 +3,9 @@
 
 Denies a file edit unless the file is inside one top-level directory of a
 task worktree: .claude/worktrees/<name>/<dir>/... The directory is the
-first argument (backend or frontend). Bash commands aren't checked; the
-reviewer checks the diff's paths as well.
+first argument (backend or frontend). The worktree's root .logs/
+(gitignored) is allowed too, for scratch files like demo scripts. Bash
+commands aren't checked; the reviewer checks the diff's paths as well.
 """
 import json
 import os
@@ -31,6 +32,6 @@ if not path:
 path = os.path.realpath(os.path.join(event.get("cwd", ""), path))
 _, found, rest = path.partition(MARKER)
 parts = rest.split("/")
-if not found or len(parts) < 3 or parts[1] != allowed:
-    deny(f"{path} is outside {allowed}/ of a task worktree. Report the "
+if not found or len(parts) < 3 or parts[1] not in (allowed, ".logs"):
+    deny(f"{path} is outside {allowed}/ or .logs/ of a task worktree. Report the "
          "change to the orchestrator instead (CLAUDE.md, Agent workflow).")

@@ -717,10 +717,12 @@
   `services/character_sheet.py` are in the layer descriptions. "Agent
   workflow" now says what to expect: `EnterWorktree` may refuse a task
   worktree when the session started at the repo root, so agents use
-  absolute paths (step 1 of each agent file points there), and scratch
-  files go in `<dir>/.logs/` because the scope hook blocks the root
-  `.logs/`. Rejected: loosening the hook for the root `.logs/` (one more
-  path to reason about, for files nobody commits).
+  absolute paths (step 1 of each agent file points there). The scope
+  hook now also allows the worktree's root `.logs/` (gitignored), so
+  demo scripts sit next to the videos and screenshots they produce
+  instead of in `frontend/.logs/`. Checked on 11 sample paths: `..`
+  escapes, the main checkout's `.logs/`, and other directories are still
+  denied.
 
 ## Next up (candidates, unordered)
 

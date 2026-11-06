@@ -248,9 +248,9 @@ task each. These rules add to everything above, for every agent.
 - Working in the worktree: `EnterWorktree` may refuse the path when the
   session started at the repo root. That's expected; use absolute paths
   into the worktree for file tools and run commands from it. Scratch
-  files you write yourself (demo scripts) go in `<your dir>/.logs/`
-  (gitignored), because the scope hook blocks the root `.logs/`; the
-  scripts' own output still lands in the root `.logs/`.
+  files you write yourself (demo scripts) go in the worktree's root
+  `.logs/` (gitignored), next to the scripts' own output; the scope hook
+  allows it alongside your directory.
 - Stay inside the task. No drive-by refactors, renames, or new
   dependencies unless the plan names them; report what you noticed.
 - Tests: never delete, skip, `xfail`, or loosen a test, or change its
