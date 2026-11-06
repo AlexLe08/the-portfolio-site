@@ -13,7 +13,8 @@ from tests.helpers import ADMIN_HEADERS
 REPO = Path(__file__).resolve().parents[2]
 FRONTEND = REPO / "frontend"
 BUNDLED_CONFIG = json.loads((FRONTEND / "lib/character-config.json").read_text(encoding="utf-8"))
-PACKAGE_SCHEMA = REPO / "packages/eorzean-character-sheet/character-sheet.schema.json"
+PACKAGE = REPO / "packages/eorzean-character-sheet"
+PACKAGE_SCHEMA = PACKAGE / "character-sheet.schema.json"
 
 
 @pytest.fixture()
@@ -40,12 +41,16 @@ def test_schema_has_versioned_id():
     # other tools can fetch the schema. The schema has no $refs (zod inlines
     # everything), so an absolute $id doesn't change how validation resolves.
     schema = json.loads(character_sheet.SCHEMA_PATH.read_text(encoding="utf-8"))
+    package = json.loads((PACKAGE / "package.json").read_text(encoding="utf-8"))
 
-    assert re.fullmatch(
-        r"https://cdn\.jsdelivr\.net/npm/@alexle08/eorzean-character-sheet@\d+"
+    match = re.fullmatch(
+        r"https://cdn\.jsdelivr\.net/npm/@alexle08/eorzean-character-sheet@(\d+)"
         r"/character-sheet\.schema\.json",
         schema["$id"],
     )
+    assert match
+    # A major version bump without regenerating would leave the old @N.
+    assert match.group(1) == package["version"].split(".")[0]
 
 
 def test_bundled_config_is_valid(config):

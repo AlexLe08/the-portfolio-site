@@ -832,9 +832,11 @@
       (`<span tabIndex={0}>`) is a focus stop with no role. Give it one
       (`role="group"` with `aria-labelledby`, or a `<button type="button">`)
       and drop its `no-noninteractive-tabindex` disable.
-    - Package lint: add `eslint-plugin-react` (`react/jsx-key` and others
-      `eslint-config-next` applied); the import allowlist doesn't see
-      dynamic `import()`, which the package doesn't use.
+    - Package lint: add `eslint-plugin-react` (`react/jsx-key`,
+      `react/no-unescaped-entities` and others `eslint-config-next`
+      applied). The import allowlist doesn't see dynamic `import()` or
+      `require()`; add a `no-restricted-syntax` rule if the package ever
+      uses them.
     - Public API: a plain `LIMITS` object instead of exporting zod
       sub-schemas (the admin form reads `jobSchema.shape` and others), and
       `findUnknownKeys`'s recursion-only `path` argument.
