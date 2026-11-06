@@ -29,6 +29,8 @@ const STATUS_NOTE: Record<JobStatus, string> = {
 export default async function CharacterSheetPreviewPage({
   searchParams,
 }: PageProps<"/admin/character-sheet/preview">) {
+  // The admin loads check the session first (adminApi()). The project list
+  // is public, so it starts alongside them rather than after.
   const [{ parsed }, stored, projects, { job: jobParam }] = await Promise.all([
     loadCharacterSheetForAdmin(),
     adminLoad("content", (api) => api.GET("/content")),
@@ -48,7 +50,8 @@ export default async function CharacterSheetPreviewPage({
 
   const config = parsed.config;
   const job = resolveJob(config, jobParam);
-  // Unset keys show their built-in text, as on the home page.
+  // Unset keys show their built-in text, as on the home page. Unknown
+  // stored keys come along too, but nothing reads them.
   const content = { ...FALLBACK_CONTENT, ...stored };
 
   return (
