@@ -827,7 +827,7 @@
   `npx tsc -p .` work in the package; the host's build still type-checks
   it with its own. Checked with probe snippets that both catch errors.
 
-- Package public API: the config's limits are a plain `LIMITS` object
+- Package public API (#80): the config's limits are a plain `LIMITS` object
   (grouped like the config, `LIMITS.job.name`) exported from `.` with
   `ID_PATTERN`, and the zod checks are built from it, so each number is
   written once. The admin page reads its form limits from `LIMITS` instead
