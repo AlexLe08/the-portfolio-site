@@ -38,8 +38,8 @@ export const LIMITS = {
   // tags and items are counts; item is a plain line item's length.
   tooltip: { title: 80, tag: 24, tags: 3, subtitle: 120, item: 80, items: 10, note: 240 },
   slotContent: { iconSrc: 500 },
-  // A link's path or an external URL.
-  action: { href: 300 },
+  // A link's path or an external URL; a param action's query name and value.
+  action: { href: 300, paramName: 40, paramValue: 80 },
 } as const;
 
 const id = z
@@ -106,6 +106,25 @@ export const slotActionSchema = z.discriminatedUnion("kind", [
       .regex(/^https?:\/\//, "an http or https URL")
       .max(LIMITS.action.href),
     newTab: z.boolean().optional().describe("Open in a new tab. Off by default."),
+  }),
+  z.object({
+    kind: z.literal("param"),
+    // "job" is refused because the panel already owns it (see jobParam).
+    // The hyphen is escaped for the same reason as in ID_PATTERN.
+    name: z
+      .string()
+      .max(LIMITS.action.paramName)
+      .regex(
+        /^(?!job$)[a-z][a-z0-9_\-]*$/,
+        'lowercase letters, digits, underscores, and hyphens; starts with a letter; not "job"',
+      )
+      .describe(
+        'A query parameter to set on the current page (keeping ?job=), e.g. "stack". Not "job", which picks the job.',
+      ),
+    value: text(LIMITS.action.paramValue).describe("The value to set it to."),
+    target: id
+      .optional()
+      .describe("Element id on the same page to scroll to after, without the #."),
   }),
   z.object({ kind: z.literal("none") }),
 ]);

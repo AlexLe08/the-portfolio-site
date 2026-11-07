@@ -27,13 +27,24 @@ export function jobHref(config: CharacterSheetConfig, jobId: string, basePath = 
   return `${basePath}?${new URLSearchParams({ [param]: jobId })}`;
 }
 
-export function actionHref(action: SlotAction): string | null {
+// currentHref is the page the panel is on, with its ?job= (from jobHref);
+// only a param action uses it, setting its one parameter on that URL so the
+// job (and any other parameter) is kept.
+export function actionHref(action: SlotAction, currentHref = "/"): string | null {
   switch (action.kind) {
     case "anchor":
       return `#${action.target}`;
     case "link":
     case "external":
       return action.href;
+    case "param": {
+      const withoutHash = currentHref.split("#")[0];
+      const queryAt = withoutHash.indexOf("?");
+      const path = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+      const query = new URLSearchParams(queryAt === -1 ? "" : withoutHash.slice(queryAt + 1));
+      query.set(action.name, action.value);
+      return `${path}?${query}${action.target ? `#${action.target}` : ""}`;
+    }
     case "none":
       return null;
   }
