@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { content } = await getContent();
-  // ?job= only changes emphasis, so every variant points at the one URL.
+  // ?job= only changes emphasis and ?stack= only filters the project list,
+  // so every variant points at the one URL.
   return { description: content["site.description"], alternates: { canonical: "/" } };
 }
 
@@ -24,7 +25,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     projects,
     { content, fallback: contentFallback },
     { config: characterConfig, fallback: characterFallback },
-    { job: jobParam },
+    { job: jobParam, stack },
   ] = await Promise.all([
     loadProjects(),
     getContent(),
@@ -45,6 +46,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         job={job}
         content={content}
         projects={projects}
+        stack={stack}
         notice={fallback && <FallbackNotice />}
       />
     </AutoRetry>

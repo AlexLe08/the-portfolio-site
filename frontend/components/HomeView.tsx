@@ -1,12 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
-import { jobHref, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
+import { actionHref, jobHref, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
 import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
-import { homeSections, PROJECTS_ANCHOR } from "@/lib/character-anchors";
+import { StatusMessage } from "@/components/StatusMessage";
+import {
+  filterByStack,
+  homeSections,
+  PROJECTS_ANCHOR,
+  readStackParam,
+  STACK_PARAM,
+} from "@/lib/character-anchors";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 import type { ContentKey, SiteContent } from "@/lib/content";
 import type { ProjectSummary } from "@/lib/projects";
@@ -26,15 +33,26 @@ type Props = {
   projects: ProjectSummary[] | null;
   // Where the job menu links (the admin preview keeps its own path).
   basePath?: string;
+  // ?stack=, which filters the project list by one stack tag.
+  stack?: string | string[];
   notice?: ReactNode;
 };
 
 // The home page's body, shared by app/page.tsx (published jobs only) and
 // the admin preview (every job), so the preview can't drift from it.
-export function HomeView({ config, job, content, projects, basePath, notice }: Props) {
+export function HomeView({ config, job, content, projects, basePath, stack, notice }: Props) {
   // The job's page sections, in slot order, labelled like their slots.
   // Their ids are the anchor targets the admin editor checks against.
   const sections = homeSections(config, job);
+  // This job's page without the filter: where "Show all projects" goes.
+  const jobUrl = jobHref(config, job.id, basePath);
+  const filter = projects && filterByStack(projects, stack);
+  const shown = filter?.projects ?? projects ?? [];
+  // A reload of this page, filter included.
+  const wanted = readStackParam(stack);
+  const retryHref = wanted
+    ? (actionHref({ kind: "param", name: STACK_PARAM, value: wanted }, jobUrl) ?? jobUrl)
+    : jobUrl;
 
   return (
     <Sheet
@@ -88,21 +106,32 @@ export function HomeView({ config, job, content, projects, basePath, notice }: P
       </div>
 
       {projects === null ? (
-        <ProjectsUnavailable retryHref={jobHref(config, job.id, basePath)} />
+        <ProjectsUnavailable retryHref={retryHref} />
       ) : (
-        <ul className="project-list">
-          {projects.map((project) => (
-            <li key={project.slug} className="project-card">
-              <h3 className="project-card__title">
-                <Link href={`/projects/${project.slug}`} className="project-card__link">
-                  {project.title}
-                </Link>
-              </h3>
-              <p className="project-card__summary">{project.summary}</p>
-              <StackTags stack={project.stack} className="project-card__stack" />
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* The URL's value isn't echoed: only a tag a project really has. */}
+          {filter && (
+            <StatusMessage tone="info">
+              {filter.tag ? `Showing projects using ${filter.tag}. ` : "No published projects use that stack. "}
+              <Link href={`${jobUrl}#${PROJECTS_ANCHOR}`}>Show all projects</Link>
+            </StatusMessage>
+          )}
+          {shown.length > 0 && (
+            <ul className="project-list">
+              {shown.map((project) => (
+                <li key={project.slug} className="project-card">
+                  <h3 className="project-card__title">
+                    <Link href={`/projects/${project.slug}`} className="project-card__link">
+                      {project.title}
+                    </Link>
+                  </h3>
+                  <p className="project-card__summary">{project.summary}</p>
+                  <StackTags stack={project.stack} className="project-card__stack" />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </Sheet>
   );
