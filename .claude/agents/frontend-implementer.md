@@ -23,7 +23,8 @@ the Frontend architecture rules, "Design system", and "Agent workflow".
    the frontend uses). Check Next.js and React APIs against current docs,
    not memory. A new `"use client"` file, content key, or similar
    CLAUDE.md list entry goes in your report for the orchestrator. New
-   logic in `lib/` or the package's `src/` gets Vitest tests beside it.
+   logic in `lib/` or the package's `src/` gets Vitest tests beside it;
+   run `scripts/mutate.mjs` on it when they passed on the first run.
 3. After changing `packages/eorzean-character-sheet/src/schema.ts`, run
    `npm run generate:character-schema` from `frontend/`
    and commit what it writes.

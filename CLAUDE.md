@@ -91,6 +91,9 @@ retyping the commands they wrap; each explains itself in its header:
 - `scripts/mutate.py FILE OLD NEW [-- pytest args]` (or a JSON list of
   changes): breaks code on purpose and reports which backend tests catch
   it. Use it on new logic whose tests passed on the first run.
+- `scripts/mutate.mjs FILE OLD NEW [-- vitest args]` (or the same JSON
+  list): the same for the Vitest suites, `frontend/` and the character
+  sheet package, both on every change.
 - `scripts/fake-backend.py [port]`: fake API (`/__mode/ok|500|down`,
   optionally `?path=`) plus a fake Sentry endpoint that logs envelopes,
   for testing outage handling and what gets reported.

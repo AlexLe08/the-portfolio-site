@@ -1004,6 +1004,12 @@
   `findDeadAnchors`, `findDeadParams`, `stackTags`, ...). Each was
   broken on purpose (12 mutations, all caught; one survivor before a
   test for `stackTags`' case-only ties was added).
+- `scripts/mutate.mjs`, the Vitest twin of `scripts/mutate.py`, kept
+  from that PR's one-off script: same arguments and JSON format, the
+  failing tests named from Vitest's JSON reporter, a file that no longer
+  loads counted as caught. Every change runs both suites, since a
+  package change can break a `lib/` test. Restores the file on Ctrl-C
+  and `kill` (checked by killing it mid-run).
 
 ## Next up (candidates, unordered)
 
