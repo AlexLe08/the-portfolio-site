@@ -1024,7 +1024,10 @@
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus
     Testing Library) only if a client component grows logic worth
-    testing apart from the demo stack.
+    testing apart from the demo stack. The package's test files aren't
+    type-checked (Vitest strips types; `next build` checks only
+    `frontend/` and what it imports): add `vitest --typecheck` or
+    `tsc -p .` to the package's own CI once it's extracted.
   - Extraction to its own repository as a React package: core, themes,
     schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
     the core never imports a CMS SDK), and a demo site. A custom-element

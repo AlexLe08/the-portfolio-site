@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # The checks CI runs before a PR can merge: backend pytest (job `test`),
-# frontend lint + unit tests + build (job `build`). Prints one line per step; the full
-# output of each goes to .logs/<step>.log, and a failing step also prints
-# its last 30 lines.
+# frontend lint + unit tests + build (job `build`). Prints one line per
+# step; the full output of each goes to .logs/<step>.log, and a failing
+# step also prints its last 30 lines.
 #
 # Usage: scripts/check.sh [backend|frontend]   (default: both)
 set -euo pipefail

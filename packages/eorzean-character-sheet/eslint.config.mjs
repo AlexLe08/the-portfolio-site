@@ -53,7 +53,7 @@ export default defineConfig([
   },
   {
     // Tests run under vitest and never ship.
-    files: ["**/*.test.ts"],
+    files: ["**/*.test.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
         "error",
