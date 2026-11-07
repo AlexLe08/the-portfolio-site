@@ -14,6 +14,7 @@ const IMPORT_MESSAGE =
 // with "..".
 const ALLOWED = ["react", "react/.+", "zod", String.raw`\./(?!.*\.\.).+`];
 const SCRIPT_ALLOWED = [...ALLOWED, "node:.+", String.raw`\.\./src/(?!.*\.\.).+`];
+const TEST_ALLOWED = [...ALLOWED, "vitest"];
 const onlyAllowed = (list) => `^(?!(${list.join("|")})$)`;
 
 export default defineConfig([
@@ -47,6 +48,16 @@ export default defineConfig([
             },
           ],
         },
+      ],
+    },
+  },
+  {
+    // Tests run under vitest and never ship.
+    files: ["**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ regex: onlyAllowed(TEST_ALLOWED), message: "Tests may also import vitest." }] },
       ],
     },
   },

@@ -51,6 +51,9 @@ Frontend (run from `frontend/`; expects the backend at
   `frontend/`. Packages are hoisted to the root `node_modules/`, so
   Next's bundled docs are at `node_modules/next/dist/docs/` there.
 - `npm run dev`, `npm run lint`, `npm run build`
+- `npm test`: Vitest, `lib/**/*.test.ts` (`vitest.config.mts`), then
+  the character sheet package's own tests (`npm test` in its directory).
+  `npx vitest` from either directory watches.
 - `npm run test:smoke`: Playwright against production by default
   (`BASE_URL`/`API_URL` override it). Run `npx playwright install chromium`
   once first. See `docs/ci-cd-runbook.md`.
@@ -58,7 +61,8 @@ Frontend (run from `frontend/`; expects the backend at
   export `backend/openapi.json` (command in `frontend/README.md`), then
   `npm run generate:types`.
 
-Before opening a PR, run backend `pytest` and frontend `lint` + `build`.
+Before opening a PR, run backend `pytest` and frontend `lint` + `test` +
+`build`.
 These are exactly what CI runs.
 
 Scripts (`scripts/`, run from anywhere in the checkout). Prefer these to
@@ -205,6 +209,11 @@ Frontend:
   `parseConfig` strips them; use `z.looseObject` for one that stays open.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
+- Unit tests are Vitest, beside the code as `*.test.ts`: `frontend/lib/`
+  for pure helpers, the package's `src/` for its own code (its lint
+  allows `vitest` in test files only). No component or DOM tests yet;
+  pages are checked on the demo stack. Vitest stays on 4.x while CI
+  runs Node 20 (Vitest 5 needs Node 22.12+).
 
 ## Hard constraints and known gotchas
 
