@@ -949,10 +949,47 @@
   the allowed-kinds message now lists `param` (owner-approved). Verified
   on the demo stack: hrefs on the default job, another job and the admin
   preview; click lands on `#projects`; a job-form save keeps the action;
-  `name: "job"` refused at its path. Not verified: a param link without a
-  target keeping scroll in a browser. No production content uses it yet:
-  don't add one until both services run this PR (an older frontend drops
-  the job).
+  `name: "job"` refused at its path. (A param link without a target
+  keeping scroll was verified in PR 2.) Merged as #88 (`84ef351`) on
+  2026-11-07.
+- The stack filter and the `param` editor (page-changing slot actions,
+  PR 2 of 2):
+  - Home page: `?stack=` filters the project list on the server
+    (`readStackParam`: first value, trimmed, empty means no filter;
+    `filterByStack`: case-insensitive exact tag, `null` for no filter so
+    it differs from "nothing matches"). An info line names the tag in the
+    project's own spelling, with "Show all projects" back to the job's
+    `#projects`; the empty state never echoes the URL. The retry link
+    keeps `stack`; canonical stays `/`; the admin preview filters too.
+    No new client components. Switching jobs drops `?stack=` (the job
+    menu is `jobHref`, like `actionHref` replacing other parameters).
+  - Job form: a real `param` option (free-text name suggesting `stack`,
+    value suggesting published projects' tags when the name is `stack`,
+    loaded with `adminRequest` and empty on failure; a new action's
+    target is `projects`). The name's HTML `pattern` is the package's
+    exported `PARAM_NAME_PATTERN`, which `schema.ts` now uses too (JSON
+    Schema unchanged). Save-time notices: `findDeadParams` for a name the
+    home page doesn't read, and param targets join `findDeadAnchors`.
+    An empty or whitespace name or value is refused by `parseConfig`
+    before the request.
+  - Verified on the demo stack (asserted, with video):
+    - filtering: `?stack=react`, `%20React%20` and `react&stack=zzz`
+      filter with the tag's spelling; `?stack=zzz` shows the empty state
+      without the value; `?stack=` shows everything; canonical `/`;
+    - clear links: on the default job and another job;
+    - the preview filters too;
+    - backend stopped: the retry link keeps `stack` and `job`;
+    - editor round trip: an untouched save stores the bundled file
+      exactly; the param kind saves with the suggestions shown; a slot
+      click filters and scrolls to the projects; a kind change drops
+      name and value; both notices appear;
+    - server-side refusals, with `required`/`pattern` stripped in the
+      browser: a whitespace value, an empty name and `Stack` are refused
+      at their paths, and the stored copy is unchanged;
+    - a param link without a target keeps the scroll position (#88's
+      open item).
+  - Still no production content uses `param`: add one only once both
+    services run #88 or later.
 
 ## Next up (candidates, unordered)
 
@@ -962,18 +999,14 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Slot actions that change the current page, PR 2 of 2 (PR 1, the
-    `param` kind, is in Done): the home page reads `?stack=` and filters
-    the project list on the server (case-insensitive exact tag, a "showing
-    projects using X" line with a clear link, an empty state that doesn't
-    echo the URL, the admin preview too), and the job form edits `param`
-    actions (free-text name; the value suggests published projects' stack
-    tags when the name is `stack`; a notice for names the home page
-    doesn't read and for a `target` that isn't on the page, alongside
-    `findDeadAnchors`). One PR, one demo video. Later: highlight a slot
-    whose filter is active; a JS test runner for the package (`actionHref`
-    was checked by reading); `jobHref` would build `?a=b?job=x` from a
-    `basePath` that already has a query (no caller does today).
+  - Slot action follow-ups (both PRs are in Done): highlight a slot
+    whose filter is active (the package would need the current params);
+    a JS test runner for the package and `lib/` helpers (`actionHref`,
+    `filterByStack`, `findDeadParams` are checked only by reading and on
+    the demo stack); `jobHref` would build `?a=b?job=x` from a `basePath`
+    that already has a query (no caller does today); with a short
+    filtered list, `#projects` can't reach the top of the window (a
+    bottom margin on the sheet would fix it).
   - Extraction to its own repository as a React package: core, themes,
     schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
     the core never imports a CMS SDK), and a demo site. A custom-element

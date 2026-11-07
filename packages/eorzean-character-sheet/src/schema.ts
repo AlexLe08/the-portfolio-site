@@ -22,6 +22,12 @@ import { z } from "zod";
 // class is a syntax error and the attribute is silently ignored.
 export const ID_PATTERN = /^[a-z0-9][a-z0-9\-]*$/;
 
+// A param action's query parameter name: lowercase, starts with a letter,
+// and not "job", which the panel already owns (see jobParam). Exported for
+// a form's pattern attribute, like ID_PATTERN; the hyphen is escaped for
+// the same reason.
+export const PARAM_NAME_PATTERN = /^(?!job$)[a-z][a-z0-9_\-]*$/;
+
 // The config's limits as plain values, so a form, a CMS adapter or any
 // other consumer can read them without zod. The checks below are built
 // from these, so they can't drift from what parsing enforces. Grouped like
@@ -109,13 +115,11 @@ export const slotActionSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("param"),
-    // "job" is refused because the panel already owns it (see jobParam).
-    // The hyphen is escaped for the same reason as in ID_PATTERN.
     name: z
       .string()
       .max(LIMITS.action.paramName)
       .regex(
-        /^(?!job$)[a-z][a-z0-9_\-]*$/,
+        PARAM_NAME_PATTERN,
         'lowercase letters, digits, underscores, and hyphens; starts with a letter; not "job"',
       )
       .describe(
