@@ -467,7 +467,8 @@
   would then be saved over the real copy. A note says when the saved copy
   differs from `lib/character-config.json`, which shows during outages.
   Unknown keys (typos like `subtitel`) are saved but listed as likely
-  typos, after each save and on load. `findUnknownKeys` in
+  typos, after each save and on load (since #85, #86, #87, refused on
+  save instead; see that entry). `findUnknownKeys` in
   `components/character-sheet/parse.ts` compares the raw document with
   zod's output, since `z.object` strips keys it doesn't know; that follows
   union branches with no second copy of the schema. Rejected: deep-strict
@@ -902,6 +903,33 @@
   which the fake backend doesn't have); its link is the same `jobHref`
   call the preview's job menu makes.
 
+- Unknown keys refused on save (#85, #86, #87): strict on write, lenient
+  on read, decided before content comes from a CMS. Replaces the
+  warn-only rule from #56.
+  - #85: the generator's `override` closes every plain `z.object` in the
+    exported JSON Schema (`additionalProperties: false`), so the
+    backend's admin save, and any editor or other backend using the
+    schema, rejects a typo like `subtitel`. `schema.ts` stays plain
+    `z.object`, so `parseConfig` still strips unknown keys and the live
+    site never drops a job over one; `z.looseObject` is the opt-out.
+    Rejected: `.strict()` in `schema.ts` (`parseConfig` drops a job, or
+    falls back entirely, on a strict failure, and a lenient copy would
+    be a second copy of every object), `io: "output"` (fields with
+    defaults become required), and stripping unknown keys before parsing
+    (needs the schema or a JSON Schema walk). `$id` stayed `@1`: the
+    package is unpublished, so nobody depends on it yet.
+  - #86: the backend names each unknown key at its own path ("not in the
+    schema (a typo?)"), and `anyOf` (tooltip items) reports the branch
+    whose type matches, like `oneOf`, so an extra key in a pair item is
+    named instead of `items.N`.
+  - #87: `saveConfig` refuses unknown keys (`findUnknownKeys`) before
+    sending, with the paths listed; the on-load notice says the next save
+    will be refused until they're removed. Checked on the demo stack: a
+    JSON-editor typo refused with the edit kept, saved once removed, and
+    a stored copy with an unknown key (written into the throwaway
+    database) listed on load and refused on a form save. Production had
+    no unknown keys before merging (checked by the owner).
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -910,11 +938,6 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Unknown keys (typos like `subtitel`) pass both zod, which strips them,
-    and the backend. Strict zod objects would reject them in both places,
-    but the lenient read would then drop a whole job over one stray key.
-    Decide before content comes from a CMS. The admin editor already warns
-    about them (`findUnknownKeys`), and a CMS adapter could do the same.
   - Slot actions that change the current page (for example filtering the
     project list), which need a small client bridge.
   - Extraction to its own repository as a React package: core, themes,

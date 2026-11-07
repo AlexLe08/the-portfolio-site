@@ -23,8 +23,8 @@ const { config, errors } = parseConfig(rawConfig);
 if (!config || errors.length > 0) {
   throw new Error(`lib/character-config.json is invalid:\n${errors.join("\n")}`);
 }
-// Unknown keys too (likely typos the panel would leave out). The admin
-// editor only warns about them; this file is fixed before it ships.
+// Unknown keys too (likely typos the panel would leave out), which admin
+// saves refuse as well.
 const unknownKeys = findUnknownKeys(rawConfig, config);
 if (unknownKeys.length > 0) {
   throw new Error(`lib/character-config.json has unknown keys:\n${unknownKeys.join("\n")}`);
