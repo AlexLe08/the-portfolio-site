@@ -23,6 +23,11 @@ const KINDS: { kind: SlotAction["kind"]; label: string }[] = [
   { kind: "external", label: "Another website" },
 ];
 
+// A param action has no inputs here yet, so it's offered only on a slot that
+// already has one (set as JSON). Kept selected, its kind submits unchanged
+// and updateCharacterJob keeps the saved action as it is.
+const PARAM_KIND = { kind: "param", label: "A query parameter on this page (edit as JSON)" } as const;
+
 // What clicking one slot does, inside CharacterJobForm. Only the selected
 // kind's inputs are rendered, so only they submit; field names start with
 // "action.<slot id>.", which updateCharacterJob reads back.
@@ -34,6 +39,7 @@ export function SlotActionFields({ slotId, action, limits, anchorTargets }: Prop
   // Switching kind unmounts the other inputs, so switching back shows the
   // saved value again rather than what was typed.
   const href = action.kind === "link" || action.kind === "external" ? action.href : "";
+  const kinds = action.kind === "param" ? [...KINDS, PARAM_KIND] : KINDS;
 
   return (
     <>
@@ -48,7 +54,7 @@ export function SlotActionFields({ slotId, action, limits, anchorTargets }: Prop
           onChange={(event) => setKind(event.target.value as SlotAction["kind"])}
           className="form-input"
         >
-          {KINDS.map((option) => (
+          {kinds.map((option) => (
             <option key={option.kind} value={option.kind}>
               {option.label}
             </option>

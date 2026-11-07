@@ -115,6 +115,12 @@ identifier.
   - `anchor`: a same-page `#id`.
   - `link`: a site path.
   - `external`: an http(s) URL, opening in the same tab unless `newTab` is set.
+  - `param`: the current page (keeping `?job=`) with one query parameter
+    set, e.g. `{ "kind": "param", "name": "stack", "value": "React", "target": "projects" }`
+    links to `/?stack=React#projects`. `target` is optional. The host page
+    reads the parameter; the panel doesn't. `name` can't be `job`, and one
+    matching the host's `jobParam` renders tooltip-only. Links go through
+    `renderLink` with `intent: "param"`.
   - `none`: tooltip only.
 - **Status:** a job's `status` is `published` (the default when it's left
   out), `draft` (not ready yet) or `hidden` (taken off the site). Pass the
