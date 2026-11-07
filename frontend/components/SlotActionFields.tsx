@@ -69,7 +69,11 @@ export function SlotActionFields({
           id={id("kind")}
           name={name("kind")}
           value={kind}
-          onChange={(event) => setKind(event.target.value as SlotAction["kind"])}
+          onChange={(event) => {
+            setKind(event.target.value as SlotAction["kind"]);
+            // The name input remounts with the saved name.
+            setParamName(savedParam?.name ?? "");
+          }}
           className="form-input"
         >
           {KINDS.map((option) => (
