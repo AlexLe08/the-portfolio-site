@@ -990,6 +990,20 @@
       open item).
   - Still no production content uses `param`: add one only once both
     services run #88 or later.
+- JS unit tests with Vitest 4 (the slot action follow-up). Chosen over
+  `node:test`, which can't load `.ts` on CI's Node 20 without a loader,
+  and Jest, which needs a TypeScript and ESM transform; Vitest reads
+  both as they are and resolves the workspace package like Next does.
+  `npm test` in `frontend/` runs `lib/**/*.test.ts` (narrowed in
+  `vitest.config.mts` so it never picks up the production smoke spec),
+  then the package's own `npm test`, which moves with it when it's
+  extracted. CI runs it in the `build` job between lint and build, and
+  `scripts/check.sh frontend` has a `test` line. First tests:
+  `actionHref`, `jobHref`, `resolveJob`, `publicConfig` in the package;
+  everything in `lib/character-anchors.ts` (`filterByStack`,
+  `findDeadAnchors`, `findDeadParams`, `stackTags`, ...). Each was
+  broken on purpose (12 mutations, all caught; one survivor before a
+  test for `stackTags`' case-only ties was added).
 
 ## Next up (candidates, unordered)
 
@@ -1001,12 +1015,16 @@
     fine: keeping it in step is low priority (see the last item below).
   - Slot action follow-ups (both PRs are in Done): highlight a slot
     whose filter is active (the package would need the current params);
-    a JS test runner for the package and `lib/` helpers (`actionHref`,
-    `filterByStack`, `findDeadParams` are checked only by reading and on
-    the demo stack); `jobHref` would build `?a=b?job=x` from a `basePath`
+    `jobHref` would build `?a=b?job=x` from a `basePath`
     that already has a query (no caller does today); with a short
     filtered list, `#projects` can't reach the top of the window (a
     bottom margin on the sheet would fix it).
+  - More unit tests, now that Vitest runs: `parseConfig` and
+    `findUnknownKeys` in the package, and `lib/` helpers beyond
+    `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
+    `character-admin.ts`). Component tests (jsdom or happy-dom plus
+    Testing Library) only if a client component grows logic worth
+    testing apart from the demo stack.
   - Extraction to its own repository as a React package: core, themes,
     schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
     the core never imports a CMS SDK), and a demo site. A custom-element
@@ -1055,6 +1073,9 @@
   Redis only if the service ever scales out).
 - Verify a domain in Resend to email anyone other than yourself, and
   switch `EMAIL_FROM` to it.
+- Move CI's Node from 20 (end of life since April 2026) to the version
+  Vercel builds with (check the project's Node.js setting), then Vitest
+  `^5`, which needs Node 22.12+. Local development already runs Node 24.
 - Low priority (decided 2026-11-05): keeping the built-in values
   (`FALLBACK_CONTENT`, `lib/character-config.json`) in step with edits
   saved in production, and cleaning up production's leftover test edits
