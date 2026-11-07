@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The checks CI runs before a PR can merge: backend pytest (job `test`),
-# frontend lint + build (job `build`). Prints one line per step; the full
+# frontend lint + unit tests + build (job `build`). Prints one line per step; the full
 # output of each goes to .logs/<step>.log, and a failing step also prints
 # its last 30 lines.
 #
@@ -33,6 +33,7 @@ if [[ "$target" == all || "$target" == backend ]]; then
 fi
 if [[ "$target" == all || "$target" == frontend ]]; then
   run lint frontend npm run lint
+  run test frontend npm test
   run build frontend npm run build
 fi
 

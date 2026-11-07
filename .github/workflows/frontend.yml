@@ -36,5 +36,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Vitest: lib/ helpers, then the character sheet package's own tests.
+      - name: Unit tests
+        run: npm test
+
       - name: Build (includes TypeScript check)
         run: npm run build
