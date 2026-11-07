@@ -193,7 +193,10 @@ Frontend:
   package's JSON Schema and copies it to `backend/app/services/`, which
   validates admin saves against it (a backend test fails if the copies
   differ). Write rules the backend must enforce as zod checks that
-  export to JSON Schema (`.regex()`, lengths), not refinements.
+  export to JSON Schema (`.regex()`, lengths), not refinements. The
+  generator closes every `z.object` in the JSON Schema
+  (`additionalProperties: false`), so writers reject unknown keys while
+  `parseConfig` strips them; use `z.looseObject` for one that stays open.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
 
