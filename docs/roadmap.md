@@ -929,6 +929,30 @@
     a stored copy with an unknown key (written into the throwaway
     database) listed on load and refused on a form save. Production had
     no unknown keys before merging (checked by the owner).
+- A `param` slot action (page-changing slot actions, PR 1 of 2): `{ kind:
+  "param", name, value, target? }` links to the current page with one
+  query parameter set, keeping `?job=`, plus an optional `#target`. The
+  roadmap's "small client bridge" turned out unnecessary: the URL is the
+  bridge, and the host reads the parameter on the server. Named `param`,
+  not `filter`, because only the host knows what a parameter does, which
+  matters once the package is published. `name` is lowercase, and `job`
+  is refused by the schema's pattern (a lookahead, which zod, the JSON
+  Schema and Python's `jsonschema` all accept); a host with another
+  `jobParam` gets a tooltip-only slot for a clashing name.
+  `actionHref(action, currentHref)` builds on `jobHref`'s URL, so other
+  parameters in the browser's URL are replaced, not added to.
+  `renderLink` gets `intent: "param"`: `scroll={false}` only without a
+  target, because in the App Router it also cancels the hash scroll
+  (`segment-cache/navigation.js`). The job form keeps a saved `param`
+  action through an "(edit as JSON)" option until PR 2's editor. Backend:
+  no app code change (`_explain` picked the new branch); 6 new tests, and
+  the allowed-kinds message now lists `param` (owner-approved). Verified
+  on the demo stack: hrefs on the default job, another job and the admin
+  preview; click lands on `#projects`; a job-form save keeps the action;
+  `name: "job"` refused at its path. Not verified: a param link without a
+  target keeping scroll in a browser. No production content uses it yet:
+  don't add one until both services run this PR (an older frontend drops
+  the job).
 
 ## Next up (candidates, unordered)
 
@@ -938,8 +962,18 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Slot actions that change the current page (for example filtering the
-    project list), which need a small client bridge.
+  - Slot actions that change the current page, PR 2 of 2 (PR 1, the
+    `param` kind, is in Done): the home page reads `?stack=` and filters
+    the project list on the server (case-insensitive exact tag, a "showing
+    projects using X" line with a clear link, an empty state that doesn't
+    echo the URL, the admin preview too), and the job form edits `param`
+    actions (free-text name; the value suggests published projects' stack
+    tags when the name is `stack`; a notice for names the home page
+    doesn't read and for a `target` that isn't on the page, alongside
+    `findDeadAnchors`). One PR, one demo video. Later: highlight a slot
+    whose filter is active; a JS test runner for the package (`actionHref`
+    was checked by reading); `jobHref` would build `?a=b?job=x` from a
+    `basePath` that already has a query (no caller does today).
   - Extraction to its own repository as a React package: core, themes,
     schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
     the core never imports a CMS SDK), and a demo site. A custom-element

@@ -28,8 +28,9 @@ export function jobHref(config: CharacterSheetConfig, jobId: string, basePath = 
 }
 
 // currentHref is the page the panel is on, with its ?job= (from jobHref);
-// only a param action uses it, setting its one parameter on that URL so the
-// job (and any other parameter) is kept.
+// only a param action uses it, setting its one parameter on that URL. The
+// query currentHref already has is kept; from CharacterSheet that's only
+// ?job=, so another parameter in the browser's URL is replaced, not added to.
 export function actionHref(action: SlotAction, currentHref = "/"): string | null {
   switch (action.kind) {
     case "anchor":
