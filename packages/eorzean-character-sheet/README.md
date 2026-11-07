@@ -23,7 +23,7 @@ the host's bundler compiles it.
 
 | Import | What it holds |
 | --- | --- |
-| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config) and `ID_PATTERN`. No React or CSS, so server code and plain Node can use it |
+| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config), `ID_PATTERN` and `PARAM_NAME_PATTERN`. No React or CSS, so server code and plain Node can use it |
 | `@alexle08/eorzean-character-sheet/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
 | `@alexle08/eorzean-character-sheet/schema` | `characterSheetConfigSchema`, the whole config's zod schema. Its parts are internal |
 | `@alexle08/eorzean-character-sheet/character-sheet.css` | The styles, for hosts that want to control CSS order |
@@ -36,7 +36,7 @@ the host's bundler compiles it.
 | File | Purpose |
 | --- | --- |
 | `src/index.ts` | The data-side entry (re-exports only) |
-| `src/schema.ts` | `LIMITS`, `ID_PATTERN` and the zod schemas built from them: the config contract |
+| `src/schema.ts` | `LIMITS`, `ID_PATTERN`, `PARAM_NAME_PATTERN` and the zod schemas built from them: the config contract |
 | `src/schema-entry.ts` | The `/schema` entry (re-exports only) |
 | `src/types.ts` | Types inferred from the schemas |
 | `src/parse.ts` | `parseConfig` (drops invalid jobs, reports errors) and `loadConfig` (fallback chain of sources) |

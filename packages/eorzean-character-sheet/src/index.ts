@@ -11,7 +11,7 @@ export {
   type LoadResult,
   type ParseResult,
 } from "./parse";
-export { ID_PATTERN, LIMITS } from "./schema";
+export { ID_PATTERN, LIMITS, PARAM_NAME_PATTERN } from "./schema";
 export { actionHref, jobHref, publicConfig, resolveJob } from "./resolve";
 export type {
   CharacterSheetConfig,
