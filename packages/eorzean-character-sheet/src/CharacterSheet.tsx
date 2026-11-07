@@ -29,8 +29,10 @@ import "./character-sheet.css";
 export type LinkRendererProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string;
   // "job": swaps the job on the same page (a host may want to keep the
-  // scroll position). "page": goes to another page on the site.
-  intent: "job" | "page";
+  // scroll position). "param": the same page with one query parameter set
+  // (a slot's param action; its href ends in #<id> when it should scroll).
+  // "page": goes to another page on the site.
+  intent: "job" | "param" | "page";
 };
 
 export type CharacterSheetProps = {
@@ -86,7 +88,9 @@ export function CharacterSheet({
   // Tooltip ids must be unique even with two panels on one page.
   const idPrefix = useId();
   const framing = job.portrait?.framing ?? "face";
-  const column = { job, idPrefix, renderLink, showSockets, slots: config.slots };
+  // This job's own URL, which a param action adds its parameter to.
+  const currentHref = jobHref(config, job.id, basePath, jobParam);
+  const column = { job, idPrefix, renderLink, showSockets, slots: config.slots, currentHref, jobParam };
 
   return (
     <section className="cs" data-cs-theme={theme} data-cs-labels={labels} aria-label={label}>
@@ -166,6 +170,8 @@ function SlotList({
   idPrefix,
   renderLink,
   showSockets,
+  currentHref,
+  jobParam,
 }: {
   position: SlotPosition;
   slots: SlotDef[];
@@ -173,6 +179,8 @@ function SlotList({
   idPrefix: string;
   renderLink: RenderLink;
   showSockets: boolean;
+  currentHref: string;
+  jobParam: string;
 }) {
   let here = slots.filter((slot) => slot.position === position);
   // One slot each side of the job title; parseConfig reports any extras.
@@ -191,6 +199,8 @@ function SlotList({
           labelId={`${idPrefix}label-${slot.id}`}
           renderLink={renderLink}
           showSockets={showSockets}
+          currentHref={currentHref}
+          jobParam={jobParam}
         />
       ))}
     </ul>
@@ -212,6 +222,8 @@ function Slot({
   labelId,
   renderLink,
   showSockets,
+  currentHref,
+  jobParam,
 }: {
   slot: SlotDef;
   content: SlotContent | undefined;
@@ -219,6 +231,8 @@ function Slot({
   labelId: string;
   renderLink: RenderLink;
   showSockets: boolean;
+  currentHref: string;
+  jobParam: string;
 }) {
   const face = (
     <>
@@ -249,7 +263,9 @@ function Slot({
   }
 
   const { action } = content;
-  const href = actionHref(action);
+  // A param action may not set the job parameter (the schema refuses "job",
+  // but a host can name its own); that one renders tooltip-only, like none.
+  const href = action.kind === "param" && action.name === jobParam ? null : actionHref(action, currentHref);
   const common = { className: "cs-slot__face", "aria-describedby": tipId };
 
   let trigger: ReactNode;
@@ -264,6 +280,8 @@ function Slot({
     );
   } else if (action.kind === "link") {
     trigger = renderLink({ ...common, href, intent: "page", children: face });
+  } else if (action.kind === "param") {
+    trigger = renderLink({ ...common, href, intent: "param", children: face });
   } else if (action.kind === "external" && action.newTab) {
     trigger = (
       <a {...common} href={href} target="_blank" rel="noopener noreferrer">

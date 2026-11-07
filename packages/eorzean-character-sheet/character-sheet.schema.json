@@ -353,6 +353,39 @@
                       "properties": {
                         "kind": {
                           "type": "string",
+                          "const": "param"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 40,
+                          "pattern": "^(?!job$)[a-z][a-z0-9_\\-]*$",
+                          "description": "A query parameter to set on the current page (keeping ?job=), e.g. \"stack\". Not \"job\", which picks the job."
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80,
+                          "description": "The value to set it to."
+                        },
+                        "target": {
+                          "description": "Element id on the same page to scroll to after, without the #.",
+                          "type": "string",
+                          "maxLength": 40,
+                          "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "name",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
                           "const": "none"
                         }
                       },

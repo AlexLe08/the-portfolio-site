@@ -85,7 +85,7 @@ def test_slot_action_with_unknown_kind_lists_the_allowed_kinds(config):
     config["jobs"][0]["slots"]["core"]["action"] = {"kind": "teleport"}
 
     assert issues_by_path(config) == {
-        "jobs.0.slots.core.action.kind": 'must be one of "anchor", "link", "external", "none"'
+        "jobs.0.slots.core.action.kind": 'must be one of "anchor", "link", "external", "param", "none"'
     }
 
 
@@ -109,6 +109,70 @@ def test_external_https_link_is_valid(config):
     }
 
     assert character_sheet.find_issues(config) == []
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        {"kind": "param", "name": "stack", "value": "fastapi", "target": "projects"},
+        {"kind": "param", "name": "stack", "value": "fastapi"},
+    ],
+)
+def test_param_action_is_valid_with_or_without_a_target(config, action):
+    config["jobs"][0]["slots"]["core"]["action"] = action
+
+    assert character_sheet.find_issues(config) == []
+
+
+@pytest.mark.parametrize("name", ["job", "Stack Filter"])
+def test_param_action_name_must_match_the_pattern(config, name):
+    # "job" picks the job, so a param action may not set it. The issue being
+    # at action.name shows the kind picked the param branch.
+    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "param", "name": name, "value": "x"}
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [
+        (["jobs", 0, "slots", "core", "action", "name"], "pattern")
+    ]
+
+
+def test_param_action_reports_a_missing_value(config):
+    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "param", "name": "stack"}
+
+    assert issues_by_path(config) == {
+        "jobs.0.slots.core.action": "'value' is a required property"
+    }
+
+
+def test_param_action_value_has_a_max_length(config):
+    config["jobs"][0]["slots"]["core"]["action"] = {
+        "kind": "param",
+        "name": "stack",
+        "value": "x" * 81,
+    }
+
+    issues = character_sheet.find_issues(config)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [
+        (["jobs", 0, "slots", "core", "action", "value"], "maxLength")
+    ]
+
+
+def test_param_action_with_a_key_from_another_kind_names_the_key(config):
+    config["jobs"][0]["slots"]["core"]["action"] = {
+        "kind": "param",
+        "name": "stack",
+        "value": "fastapi",
+        "href": "/",
+    }
+
+    assert issues_by_path(config) == {
+        "jobs.0.slots.core.action.href": "not in the schema (a typo?)"
+    }
+    assert [issue.kind for issue in character_sheet.find_issues(config)] == [
+        "additionalProperties"
+    ]
 
 
 def test_schema_closes_every_object():
@@ -323,6 +387,22 @@ def test_put_saves_and_get_returns_it_publicly(client, config):
     stored = client.get("/character-sheet")
     assert stored.status_code == 200
     assert stored.json()["config"] == config
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        {"kind": "param", "name": "stack", "value": "fastapi", "target": "projects"},
+        {"kind": "param", "name": "stack", "value": "fastapi"},
+    ],
+)
+def test_put_saves_a_param_action(client, config, action):
+    config["jobs"][0]["slots"]["core"]["action"] = action
+
+    response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json()["config"]["jobs"][0]["slots"]["core"]["action"] == action
 
 
 def test_put_is_idempotent(client, config):
