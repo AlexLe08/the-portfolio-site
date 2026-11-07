@@ -9,6 +9,7 @@
     "lint": "eslint && npm --prefix ../packages/eorzean-character-sheet run lint",
     "generate:types": "openapi-typescript ../backend/openapi.json -o lib/api-types.ts",
     "generate:character-schema": "npm --prefix ../packages/eorzean-character-sheet run generate:schema && cp ../packages/eorzean-character-sheet/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json",
+    "test": "vitest run && npm --prefix ../packages/eorzean-character-sheet test",
     "test:smoke": "playwright test"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "openapi-typescript": "^7.13.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.12"
   }
 }
