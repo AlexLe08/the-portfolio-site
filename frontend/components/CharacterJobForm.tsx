@@ -35,8 +35,11 @@ type Props = {
   limits: JobFieldLimits;
   tooltipLimits: TooltipFieldLimits;
   actionLimits: SlotActionLimits;
-  // Suggested anchor targets: see SlotActionFields.
+  // Suggested anchor targets, the param name pattern and stack tags: see
+  // SlotActionFields.
   anchorTargets: string[];
+  paramNamePattern: string;
+  stackTags: string[];
   // For the portrait; null when loading them failed.
   uploads: PortraitUpload[] | null;
   // As in CharacterSheetEditor.
@@ -44,6 +47,7 @@ type Props = {
   stored: string | null;
   unknownKeys: string[];
   deadAnchors: string[];
+  deadParams: string[];
 };
 
 // The fields of one job edited most. updateCharacterJob writes them into
@@ -57,11 +61,14 @@ export function CharacterJobForm({
   tooltipLimits,
   actionLimits,
   anchorTargets,
+  paramNamePattern,
+  stackTags,
   uploads,
   bundled,
   stored,
   unknownKeys,
   deadAnchors,
+  deadParams,
 }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
@@ -309,6 +316,8 @@ export function CharacterJobForm({
                 action={content?.action ?? { kind: "none" }}
                 limits={actionLimits}
                 anchorTargets={anchorTargets}
+                paramNamePattern={paramNamePattern}
+                stackTags={stackTags}
               />
               <SlotTooltipFields
                 slotId={slot.id}
@@ -375,6 +384,7 @@ export function CharacterJobForm({
         pending={pending}
         unknownKeys={unknownKeys}
         deadAnchors={deadAnchors}
+        deadParams={deadParams}
       />
       {note && <p className="form-help">{note}</p>}
 

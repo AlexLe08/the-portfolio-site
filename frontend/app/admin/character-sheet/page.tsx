@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addCharacterJob, removeCharacterJob, setDefaultCharacterJob, updateCharacterJob } from "./actions";
-import { ID_PATTERN, jobHref, LIMITS, resolveJob } from "@alexle08/eorzean-character-sheet";
+import { ID_PATTERN, jobHref, LIMITS, PARAM_NAME_PATTERN, resolveJob } from "@alexle08/eorzean-character-sheet";
 import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
@@ -12,7 +12,7 @@ import { Sheet } from "@/components/Sheet";
 import { StatusMessage } from "@/components/StatusMessage";
 import { adminRequest } from "@/lib/admin-api";
 import { loadCharacterSheetForAdmin } from "@/lib/character-admin";
-import { homeAnchorTargets } from "@/lib/character-anchors";
+import { homeAnchorTargets, stackTags } from "@/lib/character-anchors";
 
 export const metadata = {
   title: "Character sheet",
@@ -48,6 +48,8 @@ const TOOLTIP_LIMITS: TooltipFieldLimits = {
 const ACTION_LIMITS: SlotActionLimits = {
   target: LIMITS.id,
   href: LIMITS.action.href,
+  paramName: LIMITS.action.paramName,
+  paramValue: LIMITS.action.paramValue,
 };
 
 // One job at a time, picked with ?job= like the home page, plus which job
@@ -56,11 +58,12 @@ const ACTION_LIMITS: SlotActionLimits = {
 export default async function AdminCharacterSheetPage({
   searchParams,
 }: PageProps<"/admin/character-sheet">) {
-  const [{ parsed, bundled, stored, unknownKeys, deadAnchors }, { job: jobParam, removed }, uploads] = await Promise.all([
-    loadCharacterSheetForAdmin(),
-    searchParams,
-    loadUploads(),
-  ]);
+  const [
+    { parsed, bundled, stored, unknownKeys, deadAnchors, deadParams },
+    { job: jobParam, removed },
+    uploads,
+    tags,
+  ] = await Promise.all([loadCharacterSheetForAdmin(), searchParams, loadUploads(), loadStackTags()]);
   const jsonLink = <Link href={`${BASE_PATH}/json`}>Edit as JSON</Link>;
 
   // Every save checks the whole document strictly, so with problems in
@@ -146,11 +149,14 @@ export default async function AdminCharacterSheetPage({
         actionLimits={ACTION_LIMITS}
         // The ids the home page renders for this job.
         anchorTargets={homeAnchorTargets(config, job)}
+        paramNamePattern={PARAM_NAME_PATTERN.source}
+        stackTags={tags}
         uploads={uploads}
         bundled={bundled}
         stored={stored}
         unknownKeys={unknownKeys}
         deadAnchors={deadAnchors}
+        deadParams={deadParams}
       />
 
       {/* A separate form: nested in the job's form, it would submit it. */}
@@ -172,4 +178,11 @@ async function loadUploads(): Promise<PortraitUpload[] | null> {
   return (
     result?.data?.map(({ url, alt_text, width, height }) => ({ url, alt_text, width, height })) ?? null
   );
+}
+
+// Suggested values for a ?stack= param action: the tags of the projects
+// the home page lists. Only suggestions, so a failed load offers none.
+async function loadStackTags(): Promise<string[]> {
+  const result = await adminRequest((api) => api.GET("/admin/projects"));
+  return stackTags(result?.data?.filter((project) => project.published) ?? []);
 }

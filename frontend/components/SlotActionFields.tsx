@@ -3,9 +3,10 @@
 import { useState } from "react";
 import type { SlotAction } from "@alexle08/eorzean-character-sheet";
 import { openDetails } from "@/components/SlotTooltipFields";
+import { PROJECTS_ANCHOR, STACK_PARAM } from "@/lib/character-anchors";
 
-// Read from the zod schema by the page, like TooltipFieldLimits.
-export type SlotActionLimits = Record<"target" | "href", number | null>;
+// Read from the package's LIMITS by the page, like TooltipFieldLimits.
+export type SlotActionLimits = Record<"target" | "href" | "paramName" | "paramValue", number | null>;
 
 type Props = {
   slotId: string;
@@ -14,6 +15,10 @@ type Props = {
   // Ids the home page renders for this job (its sections, then the
   // project list), offered for anchors. Others can still be typed.
   anchorTargets: string[];
+  // PARAM_NAME_PATTERN's source, passed in so zod stays out of the bundle.
+  paramNamePattern: string;
+  // Published projects' stack tags, offered as values for ?stack=.
+  stackTags: string[];
 };
 
 const KINDS: { kind: SlotAction["kind"]; label: string }[] = [
@@ -21,25 +26,38 @@ const KINDS: { kind: SlotAction["kind"]; label: string }[] = [
   { kind: "anchor", label: "A section on the home page" },
   { kind: "link", label: "A page on this site" },
   { kind: "external", label: "Another website" },
+  { kind: "param", label: "A query parameter on this page" },
 ];
-
-// A param action has no inputs here yet, so it's offered only on a slot that
-// already has one (set as JSON). Kept selected, its kind submits unchanged
-// and updateCharacterJob keeps the saved action as it is.
-const PARAM_KIND = { kind: "param", label: "A query parameter on this page (edit as JSON)" } as const;
 
 // What clicking one slot does, inside CharacterJobForm. Only the selected
 // kind's inputs are rendered, so only they submit; field names start with
 // "action.<slot id>.", which updateCharacterJob reads back.
-export function SlotActionFields({ slotId, action, limits, anchorTargets }: Props) {
+export function SlotActionFields({
+  slotId,
+  action,
+  limits,
+  anchorTargets,
+  paramNamePattern,
+  stackTags,
+}: Props) {
   const [kind, setKind] = useState(action.kind);
+  // Tracked only to offer stack tags as values while the name is "stack".
+  const savedParam = action.kind === "param" ? action : null;
+  const [paramName, setParamName] = useState(savedParam?.name ?? "");
   const name = (field: string) => `action.${slotId}.${field}`;
   const id = (field: string) => `action-${slotId}-${field}`;
   const max = (limit: number | null) => limit ?? undefined;
   // Switching kind unmounts the other inputs, so switching back shows the
   // saved value again rather than what was typed.
   const href = action.kind === "link" || action.kind === "external" ? action.href : "";
-  const kinds = action.kind === "param" ? [...KINDS, PARAM_KIND] : KINDS;
+  // Shared by anchors and a param action's target; one kind renders at a time.
+  const targetList = (
+    <datalist id={id("targets")}>
+      {anchorTargets.map((target) => (
+        <option key={target} value={target} />
+      ))}
+    </datalist>
+  );
 
   return (
     <>
@@ -54,7 +72,7 @@ export function SlotActionFields({ slotId, action, limits, anchorTargets }: Prop
           onChange={(event) => setKind(event.target.value as SlotAction["kind"])}
           className="form-input"
         >
-          {kinds.map((option) => (
+          {KINDS.map((option) => (
             <option key={option.kind} value={option.kind}>
               {option.label}
             </option>
@@ -78,11 +96,7 @@ export function SlotActionFields({ slotId, action, limits, anchorTargets }: Prop
             aria-describedby={id("target-help")}
             className="form-input"
           />
-          <datalist id={id("targets")}>
-            {anchorTargets.map((target) => (
-              <option key={target} value={target} />
-            ))}
-          </datalist>
+          {targetList}
           <p id={id("target-help")} className="form-help">
             Without the #. This job&rsquo;s sections use their slot&rsquo;s id, for example:{" "}
             {anchorTargets.join(", ")}
@@ -138,6 +152,79 @@ export function SlotActionFields({ slotId, action, limits, anchorTargets }: Prop
               defaultChecked={action.kind === "external" && action.newTab === true}
             />
             <label htmlFor={id("new_tab")}>Open in a new tab</label>
+          </div>
+        </>
+      )}
+
+      {kind === "param" && (
+        <>
+          <div className="form-field">
+            <label htmlFor={id("name")} className="form-label">
+              Parameter name
+            </label>
+            <input
+              id={id("name")}
+              name={name("name")}
+              required
+              onInvalid={openDetails}
+              maxLength={max(limits.paramName)}
+              pattern={paramNamePattern}
+              defaultValue={savedParam?.name ?? ""}
+              onChange={(event) => setParamName(event.target.value)}
+              list={id("names")}
+              aria-describedby={id("name-help")}
+              autoCapitalize="off"
+              spellCheck={false}
+              className="form-input"
+            />
+            <datalist id={id("names")}>
+              <option value={STACK_PARAM} />
+            </datalist>
+            <p id={id("name-help")} className="form-help">
+              Lowercase letters, digits, underscores, and hyphens; starts with a letter; not job.
+              The home page reads {STACK_PARAM}, which shows only the projects using one stack tag.
+            </p>
+          </div>
+          <div className="form-field">
+            <label htmlFor={id("value")} className="form-label">
+              Value
+            </label>
+            <input
+              id={id("value")}
+              name={name("value")}
+              required
+              onInvalid={openDetails}
+              maxLength={max(limits.paramValue)}
+              defaultValue={savedParam?.value ?? ""}
+              list={paramName.trim() === STACK_PARAM ? id("values") : undefined}
+              className="form-input"
+            />
+            {paramName.trim() === STACK_PARAM && (
+              <datalist id={id("values")}>
+                {stackTags.map((tag) => (
+                  <option key={tag} value={tag} />
+                ))}
+              </datalist>
+            )}
+          </div>
+          <div className="form-field">
+            <label htmlFor={id("target")} className="form-label">
+              Then scroll to
+            </label>
+            <input
+              id={id("target")}
+              name={name("target")}
+              maxLength={max(limits.target)}
+              // A new param action scrolls to the list it most likely filters.
+              defaultValue={savedParam ? (savedParam.target ?? "") : PROJECTS_ANCHOR}
+              list={id("targets")}
+              aria-describedby={id("param-target-help")}
+              className="form-input"
+            />
+            {targetList}
+            <p id={id("param-target-help")} className="form-help">
+              Optional. A section id, without the #; empty keeps the scroll position.
+            </p>
           </div>
         </>
       )}

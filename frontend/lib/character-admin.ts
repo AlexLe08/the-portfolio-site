@@ -1,7 +1,7 @@
 import "server-only";
 import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminApi } from "./admin-api";
-import { findDeadAnchors } from "./character-anchors";
+import { findDeadAnchors, findDeadParams } from "./character-anchors";
 import bundledConfig from "./character-config.json";
 
 // The character sheet as the admin pages edit it. Not getCharacterConfig():
@@ -32,5 +32,7 @@ export async function loadCharacterSheetForAdmin() {
     unknownKeys: parsed.errors.length === 0 ? findUnknownKeys(config, parsed.config) : [],
     // Likewise for anchors to sections the home page doesn't render.
     deadAnchors: parsed.config && parsed.errors.length === 0 ? findDeadAnchors(parsed.config) : [],
+    // And for param actions setting a parameter the home page doesn't read.
+    deadParams: parsed.config && parsed.errors.length === 0 ? findDeadParams(parsed.config) : [],
   };
 }

@@ -1,6 +1,7 @@
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import { SaveStatus } from "@/components/SaveStatus";
 import { StatusMessage } from "@/components/StatusMessage";
+import { STACK_PARAM } from "@/lib/character-anchors";
 
 type Props = {
   state: CharacterSheetFormState;
@@ -12,17 +13,21 @@ type Props = {
   // Anchor actions with no section to scroll to (see findDeadAnchors),
   // replaced on save the same way.
   deadAnchors: string[];
+  // Param actions whose parameter the home page doesn't read (see
+  // findDeadParams), likewise.
+  deadParams: string[];
 };
 
 // What a character sheet save reports, shared by the form and the raw JSON
 // editor, which save through the same checks (see actions.ts).
-export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnchors }: Props) {
+export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnchors, deadParams }: Props) {
   const saved = state && "saved" in state ? state : null;
   const problems = state && "problems" in state ? state.problems : undefined;
   // Not repeated under a refused save that already lists every one.
   const storedUnknownKeys =
     saved || unknownKeys.every((key) => problems?.includes(key)) ? [] : unknownKeys;
   const brokenAnchors = saved ? saved.deadAnchors : deadAnchors;
+  const unreadParams = saved ? saved.deadParams : deadParams;
   return (
     <>
       {/* The list goes inside the alert, so it's read out with the error. */}
@@ -58,6 +63,19 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
           <ul className="json-editor__problems">
             {brokenAnchors.map((anchor) => (
               <li key={anchor}>{anchor}</li>
+            ))}
+          </ul>
+        </StatusMessage>
+      )}
+      {/* Saved anyway: the package allows any name, for other sites. */}
+      {unreadParams.length > 0 && !pending && (
+        <StatusMessage tone="info">
+          These slots set a query parameter the home page doesn&rsquo;t read, so clicking them only
+          changes the address. The home page reads {STACK_PARAM}, which filters the projects by a
+          stack tag:
+          <ul className="json-editor__problems">
+            {unreadParams.map((param) => (
+              <li key={param}>{param}</li>
             ))}
           </ul>
         </StatusMessage>

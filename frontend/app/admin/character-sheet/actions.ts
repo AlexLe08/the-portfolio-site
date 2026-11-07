@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
 import { adminRequest } from "@/lib/admin-api";
-import { findDeadAnchors } from "@/lib/character-anchors";
+import { findDeadAnchors, findDeadParams } from "@/lib/character-anchors";
 import type { components } from "@/lib/api-types";
 import bundledConfig from "@/lib/character-config.json";
 import { formText } from "@/lib/form-data";
@@ -13,10 +13,11 @@ import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 // problems lists every issue by path, so a long document can be fixed in
 // one pass. A save returns the document it stored as compact JSON, so the
 // editor can compare it with the bundled file without re-fetching, and
-// anchor actions the home page has no section for (findDeadAnchors).
+// anchor actions the home page has no section for (findDeadAnchors), and
+// param actions it doesn't read (findDeadParams).
 export type CharacterSheetFormState =
   | { error: string; problems?: string[] }
-  | { saved: string; deadAnchors: string[] }
+  | { saved: string; deadAnchors: string[]; deadParams: string[] }
   | null;
 
 type JsonObject = Record<string, unknown>;
@@ -269,6 +270,11 @@ function applyActionForm(saved: JsonObject, formData: FormData, prefix: string):
     action.target = text("target").replace(/^#/, "");
   } else if (kind === "link" || kind === "external") {
     action.href = text("href");
+  } else if (kind === "param") {
+    // An empty name or value is written as it is, so saveConfig names it.
+    action.name = text("name");
+    action.value = text("value");
+    setOrDelete(action, "target", text("target").replace(/^#/, ""));
   }
   if (kind === "external" && formData.has(`${prefix}new_tab`)) action.newTab = true;
   else delete action.newTab;
@@ -351,6 +357,7 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
   return {
     saved: JSON.stringify(config),
     deadAnchors: findDeadAnchors(parsed),
+    deadParams: findDeadParams(parsed),
   };
 }
 
