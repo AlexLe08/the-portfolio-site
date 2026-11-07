@@ -173,6 +173,11 @@ Frontend:
   `Sheet` in `AutoRetry`), and boxed status text is
   `StatusMessage` (tone `error` | `success` | `info`, which sets the ARIA
   role). Spacing goes in `globals.css` classes, not inline styles.
+- The home page (and the admin preview) reads `?stack=` (`STACK_PARAM`
+  in `lib/character-anchors.ts`) and filters the project list on the
+  server by one stack tag. A `param` slot action with any other name does
+  nothing on this site; the job form warns about one after saving
+  (`findDeadParams`).
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
 - The home page's character sheet is the workspace package
@@ -180,7 +185,8 @@ Frontend:
   meant to be published on its own later. Import it only through its
   entries: `.` (data: `parseConfig`, `resolveJob`, `LIMITS`, types; no
   React), `/react` (`CharacterSheet`), `/schema` (the config's zod
-  schema). Forms read max lengths from `LIMITS`, never from zod. Public
+  schema). Forms read max lengths from `LIMITS` and patterns from the
+  exported `ID_PATTERN` / `PARAM_NAME_PATTERN`, never from zod. Public
   pages get the config from `getCharacterConfig()`, which applies
   `publicConfig()` (published jobs only); admin code uses the whole
   config, drafts and hidden jobs included. It
