@@ -1,0 +1,141 @@
+#!/usr/bin/env node
+// Would the tests notice if this code broke? The frontend twin of
+// scripts/mutate.py: breaks the code on purpose, one change at a time,
+// runs the Vitest suites, and reports which tests failed. A change no test
+// catches is a gap in the tests. Node built-ins only.
+//
+// One change:
+//
+//     node scripts/mutate.mjs frontend/lib/character-anchors.ts \
+//         'action.name === STACK_PARAM' 'false'
+//
+// Several, from a JSON list of {"name", "file", "old", "new"} objects
+// (paths from the repository root):
+//
+//     node scripts/mutate.mjs mutations.json -- lib/character-anchors
+//
+// Each `old` must appear exactly once in its file. Every change runs both
+// suites, frontend/ (lib/) and the character sheet package, as `npm test`
+// does, since a package change can break a lib/ test. Arguments after `--`
+// go to `vitest run` in both (file filters, -t "name"); a suite they match
+// nothing in passes. The file is always restored, also on Ctrl-C or kill;
+// a copy is kept in .logs/mutate-backup/ until then, in case the process
+// is killed outright. Exits 1 if any change went unnoticed, 2 on bad
+// arguments (before anything is changed).
+
+import { spawn } from "node:child_process";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const VITEST = join(ROOT, "node_modules", ".bin", "vitest");
+const SUITES = ["frontend", "packages/eorzean-character-sheet"];
+const BACKUPS = join(ROOT, ".logs", "mutate-backup");
+
+const USAGE = `usage: node scripts/mutate.mjs FILE OLD NEW [-- vitest args]
+       node scripts/mutate.mjs MUTATIONS.json [-- vitest args]`;
+
+function fail(message) {
+  console.error(message);
+  process.exit(2);
+}
+
+function loadMutations(args) {
+  if (args.length === 1 && args[0].endsWith(".json")) return JSON.parse(readFileSync(args[0], "utf8"));
+  if (args.length === 3) {
+    const [file, old, replacement] = args;
+    return [{ name: `${JSON.stringify(old)} -> ${JSON.stringify(replacement)}`, file, old, new: replacement }];
+  }
+  fail(USAGE);
+}
+
+// Fail before changing anything if a mutation can't apply cleanly.
+function check(mutations) {
+  for (const mutation of mutations) {
+    const count = readFileSync(join(ROOT, mutation.file), "utf8").split(mutation.old).length - 1;
+    if (count !== 1) fail(`${mutation.name}: \`old\` appears ${count} times in ${mutation.file}, not once`);
+  }
+}
+
+// One suite's failing tests, as "suite: test name". A file that didn't
+// load (a syntax error the change introduced) counts as one failure.
+function runSuite(suite, vitestArgs) {
+  return new Promise((resolve) => {
+    const child = spawn(VITEST, ["run", "--reporter=json", "--passWithNoTests", ...vitestArgs], {
+      cwd: join(ROOT, suite),
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    let stdout = "";
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.on("close", (code) => {
+      let report;
+      try {
+        report = JSON.parse(stdout);
+      } catch {
+        resolve(code === 0 ? [] : [`${suite}: vitest exited ${code} without a report`]);
+        return;
+      }
+      const failed = report.testResults.flatMap((file) => {
+        const tests = file.assertionResults.filter((test) => test.status === "failed");
+        if (tests.length) return tests.map((test) => `${suite}: ${test.fullName}`);
+        return file.status === "failed" ? [`${suite}: ${basename(file.name)} (didn't run)`] : [];
+      });
+      resolve(failed);
+    });
+  });
+}
+
+// The file being mutated right now, so a signal can put it back.
+let current = null;
+
+function restore() {
+  if (!current) return;
+  writeFileSync(current.path, current.original);
+  rmSync(current.backup, { force: true });
+  current = null;
+}
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    restore();
+    process.exit(1);
+  });
+}
+
+// Apply one mutation, run both suites, restore. Returns the failing tests.
+async function run(mutation, vitestArgs) {
+  const path = join(ROOT, mutation.file);
+  const original = readFileSync(path, "utf8");
+  mkdirSync(BACKUPS, { recursive: true });
+  const backup = join(BACKUPS, basename(path));
+  copyFileSync(path, backup);
+  current = { path, original, backup };
+  try {
+    writeFileSync(path, original.replace(mutation.old, () => mutation.new));
+    const results = [];
+    for (const suite of SUITES) results.push(...(await runSuite(suite, vitestArgs)));
+    return results;
+  } finally {
+    restore();
+  }
+}
+
+const args = process.argv.slice(2);
+const split = args.indexOf("--");
+const vitestArgs = split === -1 ? [] : args.slice(split + 1);
+const mutations = loadMutations(split === -1 ? args : args.slice(0, split));
+check(mutations);
+
+let survived = 0;
+for (const mutation of mutations) {
+  const caught = await run(mutation, vitestArgs);
+  if (caught.length) {
+    console.log(`caught    ${mutation.name}  (${caught.length} failing)`);
+    for (const test of caught) console.log(`            ${test}`);
+  } else {
+    survived += 1;
+    console.log(`SURVIVED  ${mutation.name}  (no test failed)`);
+  }
+}
+process.exit(survived ? 1 : 0);
