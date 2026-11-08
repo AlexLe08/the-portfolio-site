@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
-import { actionHref, jobHref, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
+import { jobHref, withQuery, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
 import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
@@ -48,11 +48,8 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
   const jobUrl = jobHref(config, job.id, basePath);
   const filter = projects && filterByStack(projects, stack);
   const shown = filter?.projects ?? projects ?? [];
-  // A reload of this page, filter included.
-  const wanted = readStackParam(stack);
-  const retryHref = wanted
-    ? (actionHref({ kind: "param", name: STACK_PARAM, value: wanted }, jobUrl) ?? jobUrl)
-    : jobUrl;
+  // A reload of this page, filter included (none adds nothing).
+  const retryHref = withQuery(jobUrl, { [STACK_PARAM]: readStackParam(stack) });
 
   return (
     <Sheet
@@ -113,7 +110,7 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
           {filter && (
             <StatusMessage tone="info">
               {filter.tag ? `Showing projects using ${filter.tag}. ` : "No published projects use that stack. "}
-              <Link href={`${jobUrl}#${PROJECTS_ANCHOR}`}>Show all projects</Link>
+              <Link href={withQuery(jobUrl, {}, PROJECTS_ANCHOR)}>Show all projects</Link>
             </StatusMessage>
           )}
           {shown.length > 0 && (
