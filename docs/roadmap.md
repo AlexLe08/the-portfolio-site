@@ -1050,8 +1050,8 @@
   life in April 2026), and both suites use Vitest `^5.1.0`. `@types/node`
   went from `^20` to `^24`, matching the runtime and required by Vitest
   5's peer range (`^22 || >=24`). `lockfile-diff.mjs`: 8 changed
-  (`vitest` and `@vitest/*` to 5.1.0, `@types/node` 24.19.2, and four of
-  Vitest's own dependencies), 10 removed (sub-packages Vitest 5 now
+  (`vitest` and `@vitest/*` to 5.1.0, `@types/node` 24.19.2 with its
+  `undici-types`, and three of Vitest's own dependencies), 10 removed (sub-packages Vitest 5 now
   bundles), 2 added (nested `magic-string` copies); `vite` 8.3.6 stays,
   as a peer now. The one change that mattered here: Vitest 5's JSON
   reporter writes `.vitest/json/output.json` instead of stdout, so

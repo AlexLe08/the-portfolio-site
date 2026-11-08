@@ -18,7 +18,9 @@
 // suites, frontend/ (lib/) and the character sheet package, as `npm test`
 // does, since a package change can break a lib/ test. Arguments after `--`
 // go to `vitest run` in both (file filters, -t "name"); a suite they match
-// nothing in passes. The file is always restored, also on Ctrl-C or kill;
+// nothing in passes. Don't pass --reporter or --outputFile: the script
+// reads its own JSON report, and without it a change reads as unnoticed.
+// The file is always restored, also on Ctrl-C or kill;
 // a copy is kept in .logs/mutate-backup/ until then, in case the process
 // is killed outright. Exits 1 if any change went unnoticed, 2 on bad
 // arguments (before anything is changed).
