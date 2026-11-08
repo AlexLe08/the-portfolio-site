@@ -1,4 +1,4 @@
-import type { CharacterSheetConfig, Job, SlotAction } from "@alexle08/eorzean-character-sheet";
+import type { CharacterSheetConfig, Job, SlotAction } from "@solution-nine/wol-character-panel";
 import { describe, expect, it } from "vitest";
 import {
   filterByStack,

@@ -1,4 +1,4 @@
-# Character sheet (`@alexle08/eorzean-character-sheet`)
+# Character sheet (`@solution-nine/wol-character-panel`)
 
 A panel modelled on an RPG character/equipment screen:
 
@@ -23,11 +23,11 @@ the host's bundler compiles it.
 
 | Import | What it holds |
 | --- | --- |
-| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, `withQuery` (sets or removes query parameters on an href, keeping the rest; `jobHref` and `actionHref` are built on it), the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config), `ID_PATTERN` and `PARAM_NAME_PATTERN`. No React or CSS, so server code and plain Node can use it |
-| `@alexle08/eorzean-character-sheet/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
-| `@alexle08/eorzean-character-sheet/schema` | `characterSheetConfigSchema`, the whole config's zod schema. Its parts are internal |
-| `@alexle08/eorzean-character-sheet/character-sheet.css` | The styles, for hosts that want to control CSS order |
-| `@alexle08/eorzean-character-sheet/character-sheet.schema.json` | The JSON Schema other backends validate against |
+| `@solution-nine/wol-character-panel` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, `withQuery` (sets or removes query parameters on an href, keeping the rest; `jobHref` and `actionHref` are built on it), the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config), `ID_PATTERN` and `PARAM_NAME_PATTERN`. No React or CSS, so server code and plain Node can use it |
+| `@solution-nine/wol-character-panel/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
+| `@solution-nine/wol-character-panel/schema` | `characterSheetConfigSchema`, the whole config's zod schema. Its parts are internal |
+| `@solution-nine/wol-character-panel/character-sheet.css` | The styles, for hosts that want to control CSS order |
+| `@solution-nine/wol-character-panel/character-sheet.schema.json` | The JSON Schema other backends validate against |
 
 `react` and `zod` are peer dependencies: the host provides them.
 
@@ -58,7 +58,7 @@ when writing a config, while `parseConfig` strips unknown keys when reading one
 (`findUnknownKeys` lists them).
 
 The schema's `$id` is
-`https://cdn.jsdelivr.net/npm/@alexle08/eorzean-character-sheet@1/character-sheet.schema.json`.
+`https://cdn.jsdelivr.net/npm/@solution-nine/wol-character-panel@1/character-sheet.schema.json`.
 `scripts/generate-schema.mjs` builds it from `name` and the major part of
 `version` in `package.json`, so it names the contract, not a release:
 
@@ -144,8 +144,8 @@ identifier.
 ## Usage
 
 ```tsx
-import { parseConfig, resolveJob } from "@alexle08/eorzean-character-sheet";
-import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
+import { parseConfig, resolveJob } from "@solution-nine/wol-character-panel";
+import { CharacterSheet } from "@solution-nine/wol-character-panel/react";
 
 const { config, errors } = parseConfig(json);   // or: const { config } = await loadConfig(sources, fallback)
 const job = resolveJob(config, searchParams.job);

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Portrait } from "@alexle08/eorzean-character-sheet";
-import type { LinkRendererProps } from "@alexle08/eorzean-character-sheet/react";
+import type { Portrait } from "@solution-nine/wol-character-panel";
+import type { LinkRendererProps } from "@solution-nine/wol-character-panel/react";
 
 // How the framework-neutral character sheet renders on this site: <Link>
 // for client-side navigation, next/image (through the Cloudinary loader)

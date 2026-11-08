@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
+import { findUnknownKeys, parseConfig } from "@solution-nine/wol-character-panel";
 import { adminRequest } from "@/lib/admin-api";
 import { findDeadAnchors, findDeadParams } from "@/lib/character-anchors";
 import type { components } from "@/lib/api-types";

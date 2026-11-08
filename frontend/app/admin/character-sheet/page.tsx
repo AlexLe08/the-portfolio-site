@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addCharacterJob, removeCharacterJob, setDefaultCharacterJob, updateCharacterJob } from "./actions";
-import { ID_PATTERN, jobHref, LIMITS, PARAM_NAME_PATTERN, resolveJob } from "@alexle08/eorzean-character-sheet";
+import { ID_PATTERN, jobHref, LIMITS, PARAM_NAME_PATTERN, resolveJob } from "@solution-nine/wol-character-panel";
 import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";

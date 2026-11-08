@@ -1094,6 +1094,21 @@
   too; screenshots of both themes (the `game` one with the class added by
   hand, since the lab page doesn't pass the prop).
 
+- The character sheet package renamed for publishing (step 1 of the move
+  to its own repository): `@alexle08/eorzean-character-sheet` became
+  `@solution-nine/wol-character-panel`, in `packages/wol-character-panel/`
+  (`git mv`). `solution-nine` is a free npm organization owned by the npm
+  user `alexle08` (decided 2026-11-08): a neutral name that can hold later
+  projects, and "Eorzea" (a Square Enix trademark) is gone from the name.
+  The schema `$id` is now
+  `https://cdn.jsdelivr.net/npm/@solution-nine/wol-character-panel@1/character-sheet.schema.json`,
+  regenerated into both copies; the backend's `$id` test follows the name.
+  The package is MIT-licensed (`LICENSE` in its folder, so it moves with
+  it) and stays `private` at 1.0.0 until it's published from its own
+  repository. The lockfile changed only the workspace link's name. The
+  file names (`character-sheet.css`, `character-sheet.schema.json`) and
+  the exports (`CharacterSheet`) keep "character sheet".
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -1123,13 +1138,33 @@
     using it. A Python validator package (`find_issues` and its `oneOf`
     explanation) only if someone asks, and then in the same repository, so
     it ships with the schema version it checks. Done so far: the in-repo
-    package with its versioned `$id` (see Done). Left for the move:
-    - Its own repository and a build step for publishing (keeping
-      `SlotHover`'s `"use client"`); `generate:character-schema`'s `cp`
-      then reads the installed package.
-    - The npm scope `@alexle08` (check it's free), and "Eorzea" is a
-      Square Enix trademark: check their fan-content terms or publish
-      under a neutral name.
+    package with its versioned `$id`, and its rename to
+    `@solution-nine/wol-character-panel` (see Done). Left for the move
+    (planned 2026-11-08):
+    - The repository `AlexLe08/wol-character-panel` (created), started
+      from `git subtree split` of `packages/wol-character-panel/`, so it
+      keeps the package's history since #75; earlier history stays here.
+      It declares as devDependencies what it now borrows from
+      `frontend/` (`react`, `zod`, `typescript`, `@types/react`).
+    - A build step: plain `tsc` to `dist/`, ESM only, one file per
+      source file, so `SlotHover`'s `"use client"` stays at the top of its
+      own file (tsup's CJS output puts `"use strict"` above it; a
+      bundler adds nothing here). Relative imports gain `.ts` extensions
+      with `rewriteRelativeImportExtensions`; the CSS is copied. Its CI:
+      lint, `tsc -p .` including test files (closing the item above),
+      Vitest, build, and `npm pack --dry-run`.
+    - Publishing: the first 1.0.0 by hand with 2FA (npm configures a
+      trusted publisher only on an existing package; check the docs
+      then), then releases from a tag through GitHub Actions with
+      trusted publishing (OIDC, provenance included; npm CLI 11.5.1+).
+      Before that, the packed tarball installed in a site worktree must
+      pass `check.sh frontend` and look the same on the demo stack.
+    - Switching this site to the published package: `packages/` goes,
+      the root workspace stays (`["frontend"]`, so the lockfile, CI and
+      Vercel install don't move), `generate:character-schema` copies from
+      `node_modules`, and the schema copy-match and `$id`-major checks
+      move from the backend to a frontend Vitest test (approved
+      2026-11-08), because backend CI never installs `node_modules`.
     - The import allowlist doesn't see dynamic `import()` or `require()`;
       add a `no-restricted-syntax` rule if the package ever uses them
       (it doesn't today).

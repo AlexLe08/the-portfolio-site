@@ -6,14 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint && npm --prefix ../packages/eorzean-character-sheet run lint",
+    "lint": "eslint && npm --prefix ../packages/wol-character-panel run lint",
     "generate:types": "openapi-typescript ../backend/openapi.json -o lib/api-types.ts",
-    "generate:character-schema": "npm --prefix ../packages/eorzean-character-sheet run generate:schema && cp ../packages/eorzean-character-sheet/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json",
-    "test": "vitest run && npm --prefix ../packages/eorzean-character-sheet test",
+    "generate:character-schema": "npm --prefix ../packages/wol-character-panel run generate:schema && cp ../packages/wol-character-panel/character-sheet.schema.json ../backend/app/services/character_sheet.schema.json",
+    "test": "vitest run && npm --prefix ../packages/wol-character-panel test",
     "test:smoke": "playwright test"
   },
   "dependencies": {
-    "@alexle08/eorzean-character-sheet": "^1.0.0",
+    "@solution-nine/wol-character-panel": "^1.0.0",
     "@sentry/nextjs": "^11.9.0",
     "next": "16.3.6",
     "openapi-fetch": "^0.17.0",

@@ -25,7 +25,7 @@ the Frontend architecture rules, "Design system", and "Agent workflow".
    CLAUDE.md list entry goes in your report for the orchestrator. New
    logic in `lib/` or the package's `src/` gets Vitest tests beside it;
    run `scripts/mutate.mjs` on it when they passed on the first run.
-3. After changing `packages/eorzean-character-sheet/src/schema.ts`, run
+3. After changing `packages/wol-character-panel/src/schema.ts`, run
    `npm run generate:character-schema` from `frontend/`
    and commit what it writes.
 4. Run `scripts/check.sh frontend`. For visible changes, check them on

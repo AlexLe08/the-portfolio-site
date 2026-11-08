@@ -1,5 +1,5 @@
 import "server-only";
-import { findUnknownKeys, parseConfig } from "@alexle08/eorzean-character-sheet";
+import { findUnknownKeys, parseConfig } from "@solution-nine/wol-character-panel";
 import { adminApi } from "./admin-api";
 import { findDeadAnchors, findDeadParams } from "./character-anchors";
 import bundledConfig from "./character-config.json";
