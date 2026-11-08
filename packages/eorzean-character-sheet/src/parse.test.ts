@@ -66,7 +66,9 @@ describe("parseConfig", () => {
     });
 
     it("returns no config without jobs", () => {
-      expect(parseConfig(rawConfig({ jobs: [] })).config).toBeNull();
+      const { config, errors } = parseConfig(rawConfig({ jobs: [] }));
+      expect(config).toBeNull();
+      expect(errors).toEqual([expect.stringMatching(/^jobs: /)]);
     });
 
     it("reports a duplicate slot id but keeps the config", () => {
@@ -143,6 +145,15 @@ describe("parseConfig", () => {
       expect(config?.defaultJobId).toBe("data");
       expect(errors.length).toBeGreaterThan(0);
       for (const error of errors) expect(error).toMatch(/^jobs\.0\./);
+    });
+
+    it("adds its own error when the default's id was never in a job object", () => {
+      // A job that isn't an object has no id to remember, so nothing
+      // already explains why "web" is missing.
+      const { config, errors } = parseConfig(rawConfig({ defaultJobId: "web", jobs: ["web", rawJob("data")] }));
+      expect(config?.defaultJobId).toBe("data");
+      expect(errors.at(-1)).toBe('defaultJobId: no valid job "web", using "data"');
+      expect(errors[0]).toMatch(/^jobs\.0: /);
     });
 
     it("falls back when the default job isn't published", () => {

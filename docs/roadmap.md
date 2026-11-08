@@ -1007,11 +1007,16 @@
 - `scripts/mutate.mjs`, the Vitest twin of `scripts/mutate.py`, kept
   from that PR's one-off script: same arguments and JSON format, the
   failing tests named from Vitest's JSON reporter, a file that no longer
-  loads counted as caught. Every change runs both suites, since a
+  loads counted as caught, and so does a non-zero exit with no failed
+  test (the JSON reporter leaves out errors outside tests, such as an
+  unhandled rejection). Every change runs both suites, since a
   package change can break a `lib/` test. Restores the file on Ctrl-C
-  and `kill` (checked by killing it mid-run). Its first use, in the same
+  and `kill`, stopping vitest too (checked by killing it mid-run). A
+  missing `node_modules/.bin/vitest` is refused before anything changes;
+  a failed spawn also restores the file (by reading, not exercised).
+  Its first use, in the same
   PR: tests for the package's `parse.ts` (`parseConfig`,
-  `findUnknownKeys`, `loadConfig`; 29 tests), with 15 mutations, all
+  `findUnknownKeys`, `loadConfig`; 30 tests), with 15 mutations, all
   caught. zod's own messages are matched by their path only, so a zod
   update that rewords them doesn't break the tests.
 

@@ -24,8 +24,8 @@
 // arguments (before anything is changed).
 
 import { spawn } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -52,28 +52,49 @@ function loadMutations(args) {
 
 // Fail before changing anything if a mutation can't apply cleanly.
 function check(mutations) {
+  if (!existsSync(VITEST)) fail(`${VITEST} not found: run npm ci at the repository root`);
   for (const mutation of mutations) {
-    const count = readFileSync(join(ROOT, mutation.file), "utf8").split(mutation.old).length - 1;
+    const count = readFileSync(resolve(ROOT, mutation.file), "utf8").split(mutation.old).length - 1;
     if (count !== 1) fail(`${mutation.name}: \`old\` appears ${count} times in ${mutation.file}, not once`);
   }
 }
 
+// The file being mutated right now, so a signal can put it back, and the
+// vitest process running against it, so a signal can stop it too.
+let current = null;
+let child = null;
+
 // One suite's failing tests, as "suite: test name". A file that didn't
-// load (a syntax error the change introduced) counts as one failure.
+// load (a syntax error the change introduced) counts as one failure, and
+// so does a non-zero exit with no failed test in the report: the JSON
+// reporter leaves out errors outside tests (an unhandled rejection).
 function runSuite(suite, vitestArgs) {
-  return new Promise((resolve) => {
-    const child = spawn(VITEST, ["run", "--reporter=json", "--passWithNoTests", ...vitestArgs], {
+  return new Promise((done) => {
+    child = spawn(VITEST, ["run", "--reporter=json", "--passWithNoTests", ...vitestArgs], {
       cwd: join(ROOT, suite),
-      stdio: ["ignore", "pipe", "ignore"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
+    let stderr = "";
     child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    // Without this, a failed spawn throws outside the promise and run()'s
+    // finally never restores the file.
+    child.on("error", (error) => {
+      child = null;
+      done([`${suite}: vitest didn't start (${error.message})`]);
+    });
     child.on("close", (code) => {
+      child = null;
+      // The line naming the error ("CACError: Unknown option"), not the
+      // stack trace after it.
+      const lines = stderr.split("\n").map((line) => line.trim()).filter(Boolean);
+      const reason = lines.find((line) => /^\w*Error\b/.test(line)) ?? lines[0] ?? "no output";
       let report;
       try {
         report = JSON.parse(stdout);
       } catch {
-        resolve(code === 0 ? [] : [`${suite}: vitest exited ${code} without a report`]);
+        done(code === 0 ? [] : [`${suite}: vitest exited ${code} without a report: ${reason}`]);
         return;
       }
       const failed = report.testResults.flatMap((file) => {
@@ -81,13 +102,11 @@ function runSuite(suite, vitestArgs) {
         if (tests.length) return tests.map((test) => `${suite}: ${test.fullName}`);
         return file.status === "failed" ? [`${suite}: ${basename(file.name)} (didn't run)`] : [];
       });
-      resolve(failed);
+      if (failed.length === 0 && code !== 0) failed.push(`${suite}: vitest exited ${code} (errors outside tests)`);
+      done(failed);
     });
   });
 }
-
-// The file being mutated right now, so a signal can put it back.
-let current = null;
 
 function restore() {
   if (!current) return;
@@ -98,14 +117,18 @@ function restore() {
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
+    child?.kill();
     restore();
     process.exit(1);
   });
 }
+// A backstop for anything else that ends the process early (an uncaught
+// exception); restore() is synchronous and does nothing the second time.
+process.on("exit", restore);
 
 // Apply one mutation, run both suites, restore. Returns the failing tests.
 async function run(mutation, vitestArgs) {
-  const path = join(ROOT, mutation.file);
+  const path = resolve(ROOT, mutation.file);
   const original = readFileSync(path, "utf8");
   mkdirSync(BACKUPS, { recursive: true });
   const backup = join(BACKUPS, basename(path));
