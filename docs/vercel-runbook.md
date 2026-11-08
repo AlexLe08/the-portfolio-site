@@ -22,13 +22,14 @@ static/dynamic rendering) are first-class here without extra config.
 4. Under Settings > Build and Deployment, check the npm workspace setup
    (all free-tier):
    - "Include files outside the root directory in the Build Step" is
-     Enabled. The lockfile (`package-lock.json`), the root `package.json`
-     and `packages/` live outside `frontend/`.
+     Enabled. The lockfile (`package-lock.json`) and the root
+     `package.json` live outside `frontend/`.
    - Install Command is the default. npm, run in `frontend/`, finds the
      workspace root and installs from the root lockfile. An override like
      `cd frontend && npm ci` would bypass that.
-   - No custom Ignored Build Step that only diffs `frontend/`: changes in
-     `packages/` must rebuild too.
+   - No custom Ignored Build Step that only diffs `frontend/`: a
+     dependency change touches only the root lockfile, and must rebuild
+     too.
 5. Deploy.
 
 ## Environment variables

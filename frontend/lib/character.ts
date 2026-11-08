@@ -13,7 +13,8 @@ import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
 // and the per-job section text. Edit character-config.json; the JSON
-// Schema in packages/wol-character-panel gives editors autocomplete.
+// Schema the package ships (installed at the repo root) gives editors
+// autocomplete.
 //
 // The bundled file is checked strictly: any problem, even one parseConfig
 // could recover from, fails the build here instead of quietly dropping a

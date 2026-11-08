@@ -17,10 +17,9 @@ Monorepo:
   locally and in CI.
 - `frontend/`: Next.js App Router, React 19, TypeScript. Deployed to
   Vercel (Hobby).
-- `packages/`: npm workspace packages the frontend uses (currently
-  `wol-character-panel`; see its README and the roadmap).
-  The root `package.json` declares the workspaces; the one
-  `package-lock.json` and `node_modules/` are at the repo root.
+- The root `package.json` declares an npm workspace (`frontend` only),
+  so the one `package-lock.json` and `node_modules/` are at the repo
+  root.
 - `docs/`: one runbook per service, plus `roadmap.md`.
 - `render.yaml`: Render Blueprint. `docker-compose.yml`: optional local
   Postgres.
@@ -46,14 +45,12 @@ Backend (run from `backend/`, always via venv binaries; there is no plain
 
 Frontend (run from `frontend/`; expects the backend at
 `NEXT_PUBLIC_API_URL`, default `http://localhost:8000`):
-- Install: `npm ci` at the repo root (npm workspaces: one lockfile for
-  `frontend/` and `packages/`). Other npm commands still run from
-  `frontend/`. Packages are hoisted to the root `node_modules/`, so
+- Install: `npm ci` at the repo root (npm workspaces: one lockfile
+  there). Other npm commands still run from `frontend/`. Packages are hoisted to the root `node_modules/`, so
   Next's bundled docs are at `node_modules/next/dist/docs/` there.
 - `npm run dev`, `npm run lint`, `npm run build`
-- `npm test`: Vitest, `lib/**/*.test.ts` (`vitest.config.mts`), then
-  the character sheet package's own tests (`npm test` in its directory).
-  `npx vitest` from either directory watches.
+- `npm test`: Vitest, `lib/**/*.test.ts` (`vitest.config.mts`).
+  `npx vitest` watches.
 - `npm run test:smoke`: Playwright against production by default
   (`BASE_URL`/`API_URL` override it). Run `npx playwright install chromium`
   once first. See `docs/ci-cd-runbook.md`.
@@ -92,8 +89,7 @@ retyping the commands they wrap; each explains itself in its header:
   changes): breaks code on purpose and reports which backend tests catch
   it. Use it on new logic whose tests passed on the first run.
 - `scripts/mutate.mjs FILE OLD NEW [-- vitest args]` (or the same JSON
-  list): the same for the Vitest suites, `frontend/` and the character
-  sheet package, both on every change.
+  list): the same for the frontend's Vitest suite.
 - `scripts/lockfile-diff.mjs [ref] [--added]`: what an install changed in
   `package-lock.json` against a ref (default `origin/main`): every
   changed version and removed package, and the added count. Run it after
@@ -156,7 +152,7 @@ Frontend:
   page whose loads failed with `router.refresh()`) and the messages that
   read it, `components/FallbackNotice.tsx` and
   `components/ProjectsUnavailable.tsx`,
-  the character sheet package's `src/SlotHover.tsx`,
+  the character sheet package's `SlotHover` (a dependency's own file),
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
@@ -191,34 +187,30 @@ Frontend:
   (`findDeadParams`).
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
-- The home page's character sheet is the workspace package
-  `@solution-nine/wol-character-panel` (`packages/wol-character-panel/`),
-  meant to be published on its own later. Import it only through its
-  entries: `.` (data: `parseConfig`, `resolveJob`, `LIMITS`, types; no
+- The home page's character sheet is the npm package
+  `@solution-nine/wol-character-panel`, developed and released from its
+  own repository (`AlexLe08/wol-character-panel`); changes to it go
+  there, and this site picks them up by upgrading. Import it only
+  through its entries: `.` (data: `parseConfig`, `resolveJob`, `LIMITS`, types; no
   React), `/react` (`CharacterSheet`), `/schema` (the config's zod
   schema). Forms read max lengths from `LIMITS` and patterns from the
   exported `ID_PATTERN` / `PARAM_NAME_PATTERN`, never from zod. Public
   pages get the config from `getCharacterConfig()`, which applies
   `publicConfig()` (published jobs only); admin code uses the whole
-  config, drafts and hidden jobs included. It
-  imports nothing but React, zod and its own files, enforced by its
-  `eslint.config.mjs`, which the frontend's `lint` runs (the host passes
-  `renderLink` and `renderPortrait`, see `lib/character-render.tsx`). Its
-  content is `lib/character-config.json`, validated by `src/schema.ts` at
-  build time. After changing `src/schema.ts`, run
-  `npm run generate:character-schema` from `frontend/`: it writes the
-  package's JSON Schema and copies it to `backend/app/services/`, which
-  validates admin saves against it (a backend test fails if the copies
-  differ). Write rules the backend must enforce as zod checks that
-  export to JSON Schema (`.regex()`, lengths), not refinements. The
-  generator closes every `z.object` in the JSON Schema
-  (`additionalProperties: false`), so writers reject unknown keys while
-  `parseConfig` strips them; use `z.looseObject` for one that stays open.
+  config, drafts and hidden jobs included. The host passes
+  `renderLink` and `renderPortrait` (see `lib/character-render.tsx`).
+  The site's built-in content is `lib/character-config.json`, validated
+  by the package's schema at build time. After upgrading the package,
+  run `npm run generate:character-schema` from `frontend/`: it copies
+  the package's JSON Schema to `backend/app/services/`, which validates
+  admin saves against it (`lib/character-schema.test.ts` fails if the
+  copies differ, or if the copy's `$id` names another major version).
+  Every object in that schema is closed, so the backend rejects unknown
+  keys while `parseConfig` strips them.
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
-- Unit tests are Vitest, beside the code as `*.test.ts`: `frontend/lib/`
-  for pure helpers, the package's `src/` for its own code (its lint
-  allows `vitest` in test files only). No component or DOM tests yet;
+- Unit tests are Vitest, beside the code as `*.test.ts` in
+  `frontend/lib/`, for pure helpers. No component or DOM tests yet;
   pages are checked on the demo stack. CI runs Node 24, the version
   Vercel builds with; keep the two in step (Vitest 5 needs Node 22.12+).
 
@@ -281,8 +273,8 @@ The main session orchestrates; subagents in `.claude/agents/` (planner,
 backend-implementer, frontend-implementer, reviewer) take one bounded
 task each. These rules add to everything above, for every agent.
 
-- Scope: an implementer edits only its own directories (`backend/`, or
-  `frontend/` and `packages/`), in a worktree from
+- Scope: an implementer edits only its own directory (`backend/` or
+  `frontend/`), in a worktree from
   `scripts/new-worktree.sh`, never in the main checkout. The one crossing
   allowed: files written by a generator it ran for its own change
   (`scripts/gen-types.sh` writes `frontend/lib/api-types.ts`;

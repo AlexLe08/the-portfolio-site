@@ -1109,6 +1109,29 @@
   file names (`character-sheet.css`, `character-sheet.schema.json`) and
   the exports (`CharacterSheet`) keep "character sheet".
 
+- The character sheet moved to its own repository and the site switched
+  to the published package (the last step of the extraction). The
+  repository `AlexLe08/wol-character-panel` started from
+  `git filter-repo` (history since #75), builds with plain `tsc` to
+  ESM `dist/`, and its CI runs lint, `tsc -p .` (test files included),
+  Vitest, build and `npm pack --dry-run`. 1.0.0 was published by hand,
+  1.0.1 from a tag through `release.yml` with trusted publishing and
+  provenance (2026-11-08). Here, `packages/` is gone and `frontend`
+  depends on `^1.0.1`; the root workspace stays (`["frontend"]`), so the
+  lockfile, CI and the Vercel install didn't move, and the lockfile
+  changed only that package's entry (workspace link to registry 1.0.1).
+  Before switching, the published `src/` matched the in-repo source
+  except for the `.ts` import extensions, and its schema matched the
+  backend's copy byte for byte. `generate:character-schema` now copies
+  the schema out of `node_modules` (resolved through the package's
+  `exports`). The backend's copy-match and `$id`-major tests moved to
+  `frontend/lib/character-schema.test.ts`, since backend CI never
+  installs `node_modules`; `scripts/mutate.mjs` confirmed it catches a
+  stale copy, an old major and a wrong package name. `lint` and `test`
+  no longer run the package's own, `mutate.mjs` runs the frontend suite
+  only, the frontend implementer's scope is `frontend/` alone, and
+  `lib/character-config.json`'s `$schema` points into `node_modules`.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -1124,54 +1147,21 @@
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus
     Testing Library) only if a client component grows logic worth
-    testing apart from the demo stack. The package's test files aren't
-    type-checked (Vitest strips types; `next build` checks only
-    `frontend/` and what it imports): add `vitest --typecheck` or
-    `tsc -p .` to the package's own CI once it's extracted.
-  - Extraction to its own repository as a React package: core, themes,
-    schema, `loadConfig`, CMS adapters (Contentful first, on its free plan;
-    the core never imports a CMS SDK), and a demo site. A custom-element
+    testing apart from the demo stack.
+  - Package work now happens in `AlexLe08/wol-character-panel` (the
+    extraction is in Done); its own follow-ups: themes, CMS adapters
+    (Contentful first, on its free plan; the core never imports a CMS
+    SDK), and a demo site. A custom-element
     wrapper only if someone asks for one. Backend code stays out of it
     (decided with PR #54): the package ships the JSON Schema as the
     contract, which any backend can validate against in its own language,
     and this site's FastAPI storage stays here as one example of a backend
     using it. A Python validator package (`find_issues` and its `oneOf`
     explanation) only if someone asks, and then in the same repository, so
-    it ships with the schema version it checks. Done so far: the in-repo
-    package with its versioned `$id`, and its rename to
-    `@solution-nine/wol-character-panel` (see Done). Left for the move
-    (planned 2026-11-08):
-    - The repository `AlexLe08/wol-character-panel` (created), started
-      from `git filter-repo` on a fresh clone, keeping
-      `packages/eorzean-character-sheet/` and `packages/wol-character-panel/`
-      and moving both to the root (`--path-rename <dir>/:`), so it keeps
-      the package's history since #75; earlier history stays here. Not
-      `git subtree split`: it follows one path, not renames, so it would
-      start at the rename commit. Check with `git log` before pushing.
-      It declares as devDependencies what it now borrows from
-      `frontend/` (`react`, `zod`, `typescript`, `@types/react`).
-    - A build step: plain `tsc` to `dist/`, ESM only, one file per
-      source file, so `SlotHover`'s `"use client"` stays at the top of its
-      own file (tsup's CJS output puts `"use strict"` above it; a
-      bundler adds nothing here). Relative imports gain `.ts` extensions
-      with `rewriteRelativeImportExtensions`; the CSS is copied. Its CI:
-      lint, `tsc -p .` including test files (closing the item above),
-      Vitest, build, and `npm pack --dry-run`.
-    - Publishing: the first 1.0.0 by hand with 2FA (npm configures a
-      trusted publisher only on an existing package; check the docs
-      then), then releases from a tag through GitHub Actions with
-      trusted publishing (OIDC, provenance included; npm CLI 11.5.1+).
-      Before that, the packed tarball installed in a site worktree must
-      pass `check.sh frontend` and look the same on the demo stack.
-    - Switching this site to the published package: `packages/` goes,
-      the root workspace stays (`["frontend"]`, so the lockfile, CI and
-      Vercel install don't move), `generate:character-schema` copies from
-      `node_modules`, and the schema copy-match and `$id`-major checks
-      move from the backend to a frontend Vitest test (approved
-      2026-11-08), because backend CI never installs `node_modules`.
-    - The import allowlist doesn't see dynamic `import()` or `require()`;
-      add a `no-restricted-syntax` rule if the package ever uses them
-      (it doesn't today).
+    it ships with the schema version it checks. In the package's
+    repository: its import allowlist doesn't see dynamic `import()` or
+    `require()`; add a `no-restricted-syntax` rule if it ever uses them
+    (it doesn't today).
 
 - Shared error UI, only when a third segment boundary appears or the
   error UI grows past a message and a "Try again" button (a back link, a

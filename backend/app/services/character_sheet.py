@@ -1,12 +1,12 @@
 """The home page's character sheet config: one JSON document in one row.
 
 The document's shape is owned by the character sheet package's zod schema
-(packages/wol-character-panel/src/schema.ts). `npm run
-generate:character-schema` (from frontend/) exports it as the package's
-JSON Schema and copies that next to this file, and
-tests/test_character_sheet.py fails if the two copies differ. So the
-backend enforces the same structure without a second, hand-written copy
-of the rules.
+(@solution-nine/wol-character-panel, its own repository), which publishes
+it as a JSON Schema. `npm run generate:character-schema` (from frontend/)
+copies the installed package's schema next to this file, and the
+frontend's lib/character-schema.test.ts fails if the two copies differ.
+So the backend enforces the same structure without a second, hand-written
+copy of the rules.
 
 Every object in the schema is closed (additionalProperties: false), so a
 save with a key the schema doesn't name (a typo like "subtitel") is refused

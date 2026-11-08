@@ -2,7 +2,6 @@
   "name": "the-portfolio-site",
   "private": true,
   "workspaces": [
-    "frontend",
-    "packages/*"
+    "frontend"
   ]
 }

@@ -3,7 +3,7 @@
 
 Denies a file edit unless the file is inside an allowed top-level directory
 of a task worktree: .claude/worktrees/<name>/<dir>/... The directories are
-the arguments (backend, or frontend packages). The worktree's root .logs/
+the arguments (backend, or frontend). The worktree's root .logs/
 (gitignored) is allowed too, for scratch files like demo scripts. Bash
 commands aren't checked; the reviewer checks the diff's paths as well.
 """
