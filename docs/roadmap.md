@@ -1019,6 +1019,22 @@
   `findUnknownKeys`, `loadConfig`; 30 tests), with 15 mutations, all
   caught. zod's own messages are matched by their path only, so a zod
   update that rewords them doesn't break the tests.
+- One query helper for hrefs, `withQuery(href, params, hash?)` in the
+  package's data entry: sets parameters (or removes them, for `null`),
+  keeps the rest in order, replaces the hash, and leaves no bare `?`.
+  `jobHref` and param actions are built on it, which fixes `jobHref`'s
+  `?a=b?job=x` for a `basePath` with a query (no caller had one) and
+  drops a stale `?job=` from the default job's link. `HomeView`'s
+  retry link and "Show all projects" use it too, replacing a stand-in
+  param action and string concatenation. Chosen over one `href()`
+  taking every intent, which would mix the package's links with this
+  site's `?stack=`. Fresh URLs with nothing to merge
+  (`/projects/${slug}`, the job form's `?removed=` redirect) stay
+  template strings. Every link the site built before is unchanged:
+  pinned by the existing tests, and checked on the local stack for the
+  "Show all projects" link and the retry link's `retryHref` (no filter,
+  a padded tag, a job, a repeated `stack`, a tag needing encoding). 7
+  mutations of `withQuery`, all caught.
 
 ## Next up (candidates, unordered)
 
@@ -1030,10 +1046,8 @@
     fine: keeping it in step is low priority (see the last item below).
   - Slot action follow-ups (both PRs are in Done): highlight a slot
     whose filter is active (the package would need the current params);
-    `jobHref` would build `?a=b?job=x` from a `basePath`
-    that already has a query (no caller does today); with a short
-    filtered list, `#projects` can't reach the top of the window (a
-    bottom margin on the sheet would fix it).
+    with a short filtered list, `#projects` can't reach the top of the
+    window (a bottom margin on the sheet would fix it).
   - More unit tests, now that Vitest runs: `lib/` helpers beyond
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus

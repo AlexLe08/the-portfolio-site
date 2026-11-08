@@ -12,7 +12,7 @@ export {
   type ParseResult,
 } from "./parse";
 export { ID_PATTERN, LIMITS, PARAM_NAME_PATTERN } from "./schema";
-export { actionHref, jobHref, publicConfig, resolveJob } from "./resolve";
+export { actionHref, jobHref, publicConfig, resolveJob, withQuery } from "./resolve";
 export type {
   CharacterSheetConfig,
   Job,
