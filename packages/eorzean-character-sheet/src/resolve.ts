@@ -21,10 +21,30 @@ export function resolveJob(config: CharacterSheetConfig, param: string | string[
   );
 }
 
-// The default job gets the bare path, so the page has one canonical URL.
+// href with query parameters changed: each one set, or removed when its
+// value is null; the parameters href already has are kept, in order. The
+// result's hash is `hash` (without the #), or none: href's own hash is
+// dropped, since it belonged to the page before. An empty query leaves no
+// "?". The query href already has is re-encoded by URLSearchParams (a
+// space becomes "+"). jobHref and param actions are built on it; a host
+// can use it for its own links to the same pages.
+export function withQuery(href: string, params: Record<string, string | null>, hash?: string): string {
+  const withoutHash = href.split("#")[0];
+  const queryAt = withoutHash.indexOf("?");
+  const path = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
+  const query = new URLSearchParams(queryAt === -1 ? "" : withoutHash.slice(queryAt + 1));
+  for (const [name, value] of Object.entries(params)) {
+    if (value === null) query.delete(name);
+    else query.set(name, value);
+  }
+  const search = query.toString();
+  return `${path}${search ? `?${search}` : ""}${hash ? `#${hash}` : ""}`;
+}
+
+// The default job gets the bare path, so the page has one canonical URL. A
+// query basePath already has is kept.
 export function jobHref(config: CharacterSheetConfig, jobId: string, basePath = "/", param = "job"): string {
-  if (jobId === config.defaultJobId) return basePath;
-  return `${basePath}?${new URLSearchParams({ [param]: jobId })}`;
+  return withQuery(basePath, { [param]: jobId === config.defaultJobId ? null : jobId });
 }
 
 // currentHref is the page the panel is on, with its ?job= (from jobHref);
@@ -38,14 +58,8 @@ export function actionHref(action: SlotAction, currentHref = "/"): string | null
     case "link":
     case "external":
       return action.href;
-    case "param": {
-      const withoutHash = currentHref.split("#")[0];
-      const queryAt = withoutHash.indexOf("?");
-      const path = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
-      const query = new URLSearchParams(queryAt === -1 ? "" : withoutHash.slice(queryAt + 1));
-      query.set(action.name, action.value);
-      return `${path}?${query}${action.target ? `#${action.target}` : ""}`;
-    }
+    case "param":
+      return withQuery(currentHref, { [action.name]: action.value }, action.target);
     case "none":
       return null;
   }

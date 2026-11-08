@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionHref, jobHref, publicConfig, resolveJob } from "./resolve";
+import { actionHref, jobHref, publicConfig, resolveJob, withQuery } from "./resolve";
 import type { CharacterSheetConfig, Job } from "./types";
 
 function job(id: string, status: Job["status"] = "published"): Job {
@@ -51,6 +51,48 @@ describe("jobHref", () => {
   it("names any other job in the query", () => {
     expect(jobHref(config, "data")).toBe("/?job=data");
     expect(jobHref(config, "data", "/admin/preview", "j")).toBe("/admin/preview?j=data");
+  });
+
+  it("adds to a query the base path already has", () => {
+    expect(jobHref(config, "data", "/lab?theme=game")).toBe("/lab?theme=game&job=data");
+    expect(jobHref(config, "web", "/lab?theme=game")).toBe("/lab?theme=game");
+  });
+
+  it("replaces a job already in the base path, and drops it for the default", () => {
+    expect(jobHref(config, "data", "/?job=old")).toBe("/?job=data");
+    expect(jobHref(config, "web", "/?job=old")).toBe("/");
+  });
+});
+
+describe("withQuery", () => {
+  it("sets parameters on a path without a query", () => {
+    expect(withQuery("/", { stack: "React" })).toBe("/?stack=React");
+    expect(withQuery("/lab", { a: "1", b: "2" })).toBe("/lab?a=1&b=2");
+  });
+
+  it("keeps the parameters already there, in order, and replaces one in place", () => {
+    expect(withQuery("/?job=data&stack=Go", { stack: "React", page: "2" })).toBe("/?job=data&stack=React&page=2");
+  });
+
+  it("removes a parameter set to null, and the ? with the last one", () => {
+    expect(withQuery("/?job=data&stack=Go", { stack: null })).toBe("/?job=data");
+    expect(withQuery("/?stack=Go", { stack: null })).toBe("/");
+    expect(withQuery("/lab", { stack: null })).toBe("/lab");
+  });
+
+  it("drops the href's hash and adds the one given", () => {
+    expect(withQuery("/?job=data#about", {})).toBe("/?job=data");
+    expect(withQuery("/#about", { stack: "Go" }, "projects")).toBe("/?stack=Go#projects");
+    expect(withQuery("/", {}, "projects")).toBe("/#projects");
+  });
+
+  it("encodes values", () => {
+    expect(withQuery("/", { stack: "C# & .NET" })).toBe("/?stack=C%23+%26+.NET");
+  });
+
+  it("leaves a relative or empty path as it is", () => {
+    expect(withQuery("admin?x=1", { y: "2" })).toBe("admin?x=1&y=2");
+    expect(withQuery("", { y: "2" })).toBe("?y=2");
   });
 });
 
