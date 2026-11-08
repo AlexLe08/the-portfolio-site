@@ -1074,7 +1074,8 @@
   it returns true for gets `aria-current="true"` on its link and
   `cs-slot--active` (the hover colours plus an inner accent ring, its
   name in the accent colour when names show; a gold glow in the `game`
-  theme). Passing the page's parameters as data instead was rejected:
+  theme, whose ring the active rule keeps on hover and focus too, since
+  the theme's hover rule would otherwise replace it). Passing the page's parameters as data instead was rejected:
   the panel would have to guess the host's matching (this site ignores
   case and trims). The decision lives in `isActionActive` (`resolve.ts`,
   not exported: never for other kinds, nor for a param naming
