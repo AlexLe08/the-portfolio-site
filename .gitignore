@@ -3,6 +3,9 @@
 # npm workspaces install at the repo root (package.json)
 node_modules/
 
+# Vitest 5's report files (`--reporter=json` writes .vitest/json/)
+.vitest/
+
 # Claude Code personal files
 CLAUDE.local.md
 .claude/settings.local.json

@@ -32,6 +32,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const VITEST = join(ROOT, "node_modules", ".bin", "vitest");
 const SUITES = ["frontend", "packages/eorzean-character-sheet"];
 const BACKUPS = join(ROOT, ".logs", "mutate-backup");
+const REPORTS = join(ROOT, ".logs", "mutate-reports");
 
 const USAGE = `usage: node scripts/mutate.mjs FILE OLD NEW [-- vitest args]
        node scripts/mutate.mjs MUTATIONS.json [-- vitest args]`;
@@ -69,14 +70,18 @@ let child = null;
 // so does a non-zero exit with no failed test in the report: the JSON
 // reporter leaves out errors outside tests (an unhandled rejection).
 function runSuite(suite, vitestArgs) {
+  // Vitest 5's JSON reporter writes a file, not stdout. Removed first, so a
+  // run that writes nothing can't be read as the last run's report.
+  const reportPath = join(REPORTS, `${basename(suite)}.json`);
+  mkdirSync(REPORTS, { recursive: true });
+  rmSync(reportPath, { force: true });
   return new Promise((done) => {
-    child = spawn(VITEST, ["run", "--reporter=json", "--passWithNoTests", ...vitestArgs], {
-      cwd: join(ROOT, suite),
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stdout = "";
+    child = spawn(
+      VITEST,
+      ["run", "--reporter=json", `--outputFile=${reportPath}`, "--passWithNoTests", ...vitestArgs],
+      { cwd: join(ROOT, suite), stdio: ["ignore", "ignore", "pipe"] },
+    );
     let stderr = "";
-    child.stdout.on("data", (chunk) => (stdout += chunk));
     child.stderr.on("data", (chunk) => (stderr += chunk));
     // Without this, a failed spawn throws outside the promise and run()'s
     // finally never restores the file.
@@ -92,7 +97,7 @@ function runSuite(suite, vitestArgs) {
       const reason = lines.find((line) => /^\w*Error\b/.test(line)) ?? lines[0] ?? "no output";
       let report;
       try {
-        report = JSON.parse(stdout);
+        report = JSON.parse(readFileSync(reportPath, "utf8"));
       } catch {
         done(code === 0 ? [] : [`${suite}: vitest exited ${code} without a report: ${reason}`]);
         return;

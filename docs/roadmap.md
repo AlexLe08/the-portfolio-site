@@ -1045,6 +1045,28 @@
   unknown ref, and bad arguments (`-h`, `--add`, two refs) exit 2 with
   git's message or the usage line. Workspace links print as `link`.
   For the Node and Vitest 5 upgrade next.
+- Node 24 in CI and Vitest 5: `frontend.yml` and `smoke.yml` run Node 24,
+  the version the Vercel project builds with (Node 20 reached end of
+  life in April 2026), and both suites use Vitest `^5.1.0`. `@types/node`
+  went from `^20` to `^24`, matching the runtime and required by Vitest
+  5's peer range (`^22 || >=24`). `lockfile-diff.mjs`: 8 changed
+  (`vitest` and `@vitest/*` to 5.1.0, `@types/node` 24.19.2, and four of
+  Vitest's own dependencies), 10 removed (sub-packages Vitest 5 now
+  bundles), 2 added (nested `magic-string` copies); `vite` 8.3.6 stays,
+  as a peer now. The one change that mattered here: Vitest 5's JSON
+  reporter writes `.vitest/json/output.json` instead of stdout, so
+  `scripts/mutate.mjs` lost its failing test names (a caught mutation
+  still counted, through the exit code, as "exited 1 without a
+  report"). It now passes `--outputFile` into `.logs/mutate-reports/`,
+  deleting the old report first; `.vitest/` is gitignored for manual
+  runs. The report's fields are unchanged. Checked: the same 17 + 57
+  tests pass, `vitest.config.mts` still keeps the smoke spec out, and
+  `mutate.mjs` on a caught change (4 tests named), a no-op (survived,
+  exit 1) and a syntax error (`resolve.test.ts (didn't run)`). Other
+  Vitest 5 changes don't reach this repo: no `vi` mocks (`clearMocks`
+  now defaults to on), no `test.each` titles, no `-t` patterns in
+  scripts, and the config sits in the directory Vitest runs from (it no
+  longer searches parents).
 
 ## Next up (candidates, unordered)
 
@@ -1114,9 +1136,6 @@
   Redis only if the service ever scales out).
 - Verify a domain in Resend to email anyone other than yourself, and
   switch `EMAIL_FROM` to it.
-- Move CI's Node from 20 (end of life since April 2026) to the version
-  Vercel builds with (check the project's Node.js setting), then Vitest
-  `^5`, which needs Node 22.12+. Local development already runs Node 24.
 - Low priority (decided 2026-11-05): keeping the built-in values
   (`FALLBACK_CONTENT`, `lib/character-config.json`) in step with edits
   saved in production, and cleaning up production's leftover test edits

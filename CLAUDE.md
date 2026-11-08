@@ -219,8 +219,8 @@ Frontend:
 - Unit tests are Vitest, beside the code as `*.test.ts`: `frontend/lib/`
   for pure helpers, the package's `src/` for its own code (its lint
   allows `vitest` in test files only). No component or DOM tests yet;
-  pages are checked on the demo stack. Vitest stays on 4.x while CI
-  runs Node 20 (Vitest 5 needs Node 22.12+).
+  pages are checked on the demo stack. CI runs Node 24, the version
+  Vercel builds with; keep the two in step (Vitest 5 needs Node 22.12+).
 
 ## Hard constraints and known gotchas
 
