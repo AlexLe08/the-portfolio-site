@@ -6,6 +6,7 @@ import {
   findDeadParams,
   homeAnchorTargets,
   readStackParam,
+  stackParamActive,
   stackTags,
 } from "./character-anchors";
 import type { ProjectSummary } from "./projects";
@@ -51,6 +52,30 @@ describe("readStackParam", () => {
     expect(readStackParam(undefined)).toBeNull();
     expect(readStackParam("")).toBeNull();
     expect(readStackParam("   ")).toBeNull();
+  });
+});
+
+describe("stackParamActive", () => {
+  it("marks the stack value the page filters by, matched like the filter", () => {
+    const active = stackParamActive(" react ");
+    expect(active("stack", "React")).toBe(true);
+    expect(active("stack", " REACT ")).toBe(true);
+    expect(active("stack", "Python")).toBe(false);
+  });
+
+  it("uses the first of a repeated parameter", () => {
+    expect(stackParamActive(["react", "python"])("stack", "Python")).toBe(false);
+    expect(stackParamActive(["react", "python"])("stack", "React")).toBe(true);
+  });
+
+  it("ignores other parameter names", () => {
+    expect(stackParamActive("react")("tag", "React")).toBe(false);
+  });
+
+  it("marks nothing without a filter", () => {
+    expect(stackParamActive(undefined)("stack", "React")).toBe(false);
+    expect(stackParamActive("  ")("stack", "")).toBe(false);
+    expect(stackParamActive("  ")("stack", "  ")).toBe(false);
   });
 });
 

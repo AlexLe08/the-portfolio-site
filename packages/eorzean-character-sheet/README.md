@@ -120,7 +120,10 @@ identifier.
     links to `/?stack=React#projects`. `target` is optional. The host page
     reads the parameter; the panel doesn't. `name` can't be `job`, and one
     matching the host's `jobParam` renders tooltip-only. Links go through
-    `renderLink` with `intent: "param"`.
+    `renderLink` with `intent: "param"`. To mark the slot whose value the
+    page is applying (a filter that's on), pass `isParamActive(name, value)`:
+    the panel can't read the page's parameters or know how the host matches
+    them. That slot gets `aria-current="true"` and a highlight.
   - `none`: tooltip only.
 - **Status:** a job's `status` is `published` (the default when it's left
   out), `draft` (not ready yet) or `hidden` (taken off the site). Pass the
@@ -157,6 +160,7 @@ const job = resolveJob(config, searchParams.job);
   basePath="/"              // where the job links point
   renderLink={(p) => …}     // optional: your router's link (default <a>)
   renderPortrait={(p) => …} // optional: your image component (default <img>)
+  isParamActive={(name, value) => …} // optional: true for the param value the page applies
 />
 ```
 

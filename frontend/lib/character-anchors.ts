@@ -47,6 +47,15 @@ export function filterByStack(
   return { projects: filtered, tag: filtered[0]?.stack.find(matches) ?? null };
 }
 
+// The panel's isParamActive for this ?stack= value: a param slot is current
+// when it sets the stack filter the page is applying, matched like
+// filterByStack (trimmed, ignoring case). With no filter, wanted is
+// undefined, which no string equals, so nothing is.
+export function stackParamActive(param: string | string[] | undefined): (name: string, value: string) => boolean {
+  const wanted = readStackParam(param)?.toLowerCase();
+  return (name, value) => name === STACK_PARAM && value.trim().toLowerCase() === wanted;
+}
+
 // Every stack tag the projects use, sorted and de-duplicated: the values a
 // ?stack= action can usefully set.
 export function stackTags(projects: { stack: string[] }[]): string[] {
