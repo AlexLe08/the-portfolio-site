@@ -1009,7 +1009,11 @@
   failing tests named from Vitest's JSON reporter, a file that no longer
   loads counted as caught. Every change runs both suites, since a
   package change can break a `lib/` test. Restores the file on Ctrl-C
-  and `kill` (checked by killing it mid-run).
+  and `kill` (checked by killing it mid-run). Its first use, in the same
+  PR: tests for the package's `parse.ts` (`parseConfig`,
+  `findUnknownKeys`, `loadConfig`; 29 tests), with 15 mutations, all
+  caught. zod's own messages are matched by their path only, so a zod
+  update that rewords them doesn't break the tests.
 
 ## Next up (candidates, unordered)
 
@@ -1025,8 +1029,7 @@
     that already has a query (no caller does today); with a short
     filtered list, `#projects` can't reach the top of the window (a
     bottom margin on the sheet would fix it).
-  - More unit tests, now that Vitest runs: `parseConfig` and
-    `findUnknownKeys` in the package, and `lib/` helpers beyond
+  - More unit tests, now that Vitest runs: `lib/` helpers beyond
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus
     Testing Library) only if a client component grows logic worth
