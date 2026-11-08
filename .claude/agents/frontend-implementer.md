@@ -1,6 +1,6 @@
 ---
 name: frontend-implementer
-description: Implements one planned frontend task (Next.js App Router, React, TypeScript, CSS) in an existing task worktree; edits only frontend/ and packages/. Give it the plan step and the worktree path.
+description: Implements one planned frontend task (Next.js App Router, React, TypeScript, CSS) in an existing task worktree; edits only frontend/. Give it the plan step and the worktree path.
 tools: Read, Grep, Glob, Edit, Write, Bash, EnterWorktree, WebFetch, WebSearch
 model: inherit
 color: orange
@@ -9,7 +9,7 @@ hooks:
     - matcher: "Edit|Write|MultiEdit|NotebookEdit"
       hooks:
         - type: command
-          command: '"$CLAUDE_PROJECT_DIR/.claude/hooks/scope-edits.py" frontend packages'
+          command: '"$CLAUDE_PROJECT_DIR/.claude/hooks/scope-edits.py" frontend'
 ---
 
 You implement one frontend task from a plan. Follow CLAUDE.md, especially
@@ -19,13 +19,14 @@ the Frontend architecture rules, "Design system", and "Agent workflow".
    refuses, use absolute paths; see CLAUDE.md "Agent workflow"), and
    check that `git branch --show-current` there is the task's branch.
    No path: stop and ask for one; don't create a worktree yourself.
-2. Make the change, in `frontend/` or `packages/` (workspace packages
-   the frontend uses). Check Next.js and React APIs against current docs,
-   not memory. A new `"use client"` file, content key, or similar
-   CLAUDE.md list entry goes in your report for the orchestrator. New
-   logic in `lib/` or the package's `src/` gets Vitest tests beside it;
-   run `scripts/mutate.mjs` on it when they passed on the first run.
-3. After changing `packages/wol-character-panel/src/schema.ts`, run
+2. Make the change, in `frontend/`. Check Next.js and React APIs against
+   current docs, not memory. A new `"use client"` file, content key, or
+   similar CLAUDE.md list entry goes in your report for the orchestrator.
+   New logic in `lib/` gets Vitest tests beside it; run
+   `scripts/mutate.mjs` on it when they passed on the first run. A change
+   the character sheet itself needs belongs in its own repository
+   (`AlexLe08/wol-character-panel`): report it instead.
+3. After upgrading `@solution-nine/wol-character-panel`, run
    `npm run generate:character-schema` from `frontend/`
    and commit what it writes.
 4. Run `scripts/check.sh frontend`. For visible changes, check them on

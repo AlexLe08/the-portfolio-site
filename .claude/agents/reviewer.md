@@ -15,8 +15,8 @@ Bash only for read-only commands (`git diff`, `git log`, `git show`,
    plan step, then `git diff origin/main...HEAD` and `git status` (left-
    over uncommitted files are a finding).
 2. Check:
-   - Scope: every changed path is inside the implementer's directory
-     (`packages/` belongs to the frontend implementer), or is generated
+   - Scope: every changed path is inside the implementer's directory,
+     or is generated
      output CLAUDE.md allows (including the root `package-lock.json`,
      which npm writes).
    - Every rule in CLAUDE.md the diff touches (layering, `String(n)`

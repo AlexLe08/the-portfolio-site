@@ -6,7 +6,6 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
-      - "packages/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/frontend.yml"
@@ -27,8 +26,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      # npm workspaces: one lockfile at the repo root for frontend/ and
-      # packages/.
+      # npm workspaces: one lockfile at the repo root.
       - name: Install dependencies
         working-directory: .
         run: npm ci
@@ -36,7 +34,7 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Vitest: lib/ helpers, then the character sheet package's own tests.
+      # Vitest: lib/ helpers and the backend's schema copy.
       - name: Unit tests
         run: npm test
 

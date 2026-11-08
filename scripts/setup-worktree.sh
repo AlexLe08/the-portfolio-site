@@ -18,7 +18,7 @@ fi
 echo "backend: installing dependencies"
 (cd "$root/backend" && PIP_DISABLE_PIP_VERSION_CHECK=1 ./.venv/bin/pip install -q -e ".[test]")
 
-# One lockfile at the repo root covers frontend/ and packages/ (npm workspaces).
+# One lockfile at the repo root (npm workspaces, currently frontend/ only).
 echo "npm ci (workspaces)"
 (cd "$root" && npm ci --silent --no-audit --no-fund)
 
