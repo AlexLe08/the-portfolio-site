@@ -1033,8 +1033,16 @@
   template strings. Every link the site built before is unchanged:
   pinned by the existing tests, and checked on the local stack for the
   "Show all projects" link and the retry link's `retryHref` (no filter,
-  a padded tag, a job, a repeated `stack`, a tag needing encoding). 7
+  a padded tag, a job, a repeated `stack`, a tag needing encoding). 8
   mutations of `withQuery`, all caught.
+- `scripts/lockfile-diff.mjs [ref] [--added]`, kept from #90's one-off
+  check: compares `package-lock.json` at a ref (default `origin/main`)
+  with the working tree's, by installed path, and prints every changed
+  version and removed package plus the added count (`--added` lists
+  them). Checked against `9d7e71e`, before Vitest: the same 2 patch
+  bumps and 59 added packages #90 reported; a removed entry, faked in
+  the working tree and restored; a ref without a root lockfile (exit 2).
+  For the Node and Vitest 5 upgrade next.
 
 ## Next up (candidates, unordered)
 

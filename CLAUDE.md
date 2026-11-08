@@ -94,6 +94,10 @@ retyping the commands they wrap; each explains itself in its header:
 - `scripts/mutate.mjs FILE OLD NEW [-- vitest args]` (or the same JSON
   list): the same for the Vitest suites, `frontend/` and the character
   sheet package, both on every change.
+- `scripts/lockfile-diff.mjs [ref] [--added]`: what an install changed in
+  `package-lock.json` against a ref (default `origin/main`): every
+  changed version and removed package, and the added count. Run it after
+  any `npm install` that changes dependencies, and report the result.
 - `scripts/fake-backend.py [port]`: fake API (`/__mode/ok|500|down`,
   optionally `?path=`) plus a fake Sentry endpoint that logs envelopes,
   for testing outage handling and what gets reported.
