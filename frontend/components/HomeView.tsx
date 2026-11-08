@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
-import { jobHref, withQuery, type CharacterSheetConfig, type Job } from "@alexle08/eorzean-character-sheet";
-import { CharacterSheet } from "@alexle08/eorzean-character-sheet/react";
+import { jobHref, withQuery, type CharacterSheetConfig, type Job } from "@solution-nine/wol-character-panel";
+import { CharacterSheet } from "@solution-nine/wol-character-panel/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";

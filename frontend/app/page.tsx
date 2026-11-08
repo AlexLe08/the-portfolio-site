@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { resolveJob } from "@alexle08/eorzean-character-sheet";
+import { resolveJob } from "@solution-nine/wol-character-panel";
 import { AutoRetry } from "@/components/AutoRetry";
 import { FallbackNotice } from "@/components/FallbackNotice";
 import { HomeView } from "@/components/HomeView";

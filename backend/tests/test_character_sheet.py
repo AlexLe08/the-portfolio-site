@@ -14,7 +14,7 @@ from tests.helpers import ADMIN_HEADERS
 REPO = Path(__file__).resolve().parents[2]
 FRONTEND = REPO / "frontend"
 BUNDLED_CONFIG = json.loads((FRONTEND / "lib/character-config.json").read_text(encoding="utf-8"))
-PACKAGE = REPO / "packages/eorzean-character-sheet"
+PACKAGE = REPO / "packages/wol-character-panel"
 PACKAGE_SCHEMA = PACKAGE / "character-sheet.schema.json"
 
 
@@ -45,7 +45,7 @@ def test_schema_has_versioned_id():
     package = json.loads((PACKAGE / "package.json").read_text(encoding="utf-8"))
 
     match = re.fullmatch(
-        r"https://cdn\.jsdelivr\.net/npm/@alexle08/eorzean-character-sheet@(\d+)"
+        r"https://cdn\.jsdelivr\.net/npm/@solution-nine/wol-character-panel@(\d+)"
         r"/character-sheet\.schema\.json",
         schema["$id"],
     )

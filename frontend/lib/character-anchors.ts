@@ -1,4 +1,4 @@
-import type { CharacterSheetConfig, Job, SlotDef } from "@alexle08/eorzean-character-sheet";
+import type { CharacterSheetConfig, Job, SlotDef } from "@solution-nine/wol-character-panel";
 import type { ProjectSummary } from "./projects";
 
 // What the home page (components/HomeView.tsx) renders below the panel and

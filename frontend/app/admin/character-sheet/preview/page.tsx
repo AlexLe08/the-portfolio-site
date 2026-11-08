@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { jobHref, resolveJob, type JobStatus } from "@alexle08/eorzean-character-sheet";
+import { jobHref, resolveJob, type JobStatus } from "@solution-nine/wol-character-panel";
 import { AutoRetry } from "@/components/AutoRetry";
 import { HomeView } from "@/components/HomeView";
 import { Sheet } from "@/components/Sheet";

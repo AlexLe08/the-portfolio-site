@@ -1,6 +1,7 @@
 {
-  "name": "@alexle08/eorzean-character-sheet",
+  "name": "@solution-nine/wol-character-panel",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "sideEffects": [

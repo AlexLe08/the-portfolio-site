@@ -7,13 +7,13 @@ import {
   publicConfig,
   type CharacterSheetConfig,
   type ConfigSource,
-} from "@alexle08/eorzean-character-sheet";
+} from "@solution-nine/wol-character-panel";
 import { api } from "./api";
 import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
 // and the per-job section text. Edit character-config.json; the JSON
-// Schema in packages/eorzean-character-sheet gives editors autocomplete.
+// Schema in packages/wol-character-panel gives editors autocomplete.
 //
 // The bundled file is checked strictly: any problem, even one parseConfig
 // could recover from, fails the build here instead of quietly dropping a

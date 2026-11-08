@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useRef, useState } from "react";
-import type { Tooltip } from "@alexle08/eorzean-character-sheet";
+import type { Tooltip } from "@solution-nine/wol-character-panel";
 
 // Read from the zod schema by the page, like JobFieldLimits.
 export type TooltipFieldLimits = Record<

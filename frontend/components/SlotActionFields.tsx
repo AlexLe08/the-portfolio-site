@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SlotAction } from "@alexle08/eorzean-character-sheet";
+import type { SlotAction } from "@solution-nine/wol-character-panel";
 import { openDetails } from "@/components/SlotTooltipFields";
 import { PROJECTS_ANCHOR, STACK_PARAM } from "@/lib/character-anchors";
 

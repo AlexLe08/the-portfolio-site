@@ -32,7 +32,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const VITEST = join(ROOT, "node_modules", ".bin", "vitest");
-const SUITES = ["frontend", "packages/eorzean-character-sheet"];
+const SUITES = ["frontend", "packages/wol-character-panel"];
 const BACKUPS = join(ROOT, ".logs", "mutate-backup");
 const REPORTS = join(ROOT, ".logs", "mutate-reports");
 
