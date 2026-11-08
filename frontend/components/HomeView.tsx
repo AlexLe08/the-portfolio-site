@@ -13,6 +13,7 @@ import {
   PROJECTS_ANCHOR,
   readStackParam,
   STACK_PARAM,
+  stackParamActive,
 } from "@/lib/character-anchors";
 import { renderLink, renderPortrait } from "@/lib/character-render";
 import type { ContentKey, SiteContent } from "@/lib/content";
@@ -61,6 +62,7 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
           basePath={basePath}
           renderLink={renderLink}
           renderPortrait={renderPortrait}
+          isParamActive={stackParamActive(stack)}
           showSockets
           showToolbar
         />

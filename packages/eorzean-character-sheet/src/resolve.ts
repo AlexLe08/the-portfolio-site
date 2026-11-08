@@ -66,3 +66,17 @@ export function actionHref(action: SlotAction, currentHref = "/"): string | null
       return null;
   }
 }
+
+// Whether a slot's action is what the page is showing right now, so the
+// panel can mark it. Only a param action can be: the host says which
+// parameter values its page applies (isParamActive), since only it knows
+// how it reads them (a case-insensitive filter, say). A param action
+// naming the job parameter renders tooltip-only, so it's never active.
+export function isActionActive(
+  action: SlotAction,
+  isParamActive?: (name: string, value: string) => boolean,
+  jobParam = "job",
+): boolean {
+  if (action.kind !== "param" || action.name === jobParam || !isParamActive) return false;
+  return isParamActive(action.name, action.value);
+}

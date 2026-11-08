@@ -1,5 +1,5 @@
 import { useId, type AnchorHTMLAttributes, type ReactNode } from "react";
-import { actionHref, jobHref } from "./resolve";
+import { actionHref, isActionActive, jobHref } from "./resolve";
 import { SlotHover } from "./SlotHover";
 import type {
   CharacterSheetConfig,
@@ -56,6 +56,12 @@ export type CharacterSheetProps = {
   label?: string;
   renderLink?: (props: LinkRendererProps) => ReactNode;
   renderPortrait?: (portrait: Portrait) => ReactNode;
+  // Whether the page currently applies a param action's parameter value,
+  // e.g. a project filter set by ?stack=. The panel can't tell on its own:
+  // only the host knows how it reads its parameters (ignoring case, say).
+  // A slot whose action it returns true for is marked as current
+  // (aria-current and a highlight). Left out, no slot is.
+  isParamActive?: (name: string, value: string) => boolean;
 };
 
 type RenderLink = (props: LinkRendererProps) => ReactNode;
@@ -84,13 +90,14 @@ export function CharacterSheet({
   label = "Character sheet",
   renderLink = defaultLink,
   renderPortrait = defaultPortrait,
+  isParamActive,
 }: CharacterSheetProps) {
   // Tooltip ids must be unique even with two panels on one page.
   const idPrefix = useId();
   const framing = job.portrait?.framing ?? "face";
   // This job's own URL, which a param action adds its parameter to.
   const currentHref = jobHref(config, job.id, basePath, jobParam);
-  const column = { job, idPrefix, renderLink, showSockets, slots: config.slots, currentHref, jobParam };
+  const column = { job, idPrefix, renderLink, showSockets, slots: config.slots, currentHref, jobParam, isParamActive };
 
   return (
     <section className="cs" data-cs-theme={theme} data-cs-labels={labels} aria-label={label}>
@@ -172,6 +179,7 @@ function SlotList({
   showSockets,
   currentHref,
   jobParam,
+  isParamActive,
 }: {
   position: SlotPosition;
   slots: SlotDef[];
@@ -181,6 +189,7 @@ function SlotList({
   showSockets: boolean;
   currentHref: string;
   jobParam: string;
+  isParamActive?: (name: string, value: string) => boolean;
 }) {
   let here = slots.filter((slot) => slot.position === position);
   // One slot each side of the job title; parseConfig reports any extras.
@@ -201,6 +210,7 @@ function SlotList({
           showSockets={showSockets}
           currentHref={currentHref}
           jobParam={jobParam}
+          isParamActive={isParamActive}
         />
       ))}
     </ul>
@@ -224,6 +234,7 @@ function Slot({
   showSockets,
   currentHref,
   jobParam,
+  isParamActive,
 }: {
   slot: SlotDef;
   content: SlotContent | undefined;
@@ -233,6 +244,7 @@ function Slot({
   showSockets: boolean;
   currentHref: string;
   jobParam: string;
+  isParamActive?: (name: string, value: string) => boolean;
 }) {
   const face = (
     <>
@@ -266,6 +278,8 @@ function Slot({
   // A param action may not set the job parameter (the schema refuses "job",
   // but a host can name its own); that one renders tooltip-only, like none.
   const href = action.kind === "param" && action.name === jobParam ? null : actionHref(action, currentHref);
+  // The page is showing what this slot links to (its filter is on).
+  const active = isActionActive(action, isParamActive, jobParam);
   const common = { className: "cs-slot__face", "aria-describedby": tipId };
 
   let trigger: ReactNode;
@@ -281,7 +295,13 @@ function Slot({
   } else if (action.kind === "link") {
     trigger = renderLink({ ...common, href, intent: "page", children: face });
   } else if (action.kind === "param") {
-    trigger = renderLink({ ...common, href, intent: "param", children: face });
+    trigger = renderLink({
+      ...common,
+      href,
+      intent: "param",
+      "aria-current": active ? "true" : undefined,
+      children: face,
+    });
   } else if (action.kind === "external" && action.newTab) {
     trigger = (
       <a {...common} href={href} target="_blank" rel="noopener noreferrer">
@@ -298,7 +318,7 @@ function Slot({
   }
 
   return (
-    <li className={`cs-slot cs-slot--${action.kind}`}>
+    <li className={`cs-slot cs-slot--${action.kind}${active ? " cs-slot--active" : ""}`}>
       <SlotHover>
         {trigger}
         <SlotTooltip id={tipId} slot={slot} content={content} />

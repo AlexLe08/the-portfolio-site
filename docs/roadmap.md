@@ -1067,6 +1067,32 @@
   now defaults to on), no `test.each` titles, no `-t` patterns in
   scripts, and the config sits in the directory Vitest runs from (it no
   longer searches parents).
+- The slot whose filter is on is marked (a slot action follow-up, done
+  before extracting the package because it adds to its API): a new
+  `CharacterSheet` prop, `isParamActive(name, value)`, which the host
+  answers, since only it knows how it reads its parameters. A param slot
+  it returns true for gets `aria-current="true"` on its link and
+  `cs-slot--active` (the hover colours plus an inner accent ring, its
+  name in the accent colour when names show; a gold glow in the `game`
+  theme, whose ring the active rule keeps on hover and focus too, since
+  the theme's hover rule would otherwise replace it). Passing the page's parameters as data instead was rejected:
+  the panel would have to guess the host's matching (this site ignores
+  case and trims). The decision lives in `isActionActive` (`resolve.ts`,
+  not exported: never for other kinds, nor for a param naming
+  `jobParam`, which renders tooltip-only). This site passes
+  `stackParamActive(stack)` (`lib/character-anchors.ts`), matched like
+  `filterByStack`, from `HomeView`, so the admin preview highlights too.
+  Clicking an active slot still reloads the same filter; a toggle that
+  clears it is a candidate only if it's wanted. Tests: 5 for
+  `isActionActive`, 4 for `stackParamActive`; 8 mutations, all caught
+  (one test strengthened, and a redundant `undefined` check removed after
+  its mutation survived as an equivalent). Verified on the demo stack with
+  a stored config whose two header slots set `stack`: no filter marks
+  nothing; `?stack=%20react%20` and `?stack=typescript` mark the right
+  slot only; `?stack=python` marks nothing; clicking a slot lands on
+  `/?stack=React#projects` with it marked; the admin preview marks it
+  too; screenshots of both themes (the `game` one with the class added by
+  hand, since the lab page doesn't pass the prop).
 
 ## Next up (candidates, unordered)
 
@@ -1076,10 +1102,9 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Slot action follow-ups (both PRs are in Done): highlight a slot
-    whose filter is active (the package would need the current params);
-    with a short filtered list, `#projects` can't reach the top of the
-    window (a bottom margin on the sheet would fix it).
+  - Slot action follow-up: with a short filtered list, `#projects` can't
+    reach the top of the window (a bottom margin on the sheet would fix
+    it). The active-slot highlight is in Done.
   - More unit tests, now that Vitest runs: `lib/` helpers beyond
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus

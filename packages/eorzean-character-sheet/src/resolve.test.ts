@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionHref, jobHref, publicConfig, resolveJob, withQuery } from "./resolve";
+import { actionHref, isActionActive, jobHref, publicConfig, resolveJob, withQuery } from "./resolve";
 import type { CharacterSheetConfig, Job } from "./types";
 
 function job(id: string, status: Job["status"] = "published"): Job {
@@ -148,5 +148,40 @@ describe("actionHref", () => {
     it("encodes the value", () => {
       expect(actionHref({ ...stack, value: "C# & .NET" })).toBe("/?stack=C%23+%26+.NET");
     });
+  });
+});
+
+describe("isActionActive", () => {
+  const stack = { kind: "param", name: "stack", value: "React" } as const;
+  const showing = (current: Record<string, string>) => (name: string, value: string) => current[name] === value;
+
+  it("asks the host about a param action", () => {
+    expect(isActionActive(stack, showing({ stack: "React" }))).toBe(true);
+    expect(isActionActive(stack, showing({ stack: "Python" }))).toBe(false);
+    expect(isActionActive(stack, showing({}))).toBe(false);
+  });
+
+  it("passes the action's own name and value", () => {
+    const calls: [string, string][] = [];
+    isActionActive({ ...stack, value: "Go", target: "projects" }, (name, value) => (calls.push([name, value]), true));
+    expect(calls).toEqual([["stack", "Go"]]);
+  });
+
+  it("is never active without a host check", () => {
+    expect(isActionActive(stack)).toBe(false);
+  });
+
+  it("is never active for a param naming the job parameter", () => {
+    const always = () => true;
+    expect(isActionActive({ ...stack, name: "j" }, always, "j")).toBe(false);
+    expect(isActionActive({ ...stack, name: "j" }, always)).toBe(true);
+  });
+
+  it("is never active for other kinds", () => {
+    const always = () => true;
+    expect(isActionActive({ kind: "anchor", target: "projects" }, always)).toBe(false);
+    expect(isActionActive({ kind: "link", href: "/" }, always)).toBe(false);
+    expect(isActionActive({ kind: "external", href: "https://example.com" }, always)).toBe(false);
+    expect(isActionActive({ kind: "none" }, always)).toBe(false);
   });
 });
