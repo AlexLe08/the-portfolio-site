@@ -1041,7 +1041,9 @@
   version and removed package plus the added count (`--added` lists
   them). Checked against `9d7e71e`, before Vitest: the same 2 patch
   bumps and 59 added packages #90 reported; a removed entry, faked in
-  the working tree and restored; a ref without a root lockfile (exit 2).
+  the working tree and restored; a ref without a root lockfile, an
+  unknown ref, and bad arguments (`-h`, `--add`, two refs) exit 2 with
+  git's message or the usage line. Workspace links print as `link`.
   For the Node and Vitest 5 upgrade next.
 
 ## Next up (candidates, unordered)
