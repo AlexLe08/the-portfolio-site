@@ -1142,8 +1142,12 @@
     `@solution-nine/wol-character-panel` (see Done). Left for the move
     (planned 2026-11-08):
     - The repository `AlexLe08/wol-character-panel` (created), started
-      from `git subtree split` of `packages/wol-character-panel/`, so it
-      keeps the package's history since #75; earlier history stays here.
+      from `git filter-repo` on a fresh clone, keeping
+      `packages/eorzean-character-sheet/` and `packages/wol-character-panel/`
+      and moving both to the root (`--path-rename <dir>/:`), so it keeps
+      the package's history since #75; earlier history stays here. Not
+      `git subtree split`: it follows one path, not renames, so it would
+      start at the rename commit. Check with `git log` before pushing.
       It declares as devDependencies what it now borrows from
       `frontend/` (`react`, `zod`, `typescript`, `@types/react`).
     - A build step: plain `tsc` to `dist/`, ESM only, one file per
