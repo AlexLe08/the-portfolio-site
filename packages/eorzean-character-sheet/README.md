@@ -23,7 +23,7 @@ the host's bundler compiles it.
 
 | Import | What it holds |
 | --- | --- |
-| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, `withQuery` (sets or removes query parameters on an href, keeping the rest; the other two are built on it), the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config), `ID_PATTERN` and `PARAM_NAME_PATTERN`. No React or CSS, so server code and plain Node can use it |
+| `@alexle08/eorzean-character-sheet` | `parseConfig`, `loadConfig`, `findUnknownKeys`, `publicConfig`, `resolveJob`, `jobHref`, `actionHref`, `withQuery` (sets or removes query parameters on an href, keeping the rest; `jobHref` and `actionHref` are built on it), the config types, and the limits as plain values: `LIMITS` (max lengths and counts, grouped like the config), `ID_PATTERN` and `PARAM_NAME_PATTERN`. No React or CSS, so server code and plain Node can use it |
 | `@alexle08/eorzean-character-sheet/react` | `CharacterSheet`, `CharacterSheetProps`, `LinkRendererProps`. The component imports its own CSS |
 | `@alexle08/eorzean-character-sheet/schema` | `characterSheetConfigSchema`, the whole config's zod schema. Its parts are internal |
 | `@alexle08/eorzean-character-sheet/character-sheet.css` | The styles, for hosts that want to control CSS order |

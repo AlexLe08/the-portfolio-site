@@ -1046,8 +1046,8 @@
     fine: keeping it in step is low priority (see the last item below).
   - Slot action follow-ups (both PRs are in Done): highlight a slot
     whose filter is active (the package would need the current params);
-    with a short filtered list, `#projects` can't reach the top of the window (a
-    bottom margin on the sheet would fix it).
+    with a short filtered list, `#projects` can't reach the top of the
+    window (a bottom margin on the sheet would fix it).
   - More unit tests, now that Vitest runs: `lib/` helpers beyond
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus

@@ -21,8 +21,10 @@ export function resolveJob(config: CharacterSheetConfig, param: string | string[
   );
 }
 
-// href with query parameters changed: each one set, or removed when its
-// value is null; the parameters href already has are kept, in order. The
+// href with query parameters changed: each one set (replacing every copy
+// of it with one, in the first one's place), or removed when its value is
+// null (or undefined, for plain-JS callers); the parameters href already
+// has are kept, in order. The
 // result's hash is `hash` (without the #), or none: href's own hash is
 // dropped, since it belonged to the page before. An empty query leaves no
 // "?". The query href already has is re-encoded by URLSearchParams (a
@@ -34,7 +36,7 @@ export function withQuery(href: string, params: Record<string, string | null>, h
   const path = queryAt === -1 ? withoutHash : withoutHash.slice(0, queryAt);
   const query = new URLSearchParams(queryAt === -1 ? "" : withoutHash.slice(queryAt + 1));
   for (const [name, value] of Object.entries(params)) {
-    if (value === null) query.delete(name);
+    if (value == null) query.delete(name);
     else query.set(name, value);
   }
   const search = query.toString();
@@ -42,7 +44,7 @@ export function withQuery(href: string, params: Record<string, string | null>, h
 }
 
 // The default job gets the bare path, so the page has one canonical URL. A
-// query basePath already has is kept.
+// query basePath already has is kept (its hash isn't).
 export function jobHref(config: CharacterSheetConfig, jobId: string, basePath = "/", param = "job"): string {
   return withQuery(basePath, { [param]: jobId === config.defaultJobId ? null : jobId });
 }

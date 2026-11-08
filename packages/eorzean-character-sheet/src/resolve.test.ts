@@ -90,6 +90,20 @@ describe("withQuery", () => {
     expect(withQuery("/", { stack: "C# & .NET" })).toBe("/?stack=C%23+%26+.NET");
   });
 
+  it("collapses a repeated parameter to one in the first one's place, or removes them all", () => {
+    expect(withQuery("/?s=a&j=1&s=b", { s: "c" })).toBe("/?s=c&j=1");
+    expect(withQuery("/?s=a&j=1&s=b", { s: null })).toBe("/?j=1");
+  });
+
+  it("keeps an empty value", () => {
+    expect(withQuery("/", { s: "" })).toBe("/?s=");
+  });
+
+  it("treats undefined from a plain-JS caller like null", () => {
+    const params = { s: undefined } as unknown as Record<string, string | null>;
+    expect(withQuery("/?s=a&j=1", params)).toBe("/?j=1");
+  });
+
   it("leaves a relative or empty path as it is", () => {
     expect(withQuery("admin?x=1", { y: "2" })).toBe("admin?x=1&y=2");
     expect(withQuery("", { y: "2" })).toBe("?y=2");
