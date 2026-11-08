@@ -1,5 +1,5 @@
 {
-  "$schema": "../../packages/wol-character-panel/character-sheet.schema.json",
+  "$schema": "../../node_modules/@solution-nine/wol-character-panel/character-sheet.schema.json",
   "title": "Character profile",
   "defaultJobId": "healthcare",
   "slots": [

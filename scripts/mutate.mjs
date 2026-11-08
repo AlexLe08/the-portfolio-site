@@ -14,11 +14,10 @@
 //
 //     node scripts/mutate.mjs mutations.json -- lib/character-anchors
 //
-// Each `old` must appear exactly once in its file. Every change runs both
-// suites, frontend/ (lib/) and the character sheet package, as `npm test`
-// does, since a package change can break a lib/ test. Arguments after `--`
-// go to `vitest run` in both (file filters, -t "name"); a suite they match
-// nothing in passes. Don't pass --reporter or --outputFile: the script
+// Each `old` must appear exactly once in its file. Every change runs the
+// frontend/ suite (lib/), as `npm test` does; the character sheet package
+// has its own repository now. Arguments after `--` go to `vitest run`
+// (file filters, -t "name"); a filter that matches nothing passes. Don't pass --reporter or --outputFile: the script
 // reads its own JSON report, and without it a change reads as unnoticed.
 // The file is always restored, also on Ctrl-C or kill;
 // a copy is kept in .logs/mutate-backup/ until then, in case the process
@@ -32,7 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const VITEST = join(ROOT, "node_modules", ".bin", "vitest");
-const SUITES = ["frontend", "packages/wol-character-panel"];
+const SUITES = ["frontend"];
 const BACKUPS = join(ROOT, ".logs", "mutate-backup");
 const REPORTS = join(ROOT, ".logs", "mutate-reports");
 
@@ -133,7 +132,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
 // exception); restore() is synchronous and does nothing the second time.
 process.on("exit", restore);
 
-// Apply one mutation, run both suites, restore. Returns the failing tests.
+// Apply one mutation, run the suites, restore. Returns the failing tests.
 async function run(mutation, vitestArgs) {
   const path = resolve(ROOT, mutation.file);
   const original = readFileSync(path, "utf8");
