@@ -1132,6 +1132,15 @@
   only, the frontend implementer's scope is `frontend/` alone, and
   `lib/character-config.json`'s `$schema` points into `node_modules`.
 
+- A jump to `#projects` reaches the top of the window even when
+  `?stack=` leaves one project. The rule and the list are now a
+  `.projects-section` at least `100vh` tall, less the rule's
+  `scroll-margin-top`, so only the home page (and its admin preview) gets
+  the extra space, not every page as a bottom margin on the sheet would.
+  On the demo stack with `?stack=discord.js#projects`, the rule went from
+  435px (desktop) and 400px (phone) below the top to 24px, the
+  scroll margin.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -1140,9 +1149,6 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - Slot action follow-up: with a short filtered list, `#projects` can't
-    reach the top of the window (a bottom margin on the sheet would fix
-    it). The active-slot highlight is in Done.
   - More unit tests, now that Vitest runs: `lib/` helpers beyond
     `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
     `character-admin.ts`). Component tests (jsdom or happy-dom plus

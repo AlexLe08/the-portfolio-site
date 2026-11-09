@@ -100,38 +100,42 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
         </section>
       ))}
 
-      <div className="section-rule" id={PROJECTS_ANCHOR}>
-        <h2 className="section-rule__label">Projects</h2>
-      </div>
+      <section className="projects-section" aria-labelledby={`${PROJECTS_ANCHOR}-heading`}>
+        <div className="section-rule" id={PROJECTS_ANCHOR}>
+          <h2 className="section-rule__label" id={`${PROJECTS_ANCHOR}-heading`}>
+            Projects
+          </h2>
+        </div>
 
-      {projects === null ? (
-        <ProjectsUnavailable retryHref={retryHref} />
-      ) : (
-        <>
-          {/* The URL's value isn't echoed: only a tag a project really has. */}
-          {filter && (
-            <StatusMessage tone="info">
-              {filter.tag ? `Showing projects using ${filter.tag}. ` : "No published projects use that stack. "}
-              <Link href={withQuery(jobUrl, {}, PROJECTS_ANCHOR)}>Show all projects</Link>
-            </StatusMessage>
-          )}
-          {shown.length > 0 && (
-            <ul className="project-list">
-              {shown.map((project) => (
-                <li key={project.slug} className="project-card">
-                  <h3 className="project-card__title">
-                    <Link href={`/projects/${project.slug}`} className="project-card__link">
-                      {project.title}
-                    </Link>
-                  </h3>
-                  <p className="project-card__summary">{project.summary}</p>
-                  <StackTags stack={project.stack} className="project-card__stack" />
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+        {projects === null ? (
+          <ProjectsUnavailable retryHref={retryHref} />
+        ) : (
+          <>
+            {/* The URL's value isn't echoed: only a tag a project really has. */}
+            {filter && (
+              <StatusMessage tone="info">
+                {filter.tag ? `Showing projects using ${filter.tag}. ` : "No published projects use that stack. "}
+                <Link href={withQuery(jobUrl, {}, PROJECTS_ANCHOR)}>Show all projects</Link>
+              </StatusMessage>
+            )}
+            {shown.length > 0 && (
+              <ul className="project-list">
+                {shown.map((project) => (
+                  <li key={project.slug} className="project-card">
+                    <h3 className="project-card__title">
+                      <Link href={`/projects/${project.slug}`} className="project-card__link">
+                        {project.title}
+                      </Link>
+                    </h3>
+                    <p className="project-card__summary">{project.summary}</p>
+                    <StackTags stack={project.stack} className="project-card__stack" />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </section>
     </Sheet>
   );
 }
