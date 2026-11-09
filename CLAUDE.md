@@ -210,7 +210,9 @@ Frontend:
 - `lib/api-types.ts` is generated: never hand-edit it. All API calls go
   through the typed client in `lib/api.ts`.
 - Unit tests are Vitest, beside the code as `*.test.ts` in
-  `frontend/lib/`, for pure helpers. No component or DOM tests yet;
+  `frontend/lib/`, for pure helpers. A server-side helper is tested by
+  mocking `server-only` and its backend call with `vi.mock` (see
+  `lib/character-admin.test.ts`). No component or DOM tests yet;
   pages are checked on the demo stack. CI runs Node 24, the version
   Vercel builds with; keep the two in step (Vitest 5 needs Node 22.12+).
 
