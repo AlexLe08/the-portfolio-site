@@ -260,6 +260,16 @@ button:focus-visible {
   background: var(--rule-strong);
 }
 
+/* The home page's project list, from its rule down. At least a window
+   tall (less the rule's scroll-margin-top), so a jump to #projects can
+   bring the rule to the top even when ?stack= leaves one project. The
+   rule's top margin collapses through, so the height starts at the rule.
+   100vh is the largest viewport on mobile, so it's enough with the
+   toolbars shown or hidden. */
+.projects-section {
+  min-height: calc(100vh - 1.5rem);
+}
+
 /* ---------------------------------------------------------------------
    Project cards
    Flat, bordered, no radius-and-shadow kit. Border brightens to signal
