@@ -1148,7 +1148,7 @@
   with `vi.mock` so each test sets what `GET /character-sheet` answers
   (stored copy, 404 to the bundled file, a throw on anything else, and
   no unknown-key, anchor or param checks while the copy has errors).
-  `scripts/mutate.mjs` caught 27 of 28 deliberate breaks. The survivor
+  `scripts/mutate.mjs` caught 28 of 29 deliberate breaks. The survivor
   can't be caught: `cloudinaryLoader`'s `/image/upload/` check is
   redundant, since `replace()` leaves a URL without it unchanged anyway.
   Kept as written, since it states the intent.

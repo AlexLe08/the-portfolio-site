@@ -17,14 +17,14 @@ function answer(status: number, config?: unknown) {
   return GET;
 }
 
-// The bundled config with one job's first slot changed, so every check has
-// something to find.
-function withFirstSlot(change: (slot: Record<string, unknown>) => void) {
+// The bundled config with the first job's slots changed in order, one
+// change per slot, so every check has something to find.
+function withSlots(...changes: ((slot: Record<string, unknown>) => void)[]) {
   const config = structuredClone(bundledConfig) as unknown as {
     jobs: { slots: Record<string, Record<string, unknown>> }[];
   };
-  const slots = config.jobs[0].slots;
-  change(slots[Object.keys(slots)[0]]);
+  const slots = Object.values(config.jobs[0].slots);
+  changes.forEach((change, index) => change(slots[index]));
   return config;
 }
 
@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe("loadCharacterSheetForAdmin", () => {
   it("returns the stored copy as stored", async () => {
-    const stored = withFirstSlot((slot) => {
+    const stored = withSlots((slot) => {
       slot.typo = true;
     });
     const GET = answer(200, stored);
@@ -66,23 +66,28 @@ describe("loadCharacterSheetForAdmin", () => {
   });
 
   it("flags anchors and params the home page doesn't use", async () => {
-    answer(200, withFirstSlot((slot) => {
+    answer(200, withSlots((slot) => {
       slot.action = { kind: "anchor", target: "nowhere" };
     }));
-    expect((await loadCharacterSheetForAdmin()).deadAnchors).not.toEqual([]);
+    expect((await loadCharacterSheetForAdmin()).deadAnchors).toEqual([expect.stringContaining("nowhere")]);
 
-    answer(200, withFirstSlot((slot) => {
+    answer(200, withSlots((slot) => {
       slot.action = { kind: "param", name: "unused", value: "x", target: "projects" };
     }));
-    expect((await loadCharacterSheetForAdmin()).deadParams).not.toEqual([]);
+    expect((await loadCharacterSheetForAdmin()).deadParams).toEqual([expect.stringContaining("unused")]);
   });
 
   it("skips the checks while the stored copy has errors", async () => {
     // Each check would flag something here if it ran.
-    const stored = withFirstSlot((slot) => {
-      slot.typo = true;
-      slot.action = { kind: "anchor", target: "nowhere" };
-    }) as unknown as Record<string, unknown>;
+    const stored = withSlots(
+      (slot) => {
+        slot.typo = true;
+        slot.action = { kind: "anchor", target: "nowhere" };
+      },
+      (slot) => {
+        slot.action = { kind: "param", name: "unused", value: "x", target: "projects" };
+      },
+    ) as unknown as Record<string, unknown>;
     stored.defaultJobId = "missing";
     answer(200, stored);
 
