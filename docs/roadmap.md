@@ -1141,6 +1141,18 @@
   435px (desktop) and 400px (phone) below the top to 24px, the
   scroll margin.
 
+- Unit tests for the rest of `lib/`'s helpers: `project-rules.ts`,
+  `form-data.ts`, `media-rules.ts`, `messages.ts`
+  (`describeRetryAfter`, `describeSaveFailure`), `cloudinary-loader.ts`,
+  and `character-admin.ts`, which mocks `server-only` and `./admin-api`
+  with `vi.mock` so each test sets what `GET /character-sheet` answers
+  (stored copy, 404 to the bundled file, a throw on anything else, and
+  no unknown-key, anchor or param checks while the copy has errors).
+  `scripts/mutate.mjs` caught 28 of 29 deliberate breaks. The survivor
+  can't be caught: `cloudinaryLoader`'s `/image/upload/` check is
+  redundant, since `replace()` leaves a URL without it unchanged anyway.
+  Kept as written, since it states the intent.
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -1149,11 +1161,8 @@
     yet), and Education sections (the `education` slot exists). The
     built-in `lib/character-config.json` doesn't have Teacher, which is
     fine: keeping it in step is low priority (see the last item below).
-  - More unit tests, now that Vitest runs: `lib/` helpers beyond
-    `character-anchors.ts` (`project-rules.ts`, `form-data.ts`,
-    `character-admin.ts`). Component tests (jsdom or happy-dom plus
-    Testing Library) only if a client component grows logic worth
-    testing apart from the demo stack.
+  - Component tests (jsdom or happy-dom plus Testing Library) only if a
+    client component grows logic worth testing apart from the demo stack.
   - Package work now happens in `AlexLe08/wol-character-panel` (the
     extraction is in Done); its own follow-ups: themes, CMS adapters
     (Contentful first, on its free plan; the core never imports a CMS
