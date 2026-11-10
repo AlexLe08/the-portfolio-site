@@ -4,11 +4,13 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { findUnknownKeys, parseConfig } from "@solution-nine/wol-character-panel";
 import { adminRequest } from "@/lib/admin-api";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { findDeadAnchors, findDeadParams } from "@/lib/character-anchors";
 import type { components } from "@/lib/api-types";
 import bundledConfig from "@/lib/character-config.json";
 import { formText } from "@/lib/form-data";
 import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
+import { revalidatePublic } from "@/lib/revalidate-public";
 
 // problems lists every issue by path, so a long document can be fixed in
 // one pass. A save returns the document it stored as compact JSON, so the
@@ -354,6 +356,8 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
   if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
   if (error) return describeRejection(response, error);
+  // Every action here saves through this function, before any redirect.
+  revalidatePublic(CACHE_TAGS.characterSheet);
   return {
     saved: JSON.stringify(config),
     deadAnchors: findDeadAnchors(parsed),
