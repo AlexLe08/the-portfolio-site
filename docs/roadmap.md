@@ -1203,7 +1203,8 @@
   (`lib/wake-backend.ts`) when it mounts, one fire-and-forget
   `GET /health` from the browser, so Render is usually awake by the time
   the visitor sends. The form posts straight to the backend, so the data
-  cache can't help it. Chosen over a keep-warm ping (decided 2026-11-10):
+  cache can't help it. `/health` doesn't touch the database, so Neon's
+  compute still wakes on the send itself (its cold start is short). Chosen over a keep-warm ping (decided 2026-11-10):
   staying awake 24/7 uses 744 of the workspace's 750 free Render hours
   in a 31-day month, and running out suspends every free service until
   the 1st; GitHub's scheduled runs are also often late or skipped. This

@@ -139,8 +139,10 @@ whose persistent variant (`"use cache: remote"`) is paid.
 To check after a deploy: response times on a cold backend, and the
 function logs for `revalidating cache with key` (a failed background
 refresh, which Next logs but doesn't report to Sentry). A
-`TimeoutError` there is a sleeping backend and harmless; an HTTP status
-error is a real backend failure worth a look. Also that an admin save
+`TimeoutError` (only the content and character sheet loaders have the
+5 s timeout) is usually a sleeping backend and harmless, unless it keeps
+happening while Render is awake; an HTTP status error is a real backend
+failure worth a look. Also that an admin save
 shows on the public page by the second visit. It did after PR #100
 (2026-11-10), even though Vercel's functions-package page says Next's
 `revalidateTag` doesn't invalidate Runtime Cache. If saves ever start
