@@ -44,6 +44,7 @@ export { chromium } from "playwright";
 const FRONTEND = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = path.dirname(FRONTEND);
 const BACKEND = path.join(ROOT, "backend");
+export const FETCH_CACHE = path.join(FRONTEND, ".next", "cache", "fetch-cache");
 export const LOGS = path.join(ROOT, ".logs");
 
 const API_URL = "http://localhost:8000";
@@ -84,7 +85,9 @@ function assertPortFree(port) {
 }
 
 function stopProcess(child) {
-  if (!child || child.exitCode !== null) return Promise.resolve();
+  // A child killed by a signal (an earlier stop()) has a signalCode and a
+  // null exitCode; its exit event has already fired.
+  if (!child || child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
   const exited = new Promise((resolve) => child.once("exit", resolve));
   child.kill("SIGTERM");
   return exited;
@@ -106,7 +109,7 @@ function throwawayLogin() {
 // Seeds a throwaway database, builds the frontend (skip with build: false
 // when .next already holds a build pointed at localhost:8000), and starts
 // both apps. Returns { baseUrl, apiUrl, adminPassword, backend: { start,
-// stop }, dbPath, stop }.
+// stop }, frontend: { start({ clearCache }), stop }, dbPath, stop }.
 export async function startStack({ build = true } = {}) {
   await assertPortFree(8000);
   await assertPortFree(3000);
@@ -149,12 +152,24 @@ export async function startStack({ build = true } = {}) {
   // Resolved, not ./node_modules/.bin: npm workspaces hoist next to the
   // repo root's node_modules.
   const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
-  const next = spawn(process.execPath, [nextBin, "start", "-p", "3000"], {
-    cwd: FRONTEND,
-    env: { ...process.env, ...frontendEnv },
-    stdio: "ignore",
-  });
-  await waitFor(`${BASE_URL}/contact`, "frontend");
+  let next;
+  const frontend = {
+    // clearCache: true empties Next's data cache (lib/cache-tags.ts) first,
+    // for a cold start. It persists between runs, so the first start always
+    // clears it: a reused build would otherwise serve the previous run's
+    // database.
+    async start({ clearCache = false } = {}) {
+      if (clearCache) rmSync(FETCH_CACHE, { recursive: true, force: true });
+      next = spawn(process.execPath, [nextBin, "start", "-p", "3000"], {
+        cwd: FRONTEND,
+        env: { ...process.env, ...frontendEnv },
+        stdio: "ignore",
+      });
+      await waitFor(`${BASE_URL}/contact`, "frontend");
+    },
+    stop: () => stopProcess(next),
+  };
+  await frontend.start({ clearCache: true });
 
   return {
     baseUrl: BASE_URL,
@@ -163,8 +178,9 @@ export async function startStack({ build = true } = {}) {
     // For rows seed.py doesn't make, such as media (uploads are off here).
     dbPath: `${dbDir}/demo.db`,
     backend,
+    frontend,
     async stop() {
-      await Promise.all([backend.stop(), stopProcess(next)]);
+      await Promise.all([backend.stop(), frontend.stop()]);
       rmSync(dbDir, { recursive: true, force: true });
     },
   };
