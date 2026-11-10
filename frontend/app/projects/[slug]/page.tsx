@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import Markdown from "react-markdown";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { getProject } from "@/lib/projects";
-
-export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Per request, like the page: no build-time prerender, which would need the backend.
+  await connection();
   const { slug } = await params;
   const data = await getProject(slug);
   // Missing project: the page itself calls notFound(), so keep the defaults.
@@ -23,6 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
+  // Rendered per request (data from the cache in lib/projects.ts), never
+  // prerendered at build time, which would need the backend.
+  await connection();
   const { slug } = await params;
   // Any failure other than a 404 (a 500 during an outage) throws: that's
   // an error, not a missing page, and app/error.tsx shows it with a retry

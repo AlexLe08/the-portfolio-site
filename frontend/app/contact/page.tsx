@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import Markdown from "react-markdown";
 import { AutoRetry } from "@/components/AutoRetry";
 import { ContactForm } from "@/components/ContactForm";
@@ -6,14 +7,14 @@ import { Sheet } from "@/components/Sheet";
 import { getContent } from "@/lib/content";
 import { PROFILE_LINKS } from "@/lib/links";
 
-// The intro comes from the backend and can change any time via the admin API.
-export const dynamic = "force-dynamic";
-
 export const metadata = {
   title: "Contact",
 };
 
 export default async function ContactPage() {
+  // Rendered per request (data from the cache in lib/content.ts), never
+  // prerendered at build time, which would need the backend.
+  await connection();
   const { content, fallback } = await getContent();
 
   return (
