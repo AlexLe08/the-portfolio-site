@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { StatusMessage } from "@/components/StatusMessage";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { describeRetryAfter, SERVER_UNREACHABLE } from "@/lib/messages";
+import { wakeBackend } from "@/lib/wake-backend";
 
-// The only backend call made from the browser, so the only one CORS
-// applies to: every other call runs on the server (pages and Server
-// Actions). A CORS error in the console means Render's ALLOWED_ORIGINS
-// lacks this page's origin (see docs/render-runbook.md).
+// The only backend calls made from the browser (the send and the warm-up
+// ping), so the only ones CORS applies to: every other call runs on the
+// server (pages and Server Actions). A CORS error in the console means
+// Render's ALLOWED_ORIGINS lacks this page's origin (see
+// docs/render-runbook.md).
 type Status = "idle" | "submitting" | "success" | "error";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -51,6 +53,10 @@ export function ContactForm() {
   const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    wakeBackend();
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
