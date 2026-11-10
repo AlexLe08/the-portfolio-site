@@ -8,7 +8,9 @@ import {
   type CharacterSheetConfig,
   type ConfigSource,
 } from "@solution-nine/wol-character-panel";
-import { api } from "./api";
+import { unstable_cache } from "next/cache";
+import { api, apiBaseUrl } from "./api";
+import { CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
 import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
@@ -43,25 +45,43 @@ const CHARACTER_TIMEOUT_MS = 5000;
 // otherwise be a Sentry event.
 class BackendUnavailable extends Error {}
 
-// The copy saved through PUT /character-sheet. Resolves to undefined only
-// when nothing is saved yet (404); any other failure throws, so loadConfig
-// lists it as an issue.
+// The copy saved through PUT /character-sheet, unparsed. Resolves to null
+// only when nothing is saved yet (404), which is a real answer and gets
+// cached like one (null rather than undefined, so it survives the cache's
+// JSON round trip as itself). Any other failure throws, so unstable_cache
+// below only ever stores good data. Nothing is reported here: on a miss the
+// error reaches getCharacterConfig(), which reports it, and a failed
+// background refresh only keeps the old copy.
+export async function fetchSavedCharacterConfig(): Promise<unknown> {
+  let result;
+  try {
+    result = await api.GET("/character-sheet", {
+      signal: AbortSignal.timeout(CHARACTER_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new BackendUnavailable("Backend unreachable", { cause: error });
+  }
+  const { data, response } = result;
+  if (data) return data.config;
+  if (response.status === 404) return null;
+  throw new Error(`HTTP ${response.status}`);
+}
+
+// Shared between requests through Next's data cache, like cachedContent in
+// lib/content.ts (tag CACHE_TAGS.characterSheet). apiBaseUrl is in the key
+// because the fetch reads it from its closure.
+const cachedSavedConfig = unstable_cache(
+  fetchSavedCharacterConfig,
+  ["character-sheet", apiBaseUrl],
+  { tags: [CACHE_TAGS.characterSheet], revalidate: PUBLIC_REVALIDATE_SECONDS },
+);
+
+// Resolves to undefined only when nothing is saved yet; any failure throws,
+// so loadConfig lists it as an issue. Parsing happens in loadConfig, outside
+// the cache.
 const apiSource: ConfigSource = {
   name: "GET /character-sheet",
-  load: async () => {
-    let result;
-    try {
-      result = await api.GET("/character-sheet", {
-        signal: AbortSignal.timeout(CHARACTER_TIMEOUT_MS),
-      });
-    } catch (error) {
-      throw new BackendUnavailable("Backend unreachable", { cause: error });
-    }
-    const { data, response } = result;
-    if (data) return data.config;
-    if (response.status === 404) return undefined;
-    throw new Error(`HTTP ${response.status}`);
-  },
+  load: async () => (await cachedSavedConfig()) ?? undefined,
 };
 
 export type CharacterConfigResult = {
