@@ -49,6 +49,9 @@ cd "$root/backend"
 backend_pid=$!
 
 cd "$root/frontend"
+# next dev reads Next's data cache from earlier runs (other databases), so
+# start empty. A hard reload (cache-control: no-cache) also bypasses it.
+rm -rf .next/dev/cache/fetch-cache
 npm run dev -- --port 3000 >"$logs/local-frontend.log" 2>&1 &
 frontend_pid=$!
 

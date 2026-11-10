@@ -111,10 +111,34 @@ doesn't cause confusion elsewhere later.
 
 ## Rendering strategy
 
-Both data-fetching pages (`app/page.tsx`, `app/projects/[slug]/page.tsx`)
-set `export const dynamic = "force-dynamic"`, meaning they're rendered
-per-request rather than statically built once. This is deliberate:
-project data can change at any time via the backend's admin API, so a
-build-time snapshot would go stale. The cost is one real backend request
-per page visit; see the comment in `app/page.tsx` for the ISR
-(`export const revalidate = N`) middle ground if that cost ever matters.
+Public pages render per request (they read `searchParams` or call
+`await connection()`), but their backend data comes from Next's data
+cache (`unstable_cache`, tagged per resource in `lib/cache-tags.ts`).
+On Vercel that cache is Runtime Cache: on Hobby, 1M reads and 200K
+writes a month shared across the team's projects, kept across
+deployments, one cache per region; running out pauses it for the rest of
+the period at no charge (Vercel docs, checked 2026-11-10). A visit gets
+the cached data at once; a stale entry refreshes in the background, and a
+refresh that fails (Render asleep) keeps the old data. Admin saves mark
+their tag stale with `revalidateTag(tag, "max")`, so the visit after a
+save gets the old copy and the next one the edit. Edits made outside the
+admin UI show within the 1-hour backstop. Nothing is prerendered at
+build time, so the build never needs the backend. Every cache key
+includes the deploy's commit (`CACHE_VERSION`, from
+`VERCEL_GIT_COMMIT_SHA`), so data cached by an older deploy never
+reaches newer code; the cost is one miss per page after each deploy.
+
+Rejected: page-level ISR (`export const revalidate`), because the home
+page reads `?stack=` and is dynamic anyway, and it would cache a
+fallback page or need the backend at build; and `cacheComponents` /
+`"use cache"`, whose default cache doesn't persist on serverless and
+whose persistent variant (`"use cache: remote"`) is paid.
+
+To check after a deploy: response times on a cold backend, and the
+function logs for `revalidating cache with key` (a failed background
+refresh, which Next logs but doesn't report to Sentry). Also that an
+admin save shows on the public page by the second visit: Vercel's
+functions-package page says Next's `revalidateTag` doesn't invalidate
+Runtime Cache, while its Runtime Cache page uses exactly that as the
+example (both read 2026-11-10). If saves only show after the backstop,
+that page was right for this setup.

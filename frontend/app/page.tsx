@@ -7,10 +7,6 @@ import { getCharacterConfig } from "@/lib/character";
 import { getContent } from "@/lib/content";
 import { loadProjects } from "@/lib/projects";
 
-// Projects change through the admin UI at any time, so every visit fetches.
-// If backend load ever mattered, ISR (`revalidate = 60`) is the next step.
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata(): Promise<Metadata> {
   const { content } = await getContent();
   // ?job= only changes emphasis and ?stack= only filters the project list,

@@ -7,7 +7,7 @@ import { StatusMessage } from "@/components/StatusMessage";
 import { adminLoad } from "@/lib/admin-api";
 import { loadCharacterSheetForAdmin } from "@/lib/character-admin";
 import { FALLBACK_CONTENT } from "@/lib/content";
-import { loadProjects } from "@/lib/projects";
+import { loadProjectsLive } from "@/lib/projects";
 
 export const metadata = {
   title: "Character sheet preview",
@@ -34,7 +34,7 @@ export default async function CharacterSheetPreviewPage({
   const [{ parsed }, stored, projects, { job: jobParam, stack }] = await Promise.all([
     loadCharacterSheetForAdmin(),
     adminLoad("content", (api) => api.GET("/content")),
-    loadProjects(),
+    loadProjectsLive(),
     searchParams,
   ]);
 

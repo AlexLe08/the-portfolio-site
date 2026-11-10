@@ -98,7 +98,8 @@ retyping the commands they wrap; each explains itself in its header:
   optionally `?path=`) plus a fake Sentry endpoint that logs envelopes,
   for testing outage handling and what gets reported.
 - `frontend/demo/stack.mjs`: helpers for PR demo videos (seeded backend,
-  production build, stoppable backend, captions, `.webm` in `.logs/`).
+  production build, stoppable backend, a frontend restartable with an
+  empty data cache, captions, `.webm` in `.logs/`).
   `step()` captions and logs each checked state.
 - `frontend/demo/screenshot.mjs <path> [--no-build]`: full-page PNG of
   one page on that stack, signed in for `/admin` paths, in `.logs/`.
@@ -167,8 +168,19 @@ Frontend:
   Never rely on a layout for auth, and never send the admin key or the
   session token to the browser. Admin pages read the session cookie,
   which already makes them dynamic, so they don't set `force-dynamic`.
-- Pages that fetch backend data set `export const dynamic = "force-dynamic"`,
-  because project data can change at any time via the admin API.
+- Public pages read backend data only through the cached loaders in
+  `lib/` (`getContent()`, `getCharacterConfig()`, `loadProjects()`,
+  `getProject()`): `unstable_cache` with a tag from `lib/cache-tags.ts`,
+  `CACHE_VERSION` (the deploy's commit) and `apiBaseUrl` in the key,
+  and a 1-hour backstop, so a visit gets the last good data even while
+  Render sleeps. The cached function throws on any failure, so only good
+  data is cached and the fallback is decided outside it. The pages render
+  per request (`searchParams` or `await connection()`), so they don't
+  set `force-dynamic` or `fetchCache` (an explicit
+  `fetchCache = "force-no-store"` would skip those caches). Every admin Server Action
+  that changes public data calls `revalidatePublic()`
+  (`lib/revalidate-public.ts`) after a successful save. Admin pages and
+  the admin preview read the backend uncached (`loadProjectsLive()`).
 - Admin editors use `useSaveAction()` (`lib/use-save-action.ts`) and
   `SaveStatus`, which submit through `onSubmit` so a rejected save keeps
   the edit. Project field rules (slug pattern, max lengths) live in

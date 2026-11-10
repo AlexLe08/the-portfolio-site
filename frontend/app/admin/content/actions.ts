@@ -1,8 +1,10 @@
 "use server";
 
 import { adminRequest } from "@/lib/admin-api";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { formText } from "@/lib/form-data";
 import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
+import { revalidatePublic } from "@/lib/revalidate-public";
 
 // A save returns the value it stored, so the form can update its notes
 // without re-fetching the page.
@@ -26,5 +28,6 @@ export async function updateContent(
   if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
   if (error) return { error: describeSaveFailure(response, error) };
+  revalidatePublic(CACHE_TAGS.content);
   return { saved: value };
 }

@@ -42,8 +42,17 @@ instead of a runtime bug in front of a visitor.
 npm run build
 ```
 
-Pages that fetch backend data are rendered per-request
-(`export const dynamic = "force-dynamic"`), not statically generated at
-build time — project data can change at any time via the backend's admin
-API, so a build-time snapshot would go stale. This means the build does
-NOT require the backend to be reachable.
+Pages that fetch backend data are rendered per request, not statically
+generated at build time: the home and lab pages read `searchParams`, and
+the contact and project pages call `connection()`. This means the build
+does NOT require the backend to be reachable.
+
+The backend data itself comes from Next's data cache (`unstable_cache`
+in `lib/content.ts`, `lib/character.ts`, `lib/projects.ts`, tagged with
+`lib/cache-tags.ts`). A visit gets the last good copy at once and, when
+it's over an hour old or an admin save has marked it stale
+(`lib/revalidate-public.ts`), refreshes it in the background. A refresh
+that fails keeps the old copy, so a sleeping backend doesn't slow pages
+down or switch them to built-in text. Only failures are never cached:
+with nothing cached yet, an unreachable backend still shows the built-in
+fallbacks, as before. Admin pages always read the backend directly.

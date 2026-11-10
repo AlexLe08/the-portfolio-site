@@ -14,9 +14,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// The config can change through the admin API at any time.
-export const dynamic = "force-dynamic";
-
 const BASE_PATH = "/lab/character-sheet";
 
 export default async function CharacterSheetLabPage({ searchParams }: PageProps<"/lab/character-sheet">) {

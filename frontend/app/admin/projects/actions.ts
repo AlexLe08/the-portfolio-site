@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { adminRequest } from "@/lib/admin-api";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { components } from "@/lib/api-types";
 import { formText } from "@/lib/form-data";
 import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 import { isValidSlug, MAX_LENGTH } from "@/lib/project-rules";
+import { revalidatePublic } from "@/lib/revalidate-public";
 
 // adminRequest() checks the session: Server Actions can be POSTed to
 // directly, without the page that renders the form.
@@ -34,6 +36,7 @@ export async function createProject(
   const { response, error } = result;
   if (response.status === 409) return { error: `A project with the slug "${slug}" already exists.` };
   if (error) return { error: describeSaveFailure(response, error) };
+  revalidatePublic(CACHE_TAGS.projects);
 
   // Outside any try block: redirect() works by throwing.
   redirect(`/admin/projects/${slug}`);
@@ -55,6 +58,7 @@ export async function updateProject(
   const { response, error } = result;
   if (response.status === 404) return { error: "This project no longer exists." };
   if (error) return { error: describeSaveFailure(response, error) };
+  revalidatePublic(CACHE_TAGS.projects);
   return { saved: true };
 }
 
