@@ -10,7 +10,7 @@ import {
 } from "@solution-nine/wol-character-panel";
 import { unstable_cache } from "next/cache";
 import { api, apiBaseUrl } from "./api";
-import { CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
 import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
@@ -72,7 +72,7 @@ export async function fetchSavedCharacterConfig(): Promise<unknown> {
 // because the fetch reads it from its closure.
 const cachedSavedConfig = unstable_cache(
   fetchSavedCharacterConfig,
-  ["character-sheet", apiBaseUrl],
+  ["character-sheet", apiBaseUrl, CACHE_VERSION],
   { tags: [CACHE_TAGS.characterSheet], revalidate: PUBLIC_REVALIDATE_SECONDS },
 );
 

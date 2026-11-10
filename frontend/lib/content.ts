@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { api, apiBaseUrl } from "./api";
-import { CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
 
 // What the site shows when the backend is cold, down, or missing a key.
 // These mirror the production values. The backend's value always wins, so
@@ -62,8 +62,9 @@ export async function fetchContent(): Promise<Record<string, string>> {
 // served at once and refreshed in the background, and a refresh that fails
 // keeps the old copy, so a sleeping backend doesn't hold the page. Only a
 // miss waits for the backend, and its error reaches getContent().
-// apiBaseUrl is in the key because fetchContent reads it from its closure.
-const cachedContent = unstable_cache(fetchContent, ["content", apiBaseUrl], {
+// apiBaseUrl is in the key because fetchContent reads it from its closure;
+// CACHE_VERSION keeps each deploy's entries apart.
+const cachedContent = unstable_cache(fetchContent, ["content", apiBaseUrl, CACHE_VERSION], {
   tags: [CACHE_TAGS.content],
   revalidate: PUBLIC_REVALIDATE_SECONDS,
 });

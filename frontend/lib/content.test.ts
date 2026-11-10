@@ -1,9 +1,17 @@
 import * as Sentry from "@sentry/nextjs";
 import { unstable_cache } from "next/cache";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, apiBaseUrl } from "./api";
 import { CACHE_TAGS } from "./cache-tags";
 import { FALLBACK_CONTENT, fetchContent, getContent } from "./content";
+
+// A deploy's commit, set before the modules under test read it.
+vi.hoisted(() => {
+  process.env.VERCEL_GIT_COMMIT_SHA = "deploy-sha";
+});
+afterAll(() => {
+  delete process.env.VERCEL_GIT_COMMIT_SHA;
+});
 
 // unstable_cache wraps the function in a spy that calls straight through, so
 // each call reaches the mocked backend; the tests check what it was given,
@@ -37,6 +45,8 @@ describe("the content cache", () => {
     expect(call).toBeDefined();
     const [, keyParts, options] = call!;
     expect(keyParts).toContain(apiBaseUrl);
+    // Per deploy, so an older deploy's data never reaches newer code.
+    expect(keyParts).toContain("deploy-sha");
     expect(options?.tags).toEqual([CACHE_TAGS.content]);
     expect(options?.revalidate).toBeGreaterThan(0);
   });

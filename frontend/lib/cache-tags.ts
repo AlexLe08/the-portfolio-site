@@ -15,3 +15,11 @@ export const CACHE_TAGS = {
 // changes made around the admin UI (seed scripts, direct API calls). A
 // refresh that fails keeps the old data.
 export const PUBLIC_REVALIDATE_SECONDS = 3600;
+
+// Part of every cached loader's key, so data cached by an older deploy
+// never reaches newer page code that may expect another shape (Vercel's
+// data cache outlives deploys). Costs one miss per page after each deploy.
+// Vercel sets VERCEL_GIT_COMMIT_SHA at build and runtime when system
+// environment variables are enabled; without it the key is constant, as
+// it is locally.
+export const CACHE_VERSION = process.env.VERCEL_GIT_COMMIT_SHA ?? "local";

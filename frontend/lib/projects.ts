@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { api, apiBaseUrl } from "./api";
 import type { components } from "./api-types";
-import { CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
 
 export type ProjectSummary = components["schemas"]["ProjectSummary"];
 export type ProjectDetail = components["schemas"]["ProjectDetail"];
@@ -32,7 +32,7 @@ export async function fetchProjects(): Promise<ProjectSummary[]> {
 // lib/content.ts (tag CACHE_TAGS.projects, which project saves
 // revalidate). apiBaseUrl is in the key because the fetch reads it from its
 // closure.
-const cachedProjects = unstable_cache(fetchProjects, ["projects", apiBaseUrl], {
+const cachedProjects = unstable_cache(fetchProjects, ["projects", apiBaseUrl, CACHE_VERSION], {
   tags: [CACHE_TAGS.projects],
   revalidate: PUBLIC_REVALIDATE_SECONDS,
 });
@@ -78,7 +78,7 @@ export async function fetchProject(slug: string): Promise<ProjectDetail | null> 
 }
 
 // The slug is an argument, so it's part of each entry's key already.
-const cachedProject = unstable_cache(fetchProject, ["project", apiBaseUrl], {
+const cachedProject = unstable_cache(fetchProject, ["project", apiBaseUrl, CACHE_VERSION], {
   tags: [CACHE_TAGS.projects],
   revalidate: PUBLIC_REVALIDATE_SECONDS,
 });
