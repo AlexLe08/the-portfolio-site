@@ -1157,7 +1157,9 @@
   a sleeping Render (up to about a minute; one cold `/health` measured
   22.6 s on 2026-11-10). The loaders in `lib/` wrap their backend call in
   `unstable_cache`, tagged `content`, `character-sheet` or `projects`
-  (`lib/cache-tags.ts`) with a 1-hour backstop. The cached function
+  (`lib/cache-tags.ts`) with a 1-hour backstop, keyed by the deploy's
+  commit so cached data never outlives the code that shaped it (found
+  in review: Vercel keeps the cache across deploys). The cached function
   throws on any failure, so only good data is cached: a stale entry is
   served at once and refreshed in the background, a failed refresh keeps
   it (Next source, `unstable-cache.js`), and a miss still falls back as
@@ -1166,8 +1168,10 @@
   marks the tag stale with `revalidateTag(tag, "max")`: the visit after
   a save gets the old copy, the next one the edit. `updateTag` was
   rejected because it makes that visit wait on a possibly sleeping
-  backend. The four public pages dropped `force-dynamic` (which skips
-  the cache) and render per request through `searchParams` or
+  backend. The four public pages dropped `force-dynamic` (no longer
+  needed; in 16.3.6 it doesn't skip `unstable_cache`, only an explicit
+  `fetchCache = "force-no-store"` does, though Next's docs equate the
+  two) and render per request through `searchParams` or
   `connection()`, so the build needs no backend; the admin preview reads
   `loadProjectsLive()`. Rejected: page ISR (`?stack=` keeps the home page
   dynamic, and it would cache a fallback or need the backend at build),

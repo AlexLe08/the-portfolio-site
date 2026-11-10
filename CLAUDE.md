@@ -170,12 +170,14 @@ Frontend:
   which already makes them dynamic, so they don't set `force-dynamic`.
 - Public pages read backend data only through the cached loaders in
   `lib/` (`getContent()`, `getCharacterConfig()`, `loadProjects()`,
-  `getProject()`): `unstable_cache` with a tag from `lib/cache-tags.ts`
+  `getProject()`): `unstable_cache` with a tag from `lib/cache-tags.ts`,
+  `CACHE_VERSION` (the deploy's commit) and `apiBaseUrl` in the key,
   and a 1-hour backstop, so a visit gets the last good data even while
   Render sleeps. The cached function throws on any failure, so only good
   data is cached and the fallback is decided outside it. The pages render
-  per request (`searchParams` or `await connection()`) and never set
-  `force-dynamic`, which skips those caches. Every admin Server Action
+  per request (`searchParams` or `await connection()`), so they don't
+  set `force-dynamic` or `fetchCache` (an explicit
+  `fetchCache = "force-no-store"` would skip those caches). Every admin Server Action
   that changes public data calls `revalidatePublic()`
   (`lib/revalidate-public.ts`) after a successful save. Admin pages and
   the admin preview read the backend uncached (`loadProjectsLive()`).

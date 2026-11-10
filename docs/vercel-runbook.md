@@ -123,7 +123,10 @@ refresh that fails (Render asleep) keeps the old data. Admin saves mark
 their tag stale with `revalidateTag(tag, "max")`, so the visit after a
 save gets the old copy and the next one the edit. Edits made outside the
 admin UI show within the 1-hour backstop. Nothing is prerendered at
-build time, so the build never needs the backend.
+build time, so the build never needs the backend. Every cache key
+includes the deploy's commit (`CACHE_VERSION`, from
+`VERCEL_GIT_COMMIT_SHA`), so data cached by an older deploy never
+reaches newer code; the cost is one miss per page after each deploy.
 
 Rejected: page-level ISR (`export const revalidate`), because the home
 page reads `?stack=` and is dynamic anyway, and it would cache a
@@ -133,4 +136,9 @@ whose persistent variant (`"use cache: remote"`) is paid.
 
 To check after a deploy: response times on a cold backend, and the
 function logs for `revalidating cache with key` (a failed background
-refresh, which Next logs but doesn't report to Sentry).
+refresh, which Next logs but doesn't report to Sentry). Also that an
+admin save shows on the public page by the second visit: Vercel's
+functions-package page says Next's `revalidateTag` doesn't invalidate
+Runtime Cache, while its Runtime Cache page uses exactly that as the
+example (both read 2026-11-10). If saves only show after the backstop,
+that page was right for this setup.
