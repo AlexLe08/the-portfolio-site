@@ -18,8 +18,11 @@ upgrading. Render's free tier is a fixed $0 instance type, not a metered
 one — there's no overage billing mechanism for a free-tier service at all.
 The only way this service would ever cost money is explicitly changing its
 instance type to a paid one. The trade-off: the service spins down after
-15 minutes of inactivity and takes roughly 30–50 seconds to wake up on the
-next request. Acceptable for a low-traffic portfolio site.
+15 minutes of inactivity and takes up to about a minute to wake up on the
+next request (Render documents "about one minute"; one measured cold
+`/health` on 2026-11-10 took 22.6 s). Acceptable for a low-traffic
+portfolio site, since public pages serve cached data while it wakes (see
+`docs/vercel-runbook.md`, "Rendering strategy").
 
 ## Initial setup
 
@@ -116,7 +119,7 @@ mappings docs: https://docs.sentry.io/integrations/source-code-mgmt/code-mapping
 
 Run this after changing `CLIENT_IP_HEADER` or anything about the limiter.
 Every request sets the honeypot field, so nothing is saved or sent. The
-first request can take 30-50 seconds if the service is asleep.
+first request can take up to about a minute if the service is asleep.
 
 ```sh
 API_URL=https://portfolio-backend-leto.onrender.com

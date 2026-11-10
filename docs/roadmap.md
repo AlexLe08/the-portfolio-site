@@ -1153,7 +1153,48 @@
   redundant, since `replace()` leaves a URL without it unchanged anyway.
   Kept as written, since it states the intent.
 
+- Public pages serve cached backend data, so a visit no longer waits on
+  a sleeping Render (up to about a minute; one cold `/health` measured
+  22.6 s on 2026-11-10). The loaders in `lib/` wrap their backend call in
+  `unstable_cache`, tagged `content`, `character-sheet` or `projects`
+  (`lib/cache-tags.ts`) with a 1-hour backstop. The cached function
+  throws on any failure, so only good data is cached: a stale entry is
+  served at once and refreshed in the background, a failed refresh keeps
+  it (Next source, `unstable-cache.js`), and a miss still falls back as
+  before. `getProject()` caches a 404 as `null`, so an unpublished
+  project becomes a 404. Admin saves call `revalidatePublic()`, which
+  marks the tag stale with `revalidateTag(tag, "max")`: the visit after
+  a save gets the old copy, the next one the edit. `updateTag` was
+  rejected because it makes that visit wait on a possibly sleeping
+  backend. The four public pages dropped `force-dynamic` (which skips
+  the cache) and render per request through `searchParams` or
+  `connection()`, so the build needs no backend; the admin preview reads
+  `loadProjectsLive()`. Rejected: page ISR (`?stack=` keeps the home page
+  dynamic, and it would cache a fallback or need the backend at build),
+  `cacheComponents` (its default cache doesn't persist on serverless, the
+  persistent one is paid), and a keep-warm ping (see the contact warm-up
+  below). On Vercel this is Runtime Cache: on Hobby, 1M reads and 200K
+  writes a month, kept across deploys. On the demo stack with the backend
+  stopped or hanging, every public page served real data in under 60 ms,
+  saves made while it was down showed after it came back, a 500 during a
+  refresh kept the old data, and a cold empty cache showed the fallback
+  without caching it. `demo/stack.mjs` now restarts the frontend with an
+  empty data cache and treats a signal-killed process as stopped (it hung
+  before); `scripts/local-stack.sh` clears `next dev`'s data cache, which
+  otherwise served an earlier run's database.
+
 ## Next up (candidates, unordered)
+
+- Contact page warm-up, the next task after the cached public data:
+  `ContactForm` sends one fire-and-forget `GET /health` from the browser
+  when `/contact` loads, so Render is usually awake by the time the
+  visitor sends. The form posts straight to the backend, so caching
+  can't help it. Chosen over a keep-warm ping (decided 2026-11-10):
+  staying awake 24/7 uses 744 of the workspace's 750 free Render hours
+  in a 31-day month, and running out suspends every free service until
+  the 1st; GitHub's scheduled runs are also often late or skipped. This one
+  costs no idle hours and wakes Render only for visitors who may write.
+  The form's "may be waking up" message still covers a fast sender.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
@@ -1199,7 +1240,12 @@
   on either service only if errors alone stop being enough.
 - Allow Vercel preview origins in CORS if previews ever need client-side
   API calls.
-- Switch to ISR (`revalidate`) if per-request rendering becomes costly.
+- Data cache follow-ups: move to `cacheComponents` / `"use cache"` when
+  `unstable_cache` goes away, once a persistent cache handler is free on
+  Vercel. Give the project loaders a timeout if Vercel's function usage
+  shows stale-visit background refreshes held open by a sleeping
+  backend (a timeout would also make a cold miss show
+  `ProjectsUnavailable` sooner instead of waiting for Render).
 - Contact rate limiter follow-up: it is in-memory, so it resets on restart
   or cold start and isn't shared across instances (move to the database or
   Redis only if the service ever scales out).
