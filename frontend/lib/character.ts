@@ -8,9 +8,8 @@ import {
   type CharacterSheetConfig,
   type ConfigSource,
 } from "@solution-nine/wol-character-panel";
-import { unstable_cache } from "next/cache";
-import { api, apiBaseUrl } from "./api";
-import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { api } from "./api";
+import { CACHE_TAGS, PUBLIC_LOAD_TIMEOUT_MS, publicCache } from "./cache-tags";
 import rawConfig from "./character-config.json";
 
 // The home page's character sheet: jobs (target industries), their slots,
@@ -35,10 +34,6 @@ if (unknownKeys.length > 0) {
 
 export const characterConfig: CharacterSheetConfig = config;
 
-// Same reasoning as CONTENT_TIMEOUT_MS in lib/content.ts: the bundled file
-// is a fine stand-in, so a cold backend never holds the page.
-const CHARACTER_TIMEOUT_MS = 5000;
-
 // Thrown when the backend is unreachable or timed out (a Render cold
 // start). It counts as a failed load, so the page says it shows the bundled
 // file, but it's logged rather than reported: every cold start would
@@ -48,7 +43,7 @@ class BackendUnavailable extends Error {}
 // The copy saved through PUT /character-sheet, unparsed. Resolves to null
 // only when nothing is saved yet (404), which is a real answer and gets
 // cached like one (null rather than undefined, so it survives the cache's
-// JSON round trip as itself). Any other failure throws, so unstable_cache
+// JSON round trip as itself). Any other failure throws, so publicCache()
 // below only ever stores good data. Nothing is reported here: on a miss the
 // error reaches getCharacterConfig(), which reports it, and a failed
 // background refresh only keeps the old copy.
@@ -56,7 +51,7 @@ export async function fetchSavedCharacterConfig(): Promise<unknown> {
   let result;
   try {
     result = await api.GET("/character-sheet", {
-      signal: AbortSignal.timeout(CHARACTER_TIMEOUT_MS),
+      signal: AbortSignal.timeout(PUBLIC_LOAD_TIMEOUT_MS),
     });
   } catch (error) {
     throw new BackendUnavailable("Backend unreachable", { cause: error });
@@ -67,13 +62,10 @@ export async function fetchSavedCharacterConfig(): Promise<unknown> {
   throw new Error(`HTTP ${response.status}`);
 }
 
-// Shared between requests through Next's data cache, like cachedContent in
-// lib/content.ts (tag CACHE_TAGS.characterSheet). apiBaseUrl is in the key
-// because the fetch reads it from its closure.
-const cachedSavedConfig = unstable_cache(
+const cachedSavedConfig = publicCache(
   fetchSavedCharacterConfig,
-  ["character-sheet", apiBaseUrl, CACHE_VERSION],
-  { tags: [CACHE_TAGS.characterSheet], revalidate: PUBLIC_REVALIDATE_SECONDS },
+  "character-sheet",
+  CACHE_TAGS.characterSheet,
 );
 
 // Resolves to undefined only when nothing is saved yet; any failure throws,
