@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { unstable_cache } from "next/cache";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, apiBaseUrl } from "./api";
 import { CACHE_TAGS } from "./cache-tags";
 import {
@@ -49,6 +49,12 @@ beforeEach(() => {
   vi.mocked(api.GET).mockReset();
 });
 
+// Undoes vi.spyOn (AbortSignal.timeout, console.error) even when a test
+// fails before its end.
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("the project caches", () => {
   it.each([
     ["list", fetchProjects],
@@ -80,6 +86,15 @@ describe("fetchProjects", () => {
     answer(500);
     await expect(fetchProjects()).rejects.toThrow("Failed to load projects");
   });
+
+  it("gives up after 5 seconds on a sleeping backend", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    answer(200, PROJECTS);
+    await fetchProjects();
+
+    expect(timeout).toHaveBeenCalledWith(5000);
+    expect(api.GET).toHaveBeenCalledWith("/projects", { signal: timeout.mock.results[0].value });
+  });
 });
 
 describe("loadProjects", () => {
@@ -107,6 +122,16 @@ describe("loadProjects", () => {
 
     await expect(loadProjects()).resolves.toBeNull();
     expect(Sentry.captureException).toHaveBeenCalledWith(error, undefined);
+  });
+
+  it("returns null and only logs a timeout, which every cold start hits", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = new DOMException("The operation was aborted due to timeout", "TimeoutError");
+    vi.mocked(api.GET).mockRejectedValue(error);
+
+    await expect(loadProjects()).resolves.toBeNull();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(expect.any(String), error);
   });
 });
 

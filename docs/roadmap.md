@@ -1222,6 +1222,26 @@
   promise from a plain wrapper instead; `scripts/mutate.mjs` then caught
   all three breaks.
 
+- Project list timeout: `fetchProjects()` gives up after 5 seconds, like
+  `/content` and `/character-sheet`. On a cold cache miss the home page
+  now renders in about 5 s with `ProjectsUnavailable` ("trying again")
+  instead of waiting 30-50 s for Render, and `AutoRetry` fills the list
+  in once it wakes; a stale entry's background refresh against a
+  sleeping backend now ends after 5 s instead of holding the function
+  open. A timeout is only logged, since a sleeping Render accepts the
+  connection and holds it, so every cold start would otherwise be a
+  Sentry event; a refused connection and HTTP errors are still reported.
+  Project pages (`fetchProject`) keep waiting: without the case study
+  there's nothing to show, and `app/error.tsx` only retries on a click.
+  `AutoRetry`'s delays stay; on a cold start its retries now land about
+  8, 23, 48, and 83 s after the visit, which still covers a full wake.
+  The admin preview's `loadProjectsLive()` shares the timeout. Verified
+  on the demo stack with uvicorn frozen by `SIGSTOP` (connections
+  accepted, never answered): the home page rendered in 5.1 s with the
+  retry message, and 10.4 s after `SIGCONT` the list appeared without a
+  reload; `scripts/mutate.mjs` caught all five breaks. Not exercised: the
+  background-refresh path (no way to watch it end locally).
+
 ## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
@@ -1270,10 +1290,9 @@
   API calls.
 - Data cache follow-ups: move to `cacheComponents` / `"use cache"` when
   `unstable_cache` goes away, once a persistent cache handler is free on
-  Vercel. Give the project loaders a timeout if Vercel's function usage
-  shows stale-visit background refreshes held open by a sleeping
-  backend (a timeout would also make a cold miss show
-  `ProjectsUnavailable` sooner instead of waiting for Render).
+  Vercel. A timeout for project pages (`fetchProject`) only if they
+  get an auto-retrying unavailable state like the home page's list;
+  until then a timeout would trade a slow page for `app/error.tsx`.
 - Contact rate limiter follow-up: it is in-memory, so it resets on restart
   or cold start and isn't shared across instances (move to the database or
   Redis only if the service ever scales out).
