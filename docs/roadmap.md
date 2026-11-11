@@ -1185,20 +1185,44 @@
   without caching it. `demo/stack.mjs` now restarts the frontend with an
   empty data cache and treats a signal-killed process as stopped (it hung
   before); `scripts/local-stack.sh` clears `next dev`'s data cache, which
-  otherwise served an earlier run's database.
+  otherwise served an earlier run's database. In production (PR #100,
+  checked by the owner 2026-11-10): Vercel's system environment variables
+  are on, so `CACHE_VERSION` changes per deploy; with the backend asleep
+  the first home page load has a much shorter delay than before and later
+  loads are fast; the function logs show `revalidating cache with key`
+  lines (background refreshes that failed while Render slept, with the
+  stale data served). The one checked was `/content` hitting its 5 s
+  `TimeoutError`, not an HTTP error, and its key ended in the deploy's
+  commit (`ed9cd16`), so `CACHE_VERSION` works. An admin save showed on
+  the public page's second visit, so Next's `revalidateTag` does
+  invalidate Vercel's cache for `unstable_cache` entries, despite
+  Vercel's functions-package page saying it doesn't (likely meant for
+  that package's own `getCache()`; not confirmed).
 
-## Next up (candidates, unordered)
-
-- Contact page warm-up, the next task after the cached public data:
-  `ContactForm` sends one fire-and-forget `GET /health` from the browser
-  when `/contact` loads, so Render is usually awake by the time the
-  visitor sends. The form posts straight to the backend, so caching
-  can't help it. Chosen over a keep-warm ping (decided 2026-11-10):
+- Contact page warm-up: `ContactForm` calls `wakeBackend()`
+  (`lib/wake-backend.ts`) when it mounts, one fire-and-forget
+  `GET /health` from the browser, so Render is usually awake by the time
+  the visitor sends. The form posts straight to the backend, so the data
+  cache can't help it. `/health` doesn't touch the database, so Neon's
+  compute still wakes on the send itself (its cold start is short). Chosen over a keep-warm ping (decided 2026-11-10):
   staying awake 24/7 uses 744 of the workspace's 750 free Render hours
   in a 31-day month, and running out suspends every free service until
-  the 1st; GitHub's scheduled runs are also often late or skipped. This one
-  costs no idle hours and wakes Render only for visitors who may write.
-  The form's "may be waking up" message still covers a fast sender.
+  the 1st; GitHub's scheduled runs are also often late or skipped. This
+  one costs no idle hours and wakes Render only for visitors who may
+  write. Also rejected: an `after()` ping from the page's server render
+  (holds a Vercel function open while Render wakes) and a `preload` link
+  (cross-origin quirks, harder to test). A failed ping is swallowed, since
+  client Sentry reports unhandled rejections; the form's "may be waking
+  up" message still covers a fast sender. On a production build of the
+  demo stack: one request per visit (also after client-side navigation),
+  and with the backend stopped the ping fails quietly and the form still
+  renders (`next dev` sends two, from Strict Mode). The unit test first
+  missed a removed `.catch`: `vi.fn` attaches handlers to any promise its
+  implementation returns (for `settledResults`), so the mock returns the
+  promise from a plain wrapper instead; `scripts/mutate.mjs` then caught
+  all three breaks.
+
+## Next up (candidates, unordered)
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):

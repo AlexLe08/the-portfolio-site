@@ -91,13 +91,15 @@ CORS: Render's `ALLOWED_ORIGINS` is set to the production URL only (see
 would be blocked by the browser's CORS policy. Server-side fetches (the
 home page and project detail page, both React Server Components) aren't
 affected — CORS only governs requests made by JavaScript running in the
-browser, and those pages fetch server-to-server. This will start to matter
-for real once something client-side calls the API (the contact form, once
-it has a UI).
+browser, and those pages fetch server-to-server. The contact form is the
+one client-side caller: its submission, and the `GET /health` warm-up it
+sends when `/contact` loads.
 
 Not a bug to fix now — just the expected behavior to recognize if a PR
 preview's contact form submission fails with a CORS error while production
-works fine.
+works fine. On a preview the warm-up also logs a CORS error in the console;
+it still wakes Render (a plain GET reaches the server, only the response is
+blocked), and the form ignores its result either way.
 
 ## Things that only work with real internet access
 
@@ -136,9 +138,12 @@ whose persistent variant (`"use cache: remote"`) is paid.
 
 To check after a deploy: response times on a cold backend, and the
 function logs for `revalidating cache with key` (a failed background
-refresh, which Next logs but doesn't report to Sentry). Also that an
-admin save shows on the public page by the second visit: Vercel's
-functions-package page says Next's `revalidateTag` doesn't invalidate
-Runtime Cache, while its Runtime Cache page uses exactly that as the
-example (both read 2026-11-10). If saves only show after the backstop,
-that page was right for this setup.
+refresh, which Next logs but doesn't report to Sentry). A
+`TimeoutError` (only the content and character sheet loaders have the
+5 s timeout) is usually a sleeping backend and harmless, unless it keeps
+happening while Render is awake; an HTTP status error is a real backend
+failure worth a look. Also that an admin save
+shows on the public page by the second visit. It did after PR #100
+(2026-11-10), even though Vercel's functions-package page says Next's
+`revalidateTag` doesn't invalidate Runtime Cache. If saves ever start
+showing only after the 1-hour backstop, look there first.
