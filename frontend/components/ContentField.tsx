@@ -2,11 +2,11 @@
 
 import type { ContentFormState } from "@/app/admin/content/actions";
 import { SaveStatus } from "@/components/SaveStatus";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // updateContent bound to this key.
-  action: (state: ContentFormState, formData: FormData) => Promise<ContentFormState>;
+  action: SaveAction<ContentFormState>;
   contentKey: string;
   description: string;
   value: string;

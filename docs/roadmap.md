@@ -1277,20 +1277,23 @@
   actions were exercised on the demo stack (add, edit, default, a stale
   tab, an already-removed job). Found on the way: those Server Actions
   have no unit tests (a `findJob` that ignores the id passes the suite).
+- Refactor audit, step 3 of 3: components and CSS (no behavior or
+  visual changes). `components/ErrorNotice.tsx` is shared by all three
+  error boundaries, which differ only in their sentence; it was deferred
+  until a third boundary appeared, but `app/global-error.tsx` already
+  repeated the same markup inside its own `<html>` (which it keeps, with
+  its Sentry call). Character sheet limits are typed `number` (the
+  package's `LIMITS` are all numbers), so five `max()` helpers that
+  turned `null` into `undefined` are gone. `ProblemList` replaces five
+  copies of the problem list, the save status's warning props default to
+  `[]`, and `SaveAction<State>` replaces nine spelled-out action types.
+  In `globals.css`, zero margins and paddings the `*` reset already sets
+  are gone, and the upload radio and three focus rings share rules with
+  their twins. Verified by 11 before/after screenshots (public and admin
+  pages, both error boundaries), identical byte for byte, plus computed
+  focus rings and sizes.
 
 ## Next up (candidates, unordered)
-
-- Refactor audit (in progress, asked 2026-11-11; split into
-  `refactor/audit-backend-tests`, `refactor/audit-frontend-lib`, and
-  `refactor/audit-frontend-components`): across backend and frontend, find functions worth
-  combining into shared helpers (including the shared error UI below),
-  comments that can be cut or shortened, and tests that are redundant or
-  can be merged (for example into `it.each` / `pytest.mark.parametrize`).
-  Follow best practices, and say where the ask conflicts with them
-  (e.g. comments that record a decision's "why" and tests that pin a
-  distinct failure mode stay; abstractions with one caller aren't worth
-  adding). No behavior changes. Removing a test is a deliberate,
-  reported change with a reason, never a way to make a check pass.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
@@ -1314,13 +1317,6 @@
     repository: its import allowlist doesn't see dynamic `import()` or
     `require()`; add a `no-restricted-syntax` rule if it ever uses them
     (it doesn't today).
-
-- Shared error UI, only when a third segment boundary appears or the
-  error UI grows past a message and a "Try again" button (a back link, a
-  reference ID): extract `components/ErrorNotice.tsx` (`message`,
-  `retry`) from `app/error.tsx` and `app/admin/error.tsx`, which
-  currently differ only in their sentence. `app/global-error.tsx` stays
-  separate (own `<html>`, styles, Sentry).
 
 - Unit tests for the character sheet Server Actions
   (`app/admin/character-sheet/actions.ts`: `findJob`, `applyJobForm`,

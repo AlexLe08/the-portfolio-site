@@ -7,7 +7,7 @@ import { StatusMessage } from "./StatusMessage";
 // There's no built-in copy to show, so it says so where the list would be.
 // While AutoRetry is still trying it's a plain line; only once the retries
 // are used up does it become an error with a button to reload.
-// retryHref is the page to reload: the current one, ?job= included.
+// retryHref is the page to reload: the current one, ?job= and ?stack= included.
 export function ProjectsUnavailable({ retryHref = "/" }: { retryHref?: string }) {
   if (!useRetriesGaveUp()) {
     return (

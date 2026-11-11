@@ -7,13 +7,12 @@ import { useRef, useState } from "react";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
 import { SlotActionFields, type SlotActionLimits } from "@/components/SlotActionFields";
 import { SlotTooltipFields, type TooltipFieldLimits } from "@/components/SlotTooltipFields";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
-// Max lengths the page reads from the package's LIMITS (null: no limit), so
-// the numbers live only in schema.ts and zod stays out of the browser bundle.
+// Max lengths, from the package's LIMITS (read by the page).
 export type JobFieldLimits = Record<
   "name" | "title" | "icon" | "levelLabel" | "levelValue" | "portraitSrc" | "portraitAlt" | "section",
-  number | null
+  number
 >;
 
 // Typed by the status, so a new one in the schema fails the build here.
@@ -25,7 +24,7 @@ const STATUS_LABELS: Record<JobStatus, string> = {
 
 type Props = {
   // updateCharacterJob bound to the job's id.
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   job: Job;
   // The default job has to stay published.
   isDefault: boolean;
@@ -72,7 +71,6 @@ export function CharacterJobForm({
 }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
   const note = describeStoredCopy(state && "saved" in state ? state.saved : stored, bundled);
-  const max = (limit: number | null) => limit ?? undefined;
 
   // Empty slots the admin chose to fill, and filled ones they chose to
   // empty. Both save with the rest of the form; until then "Don't fill"
@@ -127,7 +125,7 @@ export function CharacterJobForm({
         id={`section-${slot.id}`}
         name={`section.${slot.id}`}
         rows={6}
-        maxLength={max(limits.section)}
+        maxLength={limits.section}
         defaultValue={job.sections?.[slot.id] ?? ""}
         className="form-input form-textarea"
       />
@@ -170,7 +168,7 @@ export function CharacterJobForm({
             id="name"
             name="name"
             required
-            maxLength={max(limits.name)}
+            maxLength={limits.name}
             defaultValue={job.name}
             aria-describedby="name-help"
             className="form-input"
@@ -188,7 +186,7 @@ export function CharacterJobForm({
             id="title"
             name="title"
             required
-            maxLength={max(limits.title)}
+            maxLength={limits.title}
             defaultValue={job.title}
             aria-describedby="title-help"
             className="form-input"
@@ -205,7 +203,7 @@ export function CharacterJobForm({
           <input
             id="icon"
             name="icon"
-            maxLength={max(limits.icon)}
+            maxLength={limits.icon}
             defaultValue={job.icon ?? ""}
             aria-describedby="icon-help"
             className="form-input form-input--short"
@@ -224,7 +222,7 @@ export function CharacterJobForm({
             id="level_label"
             name="level_label"
             required
-            maxLength={max(limits.levelLabel)}
+            maxLength={limits.levelLabel}
             defaultValue={job.level.label}
             className="form-input"
           />
@@ -238,7 +236,7 @@ export function CharacterJobForm({
             id="level_value"
             name="level_value"
             required
-            maxLength={max(limits.levelValue)}
+            maxLength={limits.levelValue}
             defaultValue={job.level.value}
             className="form-input"
           />
@@ -251,8 +249,8 @@ export function CharacterJobForm({
           uploads={uploads}
           src={job.portrait?.src ?? ""}
           alt={job.portrait?.alt ?? ""}
-          srcMaxLength={max(limits.portraitSrc)}
-          altMaxLength={max(limits.portraitAlt)}
+          srcMaxLength={limits.portraitSrc}
+          altMaxLength={limits.portraitAlt}
         />
 
         <div className="form-field">

@@ -156,7 +156,9 @@ Frontend:
   the character sheet package's `SlotHover` (a dependency's own file),
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
-  `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`).
+  `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`,
+  which share `components/ErrorNotice.tsx`; it has no directive of its
+  own, so import it only from client code).
 - A new site-content key goes in `FALLBACK_CONTENT` (`lib/content.ts`)
   and in `DESCRIPTIONS` (`app/admin/content/page.tsx`); the build fails
   until both have it. Admin code never reads content through
@@ -183,7 +185,7 @@ Frontend:
   the admin preview read the backend uncached (`loadProjectsLive()`).
 - Admin editors use `useSaveAction()` (`lib/use-save-action.ts`) and
   `SaveStatus`, which submit through `onSubmit` so a rejected save keeps
-  the edit. Project field rules (slug pattern, max lengths) live in
+  the edit; their `action` prop is typed `SaveAction<State>`. Project field rules (slug pattern, max lengths) live in
   `lib/project-rules.ts`, mirroring `schemas.ProjectCreate`.
 - Every page renders inside `Sheet` (`components/Sheet.tsx`: the sheet,
   an optional back link and ruled header, and a top `notice` slot, used for

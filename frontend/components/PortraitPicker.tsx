@@ -12,18 +12,17 @@ type Props = {
   uploads: PortraitUpload[] | null;
   src: string;
   alt: string;
-  srcMaxLength?: number;
-  altMaxLength?: number;
+  srcMaxLength: number;
+  altMaxLength: number;
 };
 
 const NONE = "none";
 const PASTED = "pasted";
 
 // Picks the portrait from the uploads at /admin/media, a pasted URL, or
-// none. Whichever it is goes out as one hidden portrait_src, the same field
-// the URL input used to send, so updateCharacterJob doesn't know the
-// difference. Picking an upload fills in its alt text unless the alt text
-// was written by hand.
+// none. Whichever it is goes out as one hidden portrait_src, so
+// updateCharacterJob doesn't know the difference. Picking an upload fills
+// in its alt text unless the alt text was written by hand.
 export function PortraitPicker({ uploads, src, alt: initialAlt, srcMaxLength, altMaxLength }: Props) {
   const list = uploads ?? [];
   // An upload's URL, NONE, or PASTED. Uploads are Cloudinary URLs, so they

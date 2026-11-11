@@ -2,10 +2,10 @@
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import { CharacterSheetSaveStatus, describeStoredCopy } from "@/components/CharacterSheetSaveStatus";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   // The document to start from, pretty-printed.
   value: string;
   // Compact JSON of lib/character-config.json and of the saved copy (null

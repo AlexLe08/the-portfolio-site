@@ -6,7 +6,7 @@ import { openDetails } from "@/components/SlotTooltipFields";
 import { PROJECTS_ANCHOR, STACK_PARAM } from "@/lib/character-anchors";
 
 // Read from the package's LIMITS by the page, like TooltipFieldLimits.
-export type SlotActionLimits = Record<"target" | "href" | "paramName" | "paramValue", number | null>;
+export type SlotActionLimits = Record<"target" | "href" | "paramName" | "paramValue", number>;
 
 type Props = {
   slotId: string;
@@ -46,7 +46,6 @@ export function SlotActionFields({
   const [paramName, setParamName] = useState(savedParam?.name ?? "");
   const name = (field: string) => `action.${slotId}.${field}`;
   const id = (field: string) => `action-${slotId}-${field}`;
-  const max = (limit: number | null) => limit ?? undefined;
   // Switching kind unmounts the other inputs, so switching back shows the
   // saved value again rather than what was typed.
   const href = action.kind === "link" || action.kind === "external" ? action.href : "";
@@ -94,7 +93,7 @@ export function SlotActionFields({
             name={name("target")}
             required
             onInvalid={openDetails}
-            maxLength={max(limits.target)}
+            maxLength={limits.target}
             defaultValue={action.kind === "anchor" ? action.target : ""}
             list={id("targets")}
             aria-describedby={id("target-help")}
@@ -118,7 +117,7 @@ export function SlotActionFields({
             name={name("href")}
             required
             onInvalid={openDetails}
-            maxLength={max(limits.href)}
+            maxLength={limits.href}
             defaultValue={action.kind === "link" ? href : ""}
             placeholder="/contact"
             aria-describedby={id("href-help")}
@@ -142,7 +141,7 @@ export function SlotActionFields({
               type="url"
               required
               onInvalid={openDetails}
-              maxLength={max(limits.href)}
+              maxLength={limits.href}
               defaultValue={action.kind === "external" ? href : ""}
               placeholder="https://"
               className="form-input"
@@ -171,7 +170,7 @@ export function SlotActionFields({
               name={name("name")}
               required
               onInvalid={openDetails}
-              maxLength={max(limits.paramName)}
+              maxLength={limits.paramName}
               pattern={paramNamePattern}
               defaultValue={savedParam?.name ?? ""}
               onChange={(event) => setParamName(event.target.value)}
@@ -198,7 +197,7 @@ export function SlotActionFields({
               name={name("value")}
               required
               onInvalid={openDetails}
-              maxLength={max(limits.paramValue)}
+              maxLength={limits.paramValue}
               defaultValue={savedParam?.value ?? ""}
               list={paramName.trim() === STACK_PARAM ? id("values") : undefined}
               className="form-input"
@@ -218,7 +217,7 @@ export function SlotActionFields({
             <input
               id={id("target")}
               name={name("target")}
-              maxLength={max(limits.target)}
+              maxLength={limits.target}
               // A new param action scrolls to the list it most likely filters.
               defaultValue={savedParam ? (savedParam.target ?? "") : PROJECTS_ANCHOR}
               list={id("targets")}
