@@ -226,7 +226,9 @@ Frontend:
 - Unit tests are Vitest, beside the code as `*.test.ts` in
   `frontend/lib/`, for pure helpers and server-side ones, which mock
   `server-only` and their backend call with `vi.mock` (see
-  `lib/character-admin.test.ts`). No component or DOM tests yet;
+  `lib/character-admin.test.ts`). Server Actions in `app/` are tested
+  from `lib/` too, importing them through `@/` (see
+  `lib/character-sheet-actions.test.ts`). No component or DOM tests yet;
   pages are checked on the demo stack. CI runs Node 24, the version
   Vercel builds with; keep the two in step (Vitest 5 needs Node 22.12+).
 

@@ -1292,6 +1292,22 @@
   their twins. Verified by 11 before/after screenshots (public and admin
   pages, both error boundaries), identical byte for byte, plus computed
   focus rings and sizes.
+- Unit tests for the character sheet Server Actions (found in the
+  refactor audit): `lib/character-sheet-actions.test.ts`, 48 tests over
+  all five actions in `app/admin/character-sheet/actions.ts`, with the
+  real `parseConfig` and only `adminRequest`, `refresh`, `redirect` (which
+  throws, like Next's), and `revalidatePublic` mocked. Covers reading the
+  saved copy (404 starts from a copy of the bundled file, other failures
+  stop), each job action touching only its own job, the form's field
+  rules (status, empty fields, portrait size, sections, slot fill/empty
+  and conflicts, tooltip and action fields), and how refusals and
+  backend errors read. Vitest now resolves `@/` imports
+  (`resolve.tsconfigPaths`, built into Vite 8), so a test in `lib/` can
+  load an `app/` module. Checked with `scripts/mutate.mjs`: 35 deliberate
+  breaks, all caught (including the audit's `findJob` that ignores the
+  id); one survivor on the first run (a kind change that kept the old
+  kind's keys) led to a stronger test. The frontend suite is now 167
+  tests.
 
 ## Next up (candidates, unordered)
 
@@ -1317,12 +1333,6 @@
     repository: its import allowlist doesn't see dynamic `import()` or
     `require()`; add a `no-restricted-syntax` rule if it ever uses them
     (it doesn't today).
-
-- Unit tests for the character sheet Server Actions
-  (`app/admin/character-sheet/actions.ts`: `findJob`, `applyJobForm`,
-  the add, remove, and default paths), with `adminRequest` mocked like
-  `lib/character-admin.test.ts`. Found in the refactor audit: they're
-  covered only by the demo stack today.
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-up, doable at `/admin/projects`: `repo_url`s for other
