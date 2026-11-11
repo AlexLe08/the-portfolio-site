@@ -3,10 +3,10 @@
 import { type FormEvent, useRef, useState } from "react";
 import type { Tooltip } from "@solution-nine/wol-character-panel";
 
-// Read from the zod schema by the page, like JobFieldLimits.
+// From the package's LIMITS, like JobFieldLimits.
 export type TooltipFieldLimits = Record<
   "title" | "tag" | "subtitle" | "statLabel" | "statValue" | "itemLabel" | "itemValue" | "note",
-  number | null
+  number
 > &
   Record<"maxTags" | "maxItems", number>;
 
@@ -30,7 +30,6 @@ export function openDetails(event: FormEvent<HTMLElement>) {
 export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props) {
   const name = (field: string) => `tooltip.${slotId}.${field}`;
   const id = (field: string) => `tooltip-${slotId}-${field}`;
-  const max = (limit: number | null) => limit ?? undefined;
 
   return (
     <>
@@ -42,7 +41,7 @@ export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props)
           id={id("title")}
           name={name("title")}
           required
-          maxLength={max(limits.title)}
+          maxLength={limits.title}
           defaultValue={tooltip.title}
           autoFocus={autoFocus}
           onInvalid={openDetails}
@@ -57,7 +56,7 @@ export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props)
         <input
           id={id("subtitle")}
           name={name("subtitle")}
-          maxLength={max(limits.subtitle)}
+          maxLength={limits.subtitle}
           defaultValue={tooltip.subtitle ?? ""}
           className="form-input"
         />
@@ -88,7 +87,7 @@ export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props)
             name={name("stat_label")}
             aria-label="Stat label"
             placeholder="Label"
-            maxLength={max(limits.statLabel)}
+            maxLength={limits.statLabel}
             defaultValue={tooltip.stat?.label ?? ""}
             className="form-input"
           />
@@ -96,7 +95,7 @@ export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props)
             name={name("stat_value")}
             aria-label="Stat value"
             placeholder="Value"
-            maxLength={max(limits.statValue)}
+            maxLength={limits.statValue}
             defaultValue={tooltip.stat?.value ?? ""}
             className="form-input"
           />
@@ -114,7 +113,7 @@ export function SlotTooltipFields({ slotId, tooltip, limits, autoFocus }: Props)
           id={id("note")}
           name={name("note")}
           rows={2}
-          maxLength={max(limits.note)}
+          maxLength={limits.note}
           defaultValue={tooltip.note ?? ""}
           className="form-input form-textarea"
         />
@@ -146,7 +145,6 @@ function TooltipItemsEditor({
   // A row added by the button, whose first input takes focus once React
   // attaches it (see the ref callback below).
   const focusKey = useRef<number | null>(null);
-  const max = (limit: number | null) => limit ?? undefined;
 
   function add() {
     const key = nextKey.current++;
@@ -188,7 +186,7 @@ function TooltipItemsEditor({
                     name={name("item_label")}
                     aria-label={`Item ${index + 1} label`}
                     placeholder="Label (optional)"
-                    maxLength={max(limits.itemLabel)}
+                    maxLength={limits.itemLabel}
                     defaultValue={row.label}
                     className="form-input"
                   />
@@ -196,7 +194,7 @@ function TooltipItemsEditor({
                     name={name("item_value")}
                     aria-label={`Item ${index + 1} text`}
                     placeholder="Text"
-                    maxLength={max(limits.itemValue)}
+                    maxLength={limits.itemValue}
                     defaultValue={row.value}
                     className="form-input"
                   />

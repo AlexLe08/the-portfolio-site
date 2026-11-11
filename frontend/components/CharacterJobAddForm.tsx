@@ -12,7 +12,7 @@ type Props = {
   // The job being edited, preselected as the one to copy.
   currentJobId: string;
   // From the package's LIMITS (see JobFieldLimits); the pattern is ID_PATTERN.
-  limits: { id: number | null; name: number | null; title: number | null };
+  limits: { id: number; name: number; title: number };
   idPattern: string;
 };
 
@@ -20,7 +20,6 @@ type Props = {
 // slots (contact, links, projects). Folded away: it's needed rarely.
 export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPattern }: Props) {
   const { state, pending, onSubmit } = useSaveAction(action);
-  const max = (limit: number | null) => limit ?? undefined;
 
   return (
     <details className="form-more">
@@ -34,7 +33,7 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
             id="new-job-id"
             name="id"
             required
-            maxLength={max(limits.id)}
+            maxLength={limits.id}
             pattern={idPattern}
             aria-describedby="new-job-id-help"
             className="form-input"
@@ -53,7 +52,7 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
             id="new-job-name"
             name="name"
             required
-            maxLength={max(limits.name)}
+            maxLength={limits.name}
             aria-describedby="new-job-name-help"
             className="form-input"
           />
@@ -70,7 +69,7 @@ export function CharacterJobAddForm({ action, jobs, currentJobId, limits, idPatt
             id="new-job-title"
             name="title"
             required
-            maxLength={max(limits.title)}
+            maxLength={limits.title}
             aria-describedby="new-job-title-help"
             className="form-input"
           />
