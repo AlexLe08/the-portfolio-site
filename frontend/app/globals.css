@@ -72,9 +72,7 @@ a:hover {
   text-decoration-color: var(--signal);
 }
 
-/* Visible keyboard focus everywhere, not just the mouse-friendly spots --
-   a deliberate callback to the accessibility rigor in the SearchInput
-   case study this same site is presenting. */
+/* Visible keyboard focus everywhere. */
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--signal);
@@ -437,10 +435,7 @@ button:focus-visible {
 }
 
 /* ---------------------------------------------------------------------
-   Site header
-   Present on every page via layout.tsx. Deliberately quiet -- the home
-   page's title block already carries the name at full size, so this is
-   wayfinding between pages, not a second hero competing with it.
+   Site header (see SiteHeader.tsx)
    ------------------------------------------------------------------ */
 .site-header {
   border-bottom: 1px solid var(--rule);
@@ -561,10 +556,6 @@ button:focus-visible {
   opacity: 0.6;
 }
 
-/* Reuses the oxide accent from the design tokens -- the same color
-   reserved for incident/debugging callouts in case-study content, so a
-   form error reads as the same kind of "something specific went wrong"
-   signal rather than inventing a third accent color just for this. */
 .form-status {
   padding: 0.85rem 1rem;
   margin-bottom: 1.25rem;
@@ -572,6 +563,7 @@ button:focus-visible {
   border: 1px solid;
 }
 
+/* Errors use oxide, the accent reserved for things going wrong. */
 .form-status--error {
   color: var(--oxide);
   background: var(--oxide-soft);
@@ -612,13 +604,16 @@ button:focus-visible {
   margin-bottom: 1.25rem;
 }
 
-.form-check input {
+.form-check input,
+.portrait-picker__upload input {
   width: 1.1rem;
   height: 1.1rem;
   accent-color: var(--signal);
 }
 
-.form-check input:focus-visible {
+.form-check input:focus-visible,
+.portrait-picker__upload input:focus-visible,
+.form-more > summary:focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 2px;
 }
@@ -628,7 +623,6 @@ button:focus-visible {
 .portrait-picker {
   border: 0;
   margin: 0 0 1.25rem;
-  padding: 0;
 }
 
 .portrait-picker .form-check {
@@ -638,7 +632,6 @@ button:focus-visible {
 .portrait-picker__uploads {
   list-style: none;
   margin: 0 0 0.75rem;
-  padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
   gap: 0.75rem;
@@ -657,18 +650,6 @@ button:focus-visible {
 .portrait-picker__upload:has(input:checked) {
   border-color: var(--signal);
   background: var(--signal-soft);
-}
-
-.portrait-picker__upload input {
-  width: 1.1rem;
-  height: 1.1rem;
-  margin: 0;
-  accent-color: var(--signal);
-}
-
-.portrait-picker__upload input:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
 }
 
 /* Square, like the portrait frame, whatever the upload's shape. */
@@ -853,8 +834,6 @@ button:focus-visible {
   flex-wrap: wrap;
   gap: 0.25rem 1.25rem;
   list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 .job-picker a[aria-current="page"] {
@@ -902,11 +881,6 @@ button:focus-visible {
   margin-top: 2.5rem;
 }
 
-.form-more > summary:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
-}
-
 /* Slot tooltips: a label input beside a wider value input (the stat, and
    each item row), with the row's buttons under it. */
 .tooltip-pair {
@@ -917,13 +891,11 @@ button:focus-visible {
 
 .tooltip-items {
   border: 0;
-  padding: 0;
   min-width: 0;
 }
 
 .tooltip-items__list {
   list-style: none;
-  padding: 0;
   margin: 0 0 0.75rem;
 }
 
@@ -941,8 +913,6 @@ button:focus-visible {
 /* The job form's empty slots: one Fill button each, wrapping. */
 .slot-fill-list {
   list-style: none;
-  padding: 0;
-  margin: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
