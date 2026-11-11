@@ -86,8 +86,7 @@ class Settings(BaseSettings):
     # environment variable" from the Cloudinary Console's API Keys page:
     # cloudinary://<api_key>:<api_secret>@<cloud_name>. Uploads are off when
     # empty. SecretStr keeps the API secret out of reprs and logs (errors
-    # are covered by hide_input_in_errors above); read it with
-    # .get_secret_value().
+    # are covered by hide_input_in_errors above).
     cloudinary_url: SecretStr = SecretStr("")
 
     # Set by Render on every deploy (it's not in render.yaml). /health

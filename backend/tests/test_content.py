@@ -1,3 +1,5 @@
+import pytest
+
 from app import models
 from tests.helpers import ADMIN_HEADERS
 
@@ -59,13 +61,15 @@ def test_put_content_is_idempotent(client):
     assert client.get("/content").json() == {"home.intro": "Same."}
 
 
-def test_put_content_rejects_malformed_keys(client):
-    for bad_key in ["Home.Intro", "home..intro", ".home", "home.", "home-intro", "a" * 101]:
-        response = client.put(
-            f"/content/{bad_key}", json={"value": "x"}, headers=ADMIN_HEADERS
-        )
-        assert response.status_code == 422, bad_key
+@pytest.mark.parametrize(
+    "bad_key",
+    ["Home.Intro", "home..intro", ".home", "home.", "home-intro", "a" * 101],
+    ids=["uppercase", "empty-segment", "leading-dot", "trailing-dot", "hyphen", "too-long"],
+)
+def test_put_content_rejects_malformed_keys(client, bad_key):
+    response = client.put(f"/content/{bad_key}", json={"value": "x"}, headers=ADMIN_HEADERS)
 
+    assert response.status_code == 422
     assert client.get("/content").json() == {}
 
 

@@ -9,8 +9,7 @@ from app.services import media, projects
 
 # Admin-only reads for the admin UI. The dependency sits on the router, so
 # every route added here is protected without having to remember it.
-# Writes stay on the resource routers (POST/PATCH /projects, PUT /content),
-# which already require admin auth.
+# Writes stay on the resource routers, which require admin auth themselves.
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 

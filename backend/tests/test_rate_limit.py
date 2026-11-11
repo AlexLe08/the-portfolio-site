@@ -104,31 +104,23 @@ def test_honeypot_submissions_count_toward_the_limit(client, monkeypatch):
     assert client.post("/contact", json=contact_payload()).status_code == 429
 
 
-def test_visitors_are_told_apart_by_the_configured_header(client, monkeypatch):
-    monkeypatch.setattr(contact.settings, "client_ip_header", "CF-Connecting-IP")
+@pytest.mark.parametrize(
+    ("header_setting", "ips", "expected"),
+    [
+        ("CF-Connecting-IP", ["1.1.1.1", "2.2.2.2", "1.1.1.1"], [201, 201, 429]),
+        # Without the setting, a forged header can't buy a fresh limit.
+        ("", ["1.1.1.1", "2.2.2.2"], [201, 429]),
+        # A request without the configured header is keyed by the peer address.
+        ("CF-Connecting-IP", [None, None], [201, 429]),
+    ],
+    ids=["told-apart", "forged-ignored", "fallback"],
+)
+def test_client_key_for_the_limit(client, monkeypatch, header_setting, ips, expected):
+    monkeypatch.setattr(contact.settings, "client_ip_header", header_setting)
     monkeypatch.setattr(contact.limiter, "limit", 1)
 
     def post(ip):
-        return client.post("/contact", json=contact_payload(), headers={"CF-Connecting-IP": ip})
+        headers = {} if ip is None else {"CF-Connecting-IP": ip}
+        return client.post("/contact", json=contact_payload(), headers=headers)
 
-    assert post("1.1.1.1").status_code == 201
-    assert post("2.2.2.2").status_code == 201
-    assert post("1.1.1.1").status_code == 429
-
-
-def test_without_the_header_setting_forged_headers_are_ignored(client, monkeypatch):
-    monkeypatch.setattr(contact.limiter, "limit", 1)
-
-    def post(ip):
-        return client.post("/contact", json=contact_payload(), headers={"CF-Connecting-IP": ip})
-
-    assert post("1.1.1.1").status_code == 201
-    assert post("2.2.2.2").status_code == 429
-
-
-def test_missing_configured_header_falls_back_to_the_peer_address(client, monkeypatch):
-    monkeypatch.setattr(contact.settings, "client_ip_header", "CF-Connecting-IP")
-    monkeypatch.setattr(contact.limiter, "limit", 1)
-
-    assert client.post("/contact", json=contact_payload()).status_code == 201
-    assert client.post("/contact", json=contact_payload()).status_code == 429
+    assert [post(ip).status_code for ip in ips] == expected

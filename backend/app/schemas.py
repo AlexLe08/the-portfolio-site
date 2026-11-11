@@ -44,7 +44,7 @@ class ProjectAdmin(ProjectDetail):
 # Lowercase words joined by single hyphens, e.g. "portfolio-site". The
 # slug is the project's URL and can't change after creation (see
 # ProjectUpdate), so a malformed one would be stuck there for good.
-# Same rule as the admin form's pattern attribute (ProjectForm.tsx).
+# Same rule as SLUG_PATTERN in frontend/lib/project-rules.ts.
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 # Field types shared by the create and update schemas, sized by their
@@ -126,8 +126,8 @@ class CharacterSheetUpdate(BaseModel):
     """The whole config, replacing the stored one.
 
     Typed only as a JSON object: its shape is checked against the JSON
-    Schema in services/character_sheet.py, generated from the frontend's
-    zod schema, so the rules live in one place.
+    Schema in services/character_sheet.py, published by the character
+    sheet package, so the rules live in one place.
     """
 
     model_config = ConfigDict(extra="forbid")
