@@ -12,8 +12,8 @@ type Props = {
   uploads: PortraitUpload[] | null;
   src: string;
   alt: string;
-  srcMaxLength?: number;
-  altMaxLength?: number;
+  srcMaxLength: number;
+  altMaxLength: number;
 };
 
 const NONE = "none";
