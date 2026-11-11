@@ -65,8 +65,9 @@ class CharacterSheet(Base):
     # Always 1, never generated, so Postgres creates no id sequence.
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     # Typed as "a JSON object", not the config's exact shape: the backend
-    # never reads inside it, and the shape is owned by the frontend's zod
-    # schema (enforced here through the JSON Schema generated from it).
+    # never reads inside it, and the shape is owned by the character sheet
+    # package's zod schema (enforced here through the JSON Schema generated
+    # from it).
     config: Mapped[dict[str, JsonValue]] = mapped_column(JSON)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

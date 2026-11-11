@@ -1240,9 +1240,41 @@
   accepted, never answered): the home page rendered in 5.1 s with the
   retry message, and 10.4 s after `SIGCONT` the list appeared without a
   reload; `scripts/mutate.mjs` caught all five breaks. Not exercised: the
-  background-refresh path (no way to watch it end locally).
+  background-refresh path (no way to watch it end locally). Merged as
+  #102 (`b2f4412`); the production check (a cold home page loads in
+  about 5 s, function logs show `Project list timed out:`, no new Sentry
+  event) is the owner's.
+- Refactor audit, step 1 of 3: backend tests and comments (no behavior
+  changes). Parametrized the forged-token, rate-limit client-key,
+  rejected-upload, Cloudinary delete-outcome, "key from another kind",
+  and config accept/empty tests, and turned two loops into parametrize
+  (each case now fails on its own). Removed tests whose assertions
+  another test already makes, folding any missing check into it: the
+  4000-character webhook text, the honeypot's email channel, the
+  production admin key, and the service-level valid-action checks (now
+  rows of the PUT test, which also checks the round trip). The public
+  project list is pinned to its exact field set (`slug`, `title`,
+  `summary`, `stack`) instead of two "omits X" tests, so a new public
+  field means updating that test on purpose. `set_action()`,
+  `issue_kinds()`, and a `notification_log` fixture replace repeated
+  setup. Five comments that pointed at files or owners that moved
+  (`ProjectForm.tsx`, `schema.ts`, "the frontend's zod schema") are
+  corrected, and Alembic's template comments in `env.py` are gone.
+  Backend suite is now 263 tests (one loop became six cases).
 
 ## Next up (candidates, unordered)
+
+- Refactor audit (in progress, asked 2026-11-11; split into
+  `refactor/audit-backend-tests`, `refactor/audit-frontend-lib`, and
+  `refactor/audit-frontend-components`): across backend and frontend, find functions worth
+  combining into shared helpers (including the shared error UI below),
+  comments that can be cut or shortened, and tests that are redundant or
+  can be merged (for example into `it.each` / `pytest.mark.parametrize`).
+  Follow best practices, and say where the ask conflicts with them
+  (e.g. comments that record a decision's "why" and tests that pin a
+  distinct failure mode stay; abstractions with one caller aren't worth
+  adding). No behavior changes. Removing a test is a deliberate,
+  reported change with a reason, never a way to make a check pass.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):

@@ -83,38 +83,29 @@ def test_login_attempts_are_rate_limited(client, login_enabled, monkeypatch):
     assert int(blocked.headers["Retry-After"]) > 0
 
 
-def test_expired_token_is_rejected(client, login_enabled):
-    long_ago = datetime.now(timezone.utc) - timedelta(days=2)
-    token, _ = create_admin_token(now=long_ago)
-
-    response = client.put(PROTECTED, json=BODY, headers=_bearer(token))
-
-    assert response.status_code == 401
+def _expired_token():
+    token, _ = create_admin_token(now=datetime.now(timezone.utc) - timedelta(days=2))
+    return token
 
 
-def test_token_signed_with_another_secret_is_rejected(client, login_enabled):
+def _token(sub, key, algorithm):
     exp = datetime.now(timezone.utc) + timedelta(hours=1)
-    token = jwt.encode({"sub": "admin", "exp": exp}, "x" * 32 + "-other-secret", algorithm="HS256")
-
-    response = client.put(PROTECTED, json=BODY, headers=_bearer(token))
-
-    assert response.status_code == 401
+    return jwt.encode({"sub": sub, "exp": exp}, key, algorithm=algorithm)
 
 
-def test_unsigned_token_is_rejected(client, login_enabled):
-    exp = datetime.now(timezone.utc) + timedelta(hours=1)
-    token = jwt.encode({"sub": "admin", "exp": exp}, None, algorithm="none")
-
-    response = client.put(PROTECTED, json=BODY, headers=_bearer(token))
-
-    assert response.status_code == 401
-
-
-def test_token_for_another_subject_is_rejected(client, login_enabled):
-    exp = datetime.now(timezone.utc) + timedelta(hours=1)
-    token = jwt.encode({"sub": "someone-else", "exp": exp}, SECRET, algorithm="HS256")
-
-    response = client.put(PROTECTED, json=BODY, headers=_bearer(token))
+# Factories, so expiry is relative to when the test runs, not collection.
+@pytest.mark.parametrize(
+    "make_token",
+    [
+        _expired_token,
+        lambda: _token("admin", "x" * 32 + "-other-secret", "HS256"),
+        lambda: _token("admin", None, "none"),
+        lambda: _token("someone-else", SECRET, "HS256"),
+    ],
+    ids=["expired", "other-secret", "alg-none", "other-subject"],
+)
+def test_forged_or_stale_token_is_rejected(client, login_enabled, make_token):
+    response = client.put(PROTECTED, json=BODY, headers=_bearer(make_token()))
 
     assert response.status_code == 401
 
