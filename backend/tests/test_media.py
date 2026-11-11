@@ -43,14 +43,13 @@ def test_public_id_is_unique(db_session):
         db_session.commit()
 
 
-def test_cloudinary_url_accepts_the_console_format():
-    url = f"cloudinary://123456789012345:{SECRET}@demo-cloud"
-
+@pytest.mark.parametrize(
+    "url",
+    [f"cloudinary://123456789012345:{SECRET}@demo-cloud", ""],
+    ids=["console-format", "empty"],
+)
+def test_cloudinary_url_is_accepted(url):
     assert Settings(cloudinary_url=url).cloudinary_url.get_secret_value() == url
-
-
-def test_cloudinary_url_may_be_empty():
-    assert Settings(cloudinary_url="").cloudinary_url.get_secret_value() == ""
 
 
 @pytest.mark.parametrize(
@@ -166,10 +165,21 @@ def test_upload_is_503_when_cloudinary_is_not_configured(client):
     assert response.status_code == 503
 
 
-def test_oversized_file_is_413_and_never_uploaded(client, fake_cloudinary):
-    response = post_image(client, data=b"x" * (media_service.MAX_UPLOAD_BYTES + 1))
+@pytest.mark.parametrize(
+    ("upload", "status"),
+    [
+        ({"data": b"x" * (media_service.MAX_UPLOAD_BYTES + 1)}, 413),
+        ({"data": b"<svg/>", "content_type": "image/svg+xml"}, 415),
+        ({"alt_text": ""}, 422),
+        ({"alt_text": "   "}, 422),
+        ({"alt_text": "x" * 301}, 422),
+    ],
+    ids=["oversized", "svg", "empty-alt", "blank-alt", "long-alt"],
+)
+def test_rejected_upload_never_reaches_cloudinary(client, fake_cloudinary, upload, status):
+    response = post_image(client, **upload)
 
-    assert response.status_code == 413
+    assert response.status_code == status
     assert fake_cloudinary.uploads == []
 
 
@@ -177,13 +187,6 @@ def test_file_at_the_limit_is_accepted(client, fake_cloudinary):
     response = post_image(client, data=b"x" * media_service.MAX_UPLOAD_BYTES)
 
     assert response.status_code == 201
-
-
-def test_svg_is_415_and_never_uploaded(client, fake_cloudinary):
-    response = post_image(client, data=b"<svg/>", content_type="image/svg+xml")
-
-    assert response.status_code == 415
-    assert fake_cloudinary.uploads == []
 
 
 def test_file_cloudinary_cannot_read_is_415(client, fake_cloudinary):
@@ -226,14 +229,6 @@ def test_failed_database_write_deletes_the_uploaded_file(client, db_session, fak
 
     [(_, options)] = fake_cloudinary.uploads
     assert fake_cloudinary.destroyed == [options["public_id"]]
-
-
-@pytest.mark.parametrize("alt_text", ["", "   ", "x" * 301])
-def test_bad_alt_text_is_422_and_never_uploaded(client, fake_cloudinary, alt_text):
-    response = post_image(client, alt_text=alt_text)
-
-    assert response.status_code == 422
-    assert fake_cloudinary.uploads == []
 
 
 def test_alt_text_is_stored_trimmed(client, fake_cloudinary):
@@ -341,37 +336,26 @@ def test_deleting_missing_media_is_404(client, fake_cloudinary):
 
 
 @pytest.mark.parametrize(
-    "fake_setup",
+    ("fake_setup", "status", "rows"),
     [
-        {"destroy_result": "not found"},
-        {"destroy_error": cloudinary.exceptions.NotFound("Resource not found")},
+        # Already gone (removed in the Cloudinary console, or a retry after a
+        # failed commit): the row goes too.
+        ({"destroy_result": "not found"}, 204, 0),
+        ({"destroy_error": cloudinary.exceptions.NotFound("Resource not found")}, 204, 0),
+        # A real failure keeps the row so the delete can be retried; nothing
+        # points at the file otherwise.
+        ({"destroy_error": cloudinary.exceptions.GeneralError("Server error")}, 502, 1),
+        ({"destroy_result": "error"}, 502, 1),
     ],
+    ids=["gone-result", "gone-error", "outage", "error-result"],
 )
-def test_file_already_gone_from_cloudinary_still_deletes_the_row(client, db_session, fake_cloudinary, fake_setup):
-    # e.g. removed in the Cloudinary console, or a retry after a failed commit.
+def test_delete_when_cloudinary_does_not_say_ok(client, db_session, fake_cloudinary, fake_setup, status, rows):
     uploaded = post_image(client).json()
     for name, value in fake_setup.items():
         setattr(fake_cloudinary, name, value)
 
-    assert delete_image(client, uploaded["id"]).status_code == 204
-    assert db_session.query(Media).count() == 0
-
-
-@pytest.mark.parametrize(
-    "fake_setup",
-    [
-        {"destroy_error": cloudinary.exceptions.GeneralError("Server error")},
-        {"destroy_result": "error"},
-    ],
-)
-def test_cloudinary_failure_on_delete_is_502_and_keeps_the_row(client, db_session, fake_cloudinary, fake_setup):
-    # The row stays so the delete can be retried; nothing points at the file otherwise.
-    uploaded = post_image(client).json()
-    for name, value in fake_setup.items():
-        setattr(fake_cloudinary, name, value)
-
-    assert delete_image(client, uploaded["id"]).status_code == 502
-    assert db_session.query(Media).count() == 1
+    assert delete_image(client, uploaded["id"]).status_code == status
+    assert db_session.query(Media).count() == rows
 
 
 def test_delete_is_503_when_cloudinary_is_not_configured(client, db_session, fake_cloudinary, monkeypatch):
