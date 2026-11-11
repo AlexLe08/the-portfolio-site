@@ -1241,6 +1241,21 @@
   retry message, and 10.4 s after `SIGCONT` the list appeared without a
   reload; `scripts/mutate.mjs` caught all five breaks. Not exercised: the
   background-refresh path (no way to watch it end locally).
+- Refactor audit, step 3 of 3: components and CSS (no behavior or
+  visual changes). `components/ErrorNotice.tsx` is shared by all three
+  error boundaries, which differ only in their sentence; it was deferred
+  until a third boundary appeared, but `app/global-error.tsx` already
+  repeated the same markup inside its own `<html>` (which it keeps, with
+  its Sentry call). Character sheet limits are typed `number` (the
+  package's `LIMITS` are all numbers), so five `max()` helpers that
+  turned `null` into `undefined` are gone. `ProblemList` replaces five
+  copies of the problem list, the save status's warning props default to
+  `[]`, and `SaveAction<State>` replaces nine spelled-out action types.
+  In `globals.css`, zero margins and paddings the `*` reset already sets
+  are gone, and the upload radio and three focus rings share rules with
+  their twins. Verified by 11 before/after screenshots (public and admin
+  pages, both error boundaries), identical byte for byte, plus computed
+  focus rings and sizes.
 
 ## Next up (candidates, unordered)
 
@@ -1266,13 +1281,6 @@
     repository: its import allowlist doesn't see dynamic `import()` or
     `require()`; add a `no-restricted-syntax` rule if it ever uses them
     (it doesn't today).
-
-- Shared error UI, only when a third segment boundary appears or the
-  error UI grows past a message and a "Try again" button (a back link, a
-  reference ID): extract `components/ErrorNotice.tsx` (`message`,
-  `retry`) from `app/error.tsx` and `app/admin/error.tsx`, which
-  currently differ only in their sentence. `app/global-error.tsx` stays
-  separate (own `<html>`, styles, Sentry).
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-up, doable at `/admin/projects`: `repo_url`s for other
