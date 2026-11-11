@@ -1240,9 +1240,23 @@
   accepted, never answered): the home page rendered in 5.1 s with the
   retry message, and 10.4 s after `SIGCONT` the list appeared without a
   reload; `scripts/mutate.mjs` caught all five breaks. Not exercised: the
-  background-refresh path (no way to watch it end locally).
+  background-refresh path (no way to watch it end locally). Merged as
+  #102 (`b2f4412`); the production check (a cold home page loads in
+  about 5 s, function logs show `Project list timed out:`, no new Sentry
+  event) is the owner's.
 
 ## Next up (candidates, unordered)
+
+- Refactor audit (in progress on `refactor/codebase-audit`, asked
+  2026-11-11): across backend and frontend, find functions worth
+  combining into shared helpers (including the shared error UI below),
+  comments that can be cut or shortened, and tests that are redundant or
+  can be merged (for example into `it.each` / `pytest.mark.parametrize`).
+  Follow best practices, and say where the ask conflicts with them
+  (e.g. comments that record a decision's "why" and tests that pin a
+  distinct failure mode stay; abstractions with one caller aren't worth
+  adding). No behavior changes. Removing a test is a deliberate,
+  reported change with a reason, never a way to make a check pass.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
