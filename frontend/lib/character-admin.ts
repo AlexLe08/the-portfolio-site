@@ -19,6 +19,10 @@ export async function loadCharacterSheetForAdmin() {
 
   const config = data?.config ?? bundledConfig;
   const parsed = parseConfig(config);
+  // Unknown keys, dead anchors and dead params below stay flagged on every
+  // load, not just on the save that made them. Skipped while the stored
+  // copy has errors: its jobs wouldn't line up.
+  const clean = parsed.errors.length === 0 ? parsed.config : null;
   return {
     // As stored, unknown keys included.
     config,
@@ -27,12 +31,8 @@ export async function loadCharacterSheetForAdmin() {
     // before the first save.
     bundled: JSON.stringify(bundledConfig),
     stored: data ? JSON.stringify(data.config) : null,
-    // Typos saved earlier stay flagged, not just on the save that made
-    // them. Skipped if the stored copy has errors: its jobs wouldn't line up.
-    unknownKeys: parsed.errors.length === 0 ? findUnknownKeys(config, parsed.config) : [],
-    // Likewise for anchors to sections the home page doesn't render.
-    deadAnchors: parsed.config && parsed.errors.length === 0 ? findDeadAnchors(parsed.config) : [],
-    // And for param actions setting a parameter the home page doesn't read.
-    deadParams: parsed.config && parsed.errors.length === 0 ? findDeadParams(parsed.config) : [],
+    unknownKeys: clean ? findUnknownKeys(config, clean) : [],
+    deadAnchors: clean ? findDeadAnchors(clean) : [],
+    deadParams: clean ? findDeadParams(clean) : [],
   };
 }

@@ -1,8 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { api, apiBaseUrl } from "./api";
-import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { api } from "./api";
+import { CACHE_TAGS, PUBLIC_LOAD_TIMEOUT_MS, publicCache } from "./cache-tags";
 
 // What the site shows when the backend is cold, down, or missing a key.
 // These mirror the production values. The backend's value always wins, so
@@ -27,10 +26,6 @@ export const FALLBACK_CONTENT = {
 export type ContentKey = keyof typeof FALLBACK_CONTENT;
 export type SiteContent = Record<ContentKey, string>;
 
-// Render's free tier takes 30-50s to wake. Copy isn't worth holding a page
-// that long, so give up after a few seconds and show the fallbacks.
-const CONTENT_TIMEOUT_MS = 5000;
-
 export type ContentResult = {
   content: SiteContent;
   // True when the load failed and every key shows its built-in value. A key
@@ -48,26 +43,18 @@ class ContentHttpError extends Error {
 }
 
 // The saved copy, straight from the backend. Throws on any failure, so
-// unstable_cache below only ever stores good data.
+// publicCache() below only ever stores good data.
 export async function fetchContent(): Promise<Record<string, string>> {
   const { data, error } = await api.GET("/content", {
-    signal: AbortSignal.timeout(CONTENT_TIMEOUT_MS),
+    signal: AbortSignal.timeout(PUBLIC_LOAD_TIMEOUT_MS),
   });
   if (!data) throw new ContentHttpError(error);
   return data;
 }
 
-// Shared between requests through Next's data cache (tag
-// CACHE_TAGS.content, which admin saves revalidate). A stale entry is
-// served at once and refreshed in the background, and a refresh that fails
-// keeps the old copy, so a sleeping backend doesn't hold the page. Only a
-// miss waits for the backend, and its error reaches getContent().
-// apiBaseUrl is in the key because fetchContent reads it from its closure;
-// CACHE_VERSION keeps each deploy's entries apart.
-const cachedContent = unstable_cache(fetchContent, ["content", apiBaseUrl, CACHE_VERSION], {
-  tags: [CACHE_TAGS.content],
-  revalidate: PUBLIC_REVALIDATE_SECONDS,
-});
+// Admin saves revalidate CACHE_TAGS.content. A miss's error reaches
+// getContent().
+const cachedContent = publicCache(fetchContent, "content", CACHE_TAGS.content);
 
 // cache() memoizes per request on top: a page and its generateMetadata can
 // both call getContent() and share one lookup.

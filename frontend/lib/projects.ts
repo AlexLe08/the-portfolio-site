@@ -1,9 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { api, apiBaseUrl } from "./api";
+import { api } from "./api";
 import type { components } from "./api-types";
-import { CACHE_TAGS, CACHE_VERSION, PUBLIC_REVALIDATE_SECONDS } from "./cache-tags";
+import { CACHE_TAGS, PUBLIC_LOAD_TIMEOUT_MS, publicCache } from "./cache-tags";
 
 export type ProjectSummary = components["schemas"]["ProjectSummary"];
 export type ProjectDetail = components["schemas"]["ProjectDetail"];
@@ -19,34 +18,20 @@ class ProjectsHttpError extends Error {
   }
 }
 
-// Same limit as CONTENT_TIMEOUT_MS in lib/content.ts. A cold miss then shows
-// the page within seconds, with ProjectsUnavailable where the list goes and
-// AutoRetry filling it in once Render is awake, and a background refresh
-// against a sleeping backend doesn't hold the function open while it wakes.
-// Project pages have no timeout: without the case study there is nothing to
-// show, so waiting for the backend beats app/error.tsx.
-const PROJECTS_TIMEOUT_MS = 5000;
-
 // The published project list, straight from the backend. Throws on any
 // failure (openapi-fetch throws when the backend is unreachable or the
-// timeout aborts the request), so unstable_cache below only ever stores
+// timeout aborts the request), so publicCache() below only ever stores
 // good data.
 export async function fetchProjects(): Promise<ProjectSummary[]> {
   const { data, error } = await api.GET("/projects", {
-    signal: AbortSignal.timeout(PROJECTS_TIMEOUT_MS),
+    signal: AbortSignal.timeout(PUBLIC_LOAD_TIMEOUT_MS),
   });
   if (!data) throw new ProjectsHttpError("Failed to load projects", error);
   return data;
 }
 
-// Shared between requests through Next's data cache, like cachedContent in
-// lib/content.ts (tag CACHE_TAGS.projects, which project saves
-// revalidate). apiBaseUrl is in the key because the fetch reads it from its
-// closure.
-const cachedProjects = unstable_cache(fetchProjects, ["projects", apiBaseUrl, CACHE_VERSION], {
-  tags: [CACHE_TAGS.projects],
-  revalidate: PUBLIC_REVALIDATE_SECONDS,
-});
+// Project saves revalidate CACHE_TAGS.projects.
+const cachedProjects = publicCache(fetchProjects, "projects", CACHE_TAGS.projects);
 
 // null when the load failed, so the page can still render its copy (which
 // has fallbacks) instead of the whole-page app/error.tsx. Catching here
@@ -84,7 +69,9 @@ export function loadProjectsLive(): Promise<ProjectSummary[] | null> {
 // One published project with its case study. null on a 404 (unknown or
 // unpublished slug), which is a real answer and gets cached like one, so
 // unpublishing a project turns its page into a 404 once the cache
-// refreshes. Throws on any other failure.
+// refreshes. Throws on any other failure. No timeout, unlike the list:
+// without the case study there is nothing to show, so waiting for the
+// backend beats app/error.tsx.
 export async function fetchProject(slug: string): Promise<ProjectDetail | null> {
   const { data, error, response } = await api.GET("/projects/{slug}", {
     params: { path: { slug } },
@@ -95,10 +82,7 @@ export async function fetchProject(slug: string): Promise<ProjectDetail | null> 
 }
 
 // The slug is an argument, so it's part of each entry's key already.
-const cachedProject = unstable_cache(fetchProject, ["project", apiBaseUrl, CACHE_VERSION], {
-  tags: [CACHE_TAGS.projects],
-  revalidate: PUBLIC_REVALIDATE_SECONDS,
-});
+const cachedProject = publicCache(fetchProject, "project", CACHE_TAGS.projects);
 
 // cache() memoizes per request on top, so a page and its generateMetadata
 // share one lookup. Errors propagate: the page shows app/error.tsx, and

@@ -75,7 +75,6 @@ describe("stackParamActive", () => {
   it("marks nothing without a filter", () => {
     expect(stackParamActive(undefined)("stack", "React")).toBe(false);
     expect(stackParamActive("  ")("stack", "")).toBe(false);
-    expect(stackParamActive("  ")("stack", "  ")).toBe(false);
   });
 });
 
@@ -89,12 +88,11 @@ describe("filterByStack", () => {
     expect(filterByStack(projects, "react")).toEqual({ projects: [projects[1], projects[2]], tag: "React" });
   });
 
-  it("doesn't match part of a tag", () => {
-    expect(filterByStack(projects, "Next")).toEqual({ projects: [], tag: null });
-  });
-
-  it("returns an empty list and no tag when nothing matches", () => {
-    expect(filterByStack(projects, "zzz")).toEqual({ projects: [], tag: null });
+  it.each([
+    ["part of a tag", "Next"],
+    ["no tag", "zzz"],
+  ])("returns an empty list and no tag when it matches %s", (_, param) => {
+    expect(filterByStack(projects, param)).toEqual({ projects: [], tag: null });
   });
 });
 

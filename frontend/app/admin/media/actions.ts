@@ -7,9 +7,6 @@ import { formText } from "@/lib/form-data";
 import { checkAltText, checkImageFile, FORMAT_NAMES, TOO_LARGE } from "@/lib/media-rules";
 import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 
-// adminRequest() checks the session: Server Actions can be POSTed to
-// directly, without the page that renders the form.
-
 type Media = components["schemas"]["MediaRead"];
 type UploadBody = components["schemas"]["Body_upload_media_media_post"];
 

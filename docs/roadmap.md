@@ -1261,6 +1261,22 @@
   (`ProjectForm.tsx`, `schema.ts`, "the frontend's zod schema") are
   corrected, and Alembic's template comments in `env.py` are gone.
   Backend suite is now 263 tests (one loop became six cases).
+- Refactor audit, step 2 of 3: frontend lib and actions (no behavior
+  changes). `publicCache()` in `lib/cache-tags.ts` builds the
+  `unstable_cache` call (key, tag, backstop) for all four public
+  loaders, so the key rule and its reason are written once, and one
+  `PUBLIC_LOAD_TIMEOUT_MS` replaces three 5000 ms constants
+  (`fetchProject` still has none). The four character-job actions share
+  `savedJobs()`, `findJob()`, and `jobGone()`; a callback-style
+  "load, edit, save" wrapper was rejected because each action ends
+  differently (refresh, redirect, or redirect without saving). Comments
+  that repeated a rule recorded elsewhere are cut (the `adminRequest()`
+  session note, "outside any try block" where there is no try). Three
+  test merges (`revalidatePublic`, `filterByStack`, the Cloudinary
+  loader); the frontend suite is now 119 tests. The four character-job
+  actions were exercised on the demo stack (add, edit, default, a stale
+  tab, an already-removed job). Found on the way: those Server Actions
+  have no unit tests (a `findJob` that ignores the id passes the suite).
 - Refactor audit, step 3 of 3: components and CSS (no behavior or
   visual changes). `components/ErrorNotice.tsx` is shared by all three
   error boundaries, which differ only in their sentence; it was deferred
@@ -1278,18 +1294,6 @@
   focus rings and sizes.
 
 ## Next up (candidates, unordered)
-
-- Refactor audit (in progress, asked 2026-11-11; split into
-  `refactor/audit-backend-tests`, `refactor/audit-frontend-lib`, and
-  `refactor/audit-frontend-components`): across backend and frontend, find functions worth
-  combining into shared helpers (including the shared error UI below),
-  comments that can be cut or shortened, and tests that are redundant or
-  can be merged (for example into `it.each` / `pytest.mark.parametrize`).
-  Follow best practices, and say where the ask conflicts with them
-  (e.g. comments that record a decision's "why" and tests that pin a
-  distinct failure mode stay; abstractions with one caller aren't worth
-  adding). No behavior changes. Removing a test is a deliberate,
-  reported change with a reason, never a way to make a check pass.
 
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
@@ -1313,6 +1317,12 @@
     repository: its import allowlist doesn't see dynamic `import()` or
     `require()`; add a `no-restricted-syntax` rule if it ever uses them
     (it doesn't today).
+
+- Unit tests for the character sheet Server Actions
+  (`app/admin/character-sheet/actions.ts`: `findJob`, `applyJobForm`,
+  the add, remove, and default paths), with `adminRequest` mocked like
+  `lib/character-admin.test.ts`. Found in the refactor audit: they're
+  covered only by the demo stack today.
 
 - Project deletion, only if unpublishing ever stops being enough.
 - Content follow-up, doable at `/admin/projects`: `repo_url`s for other
