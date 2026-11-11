@@ -7,11 +7,6 @@ import type { components } from "@/lib/api-types";
 import { describeRetryAfter, SERVER_UNREACHABLE } from "@/lib/messages";
 import { wakeBackend } from "@/lib/wake-backend";
 
-// The only backend calls made from the browser (the send and the warm-up
-// ping), so the only ones CORS applies to: every other call runs on the
-// server (pages and Server Actions). A CORS error in the console means
-// Render's ALLOWED_ORIGINS lacks this page's origin (see
-// docs/render-runbook.md).
 type Status = "idle" | "submitting" | "success" | "error";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -45,6 +40,11 @@ function describeValidationError(
   return GENERIC_ERROR;
 }
 
+// The only backend calls made from the browser (the send and the warm-up
+// ping), so the only ones CORS applies to: every other call runs on the
+// server (pages and Server Actions). A CORS error in the console means
+// Render's ALLOWED_ORIGINS lacks this page's origin (see
+// docs/render-runbook.md).
 export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

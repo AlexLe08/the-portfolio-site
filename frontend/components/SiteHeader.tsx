@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { PROFILE_LINKS } from "@/lib/links";
 
-// A plain Server Component -- no interactivity needed, so no "use client"
-// and no client-side JS shipped for this at all. Rendered once, in
-// layout.tsx, so it's present on every route without each page needing
-// its own copy. Kept deliberately understated: the title block on the
-// home page already carries the name at full size, so this is wayfinding,
-// not a second hero.
+// On every page via layout.tsx. Wayfinding only: the home page's title
+// block carries the name at full size.
 export function SiteHeader() {
   return (
     <header className="site-header">
