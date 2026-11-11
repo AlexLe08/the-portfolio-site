@@ -8,20 +8,11 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
 
 describe("revalidatePublic", () => {
-  it.each(Object.values(CACHE_TAGS))("marks %s stale with the max profile", (tag) => {
-    revalidatePublic(tag);
+  it("marks every tag it's given stale with the max profile", () => {
+    const tags = Object.values(CACHE_TAGS);
+    revalidatePublic(...tags);
 
-    expect(revalidateTag).toHaveBeenCalledTimes(1);
-    expect(revalidateTag).toHaveBeenCalledWith(tag, "max");
-  });
-
-  it("revalidates every tag it's given", () => {
-    revalidatePublic(CACHE_TAGS.content, CACHE_TAGS.projects);
-
-    expect(vi.mocked(revalidateTag).mock.calls).toEqual([
-      [CACHE_TAGS.content, "max"],
-      [CACHE_TAGS.projects, "max"],
-    ]);
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual(tags.map((tag) => [tag, "max"]));
   });
 
   it("does nothing without tags", () => {
