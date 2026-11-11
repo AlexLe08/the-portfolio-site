@@ -1293,21 +1293,26 @@
   pages, both error boundaries), identical byte for byte, plus computed
   focus rings and sizes.
 - Unit tests for the character sheet Server Actions (found in the
-  refactor audit): `lib/character-sheet-actions.test.ts`, 48 tests over
+  refactor audit): `lib/character-sheet-actions.test.ts`, 51 tests over
   all five actions in `app/admin/character-sheet/actions.ts`, with the
-  real `parseConfig` and only `adminRequest`, `refresh`, `redirect` (which
-  throws, like Next's), and `revalidatePublic` mocked. Covers reading the
+  real `parseConfig`; only the backend (`adminRequest`), Next's APIs
+  (`redirect` throws, like Next's), `server-only`, and
+  `revalidatePublic` are mocked. Covers reading the
   saved copy (404 starts from a copy of the bundled file, other failures
   stop), each job action touching only its own job, the form's field
   rules (status, empty fields, portrait size, sections, slot fill/empty
   and conflicts, tooltip and action fields), and how refusals and
   backend errors read. Vitest now resolves `@/` imports
   (`resolve.tsconfigPaths`, built into Vite 8), so a test in `lib/` can
-  load an `app/` module. Checked with `scripts/mutate.mjs`: 35 deliberate
-  breaks, all caught (including the audit's `findJob` that ignores the
-  id); one survivor on the first run (a kind change that kept the old
-  kind's keys) led to a stronger test. The frontend suite is now 167
-  tests.
+  load an `app/` module. Checked with `scripts/mutate.mjs`: 39 of 40
+  deliberate breaks caught (including the audit's `findJob` that ignores
+  the id); a survivor on the first run (a kind change that kept the old
+  kind's keys) led to a stronger test, and review added the `param`
+  action and an unticked "new tab". The one left, a same-kind action
+  starting clean instead of keeping its saved keys, changes nothing
+  today: the form rewrites every key the schema gives each kind. It
+  matters only for a key a later schema version adds, so it isn't pinned
+  with a test of unknown keys. The frontend suite is now 170 tests.
 
 ## Next up (candidates, unordered)
 

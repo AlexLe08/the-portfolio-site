@@ -159,6 +159,8 @@ describe("updateCharacterSheet", () => {
 
     const result = await updateCharacterSheet(null, form({ config: JSON.stringify(stored) }));
 
+    // The package's wording, minus ', using "healthcare"'. An upgrade that
+    // rewords it fails here; update the text, not the check.
     expect(result).toEqual({
       error: "Not saved. Fix these problems first:",
       problems: ['defaultJobId: no valid job "missing"'],
@@ -374,6 +376,37 @@ describe("updateCharacterJob", () => {
     await updateCharacterJob("ecommerce", null, jobForm(config().jobs[1], slotFields("core", { title: "Next.js" })));
 
     expect(sent().jobs[1].slots.core.action).toEqual(config().jobs[1].slots.core.action);
+  });
+
+  it.each([
+    ["with a target, without its #", "#projects", { target: "projects" }],
+    ["without an empty target", "", {}],
+  ])("writes a param action %s", async (_name, target, expected) => {
+    saved(config());
+
+    await updateCharacterJob(
+      "ecommerce",
+      null,
+      jobForm(config().jobs[1], slotFields("core", { title: "React" }, { kind: "param", name: "stack", value: "react", target })),
+    );
+
+    expect(sent().jobs[1].slots.core.action).toEqual({ kind: "param", name: "stack", value: "react", ...expected });
+  });
+
+  it("drops newTab when the box is unticked, keeping the action's other keys", async () => {
+    const stored = config();
+    stored.jobs[1].slots.github.action = { kind: "external", href: "https://example.com", newTab: true };
+    saved(stored);
+    const fields = slotFields("github", { title: "GitHub" }, { kind: "external", href: "https://example.com/new" });
+
+    await updateCharacterJob("ecommerce", null, jobForm(stored.jobs[1], fields));
+    expect(sent().jobs[1].slots.github.action).toEqual({ kind: "external", href: "https://example.com/new" });
+
+    // Ticked again, it comes back.
+    api.PUT.mockClear();
+    saved(structuredClone(stored));
+    await updateCharacterJob("ecommerce", null, jobForm(stored.jobs[1], { ...fields, "action.github.new_tab": "on" }));
+    expect(sent().jobs[1].slots.github.action).toEqual({ kind: "external", href: "https://example.com/new", newTab: true });
   });
 
   it("fills a slot from its fields", async () => {
