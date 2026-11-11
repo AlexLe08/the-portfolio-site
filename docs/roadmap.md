@@ -1234,7 +1234,7 @@
   Project pages (`fetchProject`) keep waiting: without the case study
   there's nothing to show, and `app/error.tsx` only retries on a click.
   `AutoRetry`'s delays stay; on a cold start its retries now land about
-  8, 23, 48, and 78 s after the visit, which still covers a full wake.
+  8, 23, 48, and 83 s after the visit, which still covers a full wake.
   The admin preview's `loadProjectsLive()` shares the timeout. Verified
   on the demo stack with uvicorn frozen by `SIGSTOP` (connections
   accepted, never answered): the home page rendered in 5.1 s with the

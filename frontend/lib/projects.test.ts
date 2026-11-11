@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { unstable_cache } from "next/cache";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, apiBaseUrl } from "./api";
 import { CACHE_TAGS } from "./cache-tags";
 import {
@@ -49,6 +49,12 @@ beforeEach(() => {
   vi.mocked(api.GET).mockReset();
 });
 
+// Undoes vi.spyOn (AbortSignal.timeout, console.error) even when a test
+// fails before its end.
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("the project caches", () => {
   it.each([
     ["list", fetchProjects],
@@ -88,7 +94,6 @@ describe("fetchProjects", () => {
 
     expect(timeout).toHaveBeenCalledWith(5000);
     expect(api.GET).toHaveBeenCalledWith("/projects", { signal: timeout.mock.results[0].value });
-    timeout.mockRestore();
   });
 });
 
@@ -127,7 +132,6 @@ describe("loadProjects", () => {
     await expect(loadProjects()).resolves.toBeNull();
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(expect.any(String), error);
-    consoleError.mockRestore();
   });
 });
 

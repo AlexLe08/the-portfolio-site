@@ -15,7 +15,7 @@ import {
 // Wait before each retry, counted from the end of the previous one. On a
 // cold start every load gives up after 5 seconds while Render wakes (30-50
 // seconds), and a failed retry takes those 5 seconds too, so the retries
-// land about 8, 23, 48, and 78 seconds after the visit: the first catches a
+// land about 8, 23, 48, and 83 seconds after the visit: the first catches a
 // backend that was only briefly slow, the later ones a full wake.
 const RETRY_DELAYS_MS = [3_000, 10_000, 20_000, 30_000];
 
