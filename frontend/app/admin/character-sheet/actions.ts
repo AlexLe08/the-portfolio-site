@@ -13,10 +13,10 @@ import { describeSaveFailure, SERVER_UNREACHABLE } from "@/lib/messages";
 import { revalidatePublic } from "@/lib/revalidate-public";
 
 // problems lists every issue by path, so a long document can be fixed in
-// one pass. A save returns the document it stored as compact JSON, so the
-// editor can compare it with the bundled file without re-fetching, and
-// anchor actions the home page has no section for (findDeadAnchors), and
-// param actions it doesn't read (findDeadParams).
+// one pass. A save returns the stored document as compact JSON (for the
+// editor to compare with the bundled file without re-fetching), plus the
+// anchor actions the home page has no section for and the param actions
+// it doesn't read.
 export type CharacterSheetFormState =
   | { error: string; problems?: string[] }
   | { saved: string; deadAnchors: string[]; deadParams: string[] }
@@ -49,10 +49,8 @@ export async function updateCharacterSheet(
   return result;
 }
 
-// The structured form: changes one job's form fields in the saved copy and
-// saves the result. Read at save time rather than sent from the page, so
-// whatever the form doesn't show (slots, other jobs, an edit made in the
-// JSON editor since this page loaded) is kept as it is.
+// The structured form: changes one job's form fields in the saved copy
+// (loadSavedConfig) and saves the result.
 export async function updateCharacterJob(
   jobId: string,
   _previous: CharacterSheetFormState,
@@ -62,9 +60,8 @@ export async function updateCharacterJob(
   if ("error" in loaded) return loaded;
   const { config } = loaded;
 
-  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
-  const job = jobs.find((entry): entry is JsonObject => isObject(entry) && entry.id === jobId);
-  if (!job) return { error: `The saved copy has no job "${jobId}" any more. Reload the page.` };
+  const job = findJob(savedJobs(config), jobId);
+  if (!job) return jobGone(jobId);
   const conflict = applyJobForm(job, formData);
   if (conflict) return { error: conflict };
   const result = await saveConfig(config);
@@ -90,12 +87,10 @@ export async function addCharacterJob(
   if ("error" in loaded) return loaded;
   const { config } = loaded;
 
-  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
-  const findJob = (jobId: string) =>
-    jobs.find((entry): entry is JsonObject => isObject(entry) && entry.id === jobId);
-  if (findJob(id)) return { error: `A job with the id "${id}" already exists.` };
-  const source = findJob(copyFrom);
-  if (!source) return { error: `The saved copy has no job "${copyFrom}" any more. Reload the page.` };
+  const jobs = savedJobs(config);
+  if (findJob(jobs, id)) return { error: `A job with the id "${id}" already exists.` };
+  const source = findJob(jobs, copyFrom);
+  if (!source) return jobGone(copyFrom);
 
   // id first, as in the bundled file; spreading keeps the rest in order.
   const job = {
@@ -108,14 +103,12 @@ export async function addCharacterJob(
   config.jobs = [...jobs, job];
   const result = await saveConfig(config);
   if (!result || "error" in result) return result;
-
-  // Outside any try block: redirect() works by throwing.
   redirect(`/admin/character-sheet?job=${encodeURIComponent(id)}`);
 }
 
-// Makes another job the one / shows with no ?job=. Read at save time like
-// the other actions, so only defaultJobId changes; re-rendered afterwards,
-// so the form's summary names the new default.
+// Makes another job the one / shows with no ?job=. Only defaultJobId
+// changes; re-rendered afterwards, so the form's summary names the new
+// default.
 export async function setDefaultCharacterJob(
   _previous: CharacterSheetFormState,
   formData: FormData,
@@ -125,18 +118,15 @@ export async function setDefaultCharacterJob(
   if ("error" in loaded) return loaded;
   const { config } = loaded;
 
-  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
-  if (!jobs.some((entry) => isObject(entry) && entry.id === jobId)) {
-    return { error: `The saved copy has no job "${jobId}" any more. Reload the page.` };
-  }
+  if (!findJob(savedJobs(config), jobId)) return jobGone(jobId);
   config.defaultJobId = jobId;
   const result = await saveConfig(config);
   if (result && "saved" in result) refresh();
   return result;
 }
 
-// Removes a job from the saved copy, read at save time like the other
-// actions, so nothing else in the document changes. A job already gone
+// Removes a job from the saved copy; nothing else in the document
+// changes. A job already gone
 // (removed in another tab or as JSON) counts as removed: same end state,
 // so it redirects without saving, as stale "empty" ids are ignored. The
 // default job is refused rather than picking a new default here: it's
@@ -153,9 +143,8 @@ export async function removeCharacterJob(
   const { config } = loaded;
 
   const removedHref = `/admin/character-sheet?${new URLSearchParams({ removed: jobId })}`;
-  const jobs = Array.isArray(config.jobs) ? config.jobs : [];
-  const isJob = (entry: unknown) => isObject(entry) && entry.id === jobId;
-  if (!jobs.some(isJob)) redirect(removedHref);
+  const jobs = savedJobs(config);
+  if (!findJob(jobs, jobId)) redirect(removedHref);
   if (config.defaultJobId === jobId) {
     return {
       error: `Not removed: "${jobId}" is the default job, shown at / with no ?job=. Make another job the default first.`,
@@ -163,14 +152,15 @@ export async function removeCharacterJob(
   }
 
   // Entries that aren't objects stay as they are, for saveConfig to name.
-  config.jobs = jobs.filter((entry) => !isJob(entry));
+  config.jobs = jobs.filter((entry) => !(isObject(entry) && entry.id === jobId));
   const result = await saveConfig(config);
   if (!result || "error" in result) return result;
-
-  // Outside any try block: redirect() works by throwing.
   redirect(removedHref);
 }
 
+// The document the job actions edit. Read at save time rather than sent
+// from the page, so whatever the form doesn't show (slots, other jobs, an
+// edit made in the JSON editor since this page loaded) is kept as it is.
 // Only a 404 (nothing saved yet) starts from the bundled file, as on the
 // page. Patching the bundled file after a failed read would save it over
 // the real copy.
@@ -182,6 +172,21 @@ async function loadSavedConfig(): Promise<{ config: JsonObject } | { error: stri
   // A copy, because the imported module is shared by every request.
   if (response.status === 404) return { config: structuredClone(bundledConfig) };
   return { error: `Not saved: reading the saved copy failed (HTTP ${response.status}).` };
+}
+
+// The saved copy's jobs, entries that aren't objects included (saveConfig
+// names those).
+function savedJobs(config: JsonObject): unknown[] {
+  return Array.isArray(config.jobs) ? config.jobs : [];
+}
+
+function findJob(jobs: unknown[], id: string): JsonObject | undefined {
+  return jobs.find((entry): entry is JsonObject => isObject(entry) && entry.id === id);
+}
+
+// For a job removed (in another tab or as JSON) since the page loaded.
+function jobGone(id: string): { error: string } {
+  return { error: `The saved copy has no job "${id}" any more. Reload the page.` };
 }
 
 // Writes the form's fields into the job in place. Empty optional fields
@@ -332,12 +337,11 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
     };
   }
 
-  // Keys the schema doesn't have are refused before sending, listed by
-  // full path like the on-load notice. The backend's JSON Schema refuses
-  // them too; this just answers first, in similar words. Most are typos
-  // of optional fields (a typo in a required one already fails above as
-  // missing), which the site would otherwise silently leave out. The form
-  // can't show them, so the message points at the JSON editor.
+  // Keys the schema doesn't have, listed by full path like the on-load
+  // notice. The backend's JSON Schema refuses them too; this answers
+  // first, in similar words. Most are typos of optional fields (a typo in
+  // a required one already fails above), which the site would silently
+  // leave out. The form can't show them, hence the JSON editor.
   const unknownKeys = findUnknownKeys(config, parsed);
   if (unknownKeys.length > 0) {
     return {
@@ -350,8 +354,6 @@ async function saveConfig(config: JsonObject): Promise<CharacterSheetFormState> 
   // The document as written, not zod's parsed copy, which would drop keys
   // and fill in defaults the editor doesn't show.
   const body = { config: config as Record<string, components["schemas"]["JsonValue"]> };
-  // adminRequest() checks the session: Server Actions can be POSTed to
-  // directly, without the page that renders the form.
   const result = await adminRequest((api) => api.PUT("/character-sheet", { body }));
   if (!result) return { error: SERVER_UNREACHABLE };
   const { response, error } = result;
