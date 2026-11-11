@@ -39,12 +39,9 @@ def test_origin_with_more_than_scheme_and_host_fails_at_startup(origins, message
         Settings(allowed_origins=origins)
 
 
-def test_argon2_password_hash_is_accepted():
-    assert Settings(admin_password_hash=PASSWORD_HASH).admin_password_hash == PASSWORD_HASH
-
-
-def test_password_hash_may_be_empty():
-    assert Settings(admin_password_hash="").admin_password_hash == ""
+@pytest.mark.parametrize("value", [PASSWORD_HASH, ""], ids=["argon2", "empty"])
+def test_password_hash_is_accepted(value):
+    assert Settings(admin_password_hash=value).admin_password_hash == value
 
 
 @pytest.mark.parametrize(
@@ -66,9 +63,11 @@ def test_malformed_password_hash_fails_at_startup(value):
 
 @pytest.mark.parametrize("environment", ["development", "production"])
 def test_known_environments_are_accepted(environment):
+    # "production" also shows a real admin key passes its check.
     settings = Settings(environment=environment, admin_api_key="generated-by-render")
 
     assert settings.environment == environment
+    assert settings.admin_api_key == "generated-by-render"
 
 
 @pytest.mark.parametrize("environment", ["prod", "Production", "staging", ""])
@@ -82,10 +81,6 @@ def test_unknown_environment_fails_at_startup(environment):
 def test_production_refuses_default_or_empty_admin_key(key):
     with pytest.raises(ValidationError, match="ADMIN_API_KEY must be set"):
         Settings(environment="production", admin_api_key=key)
-
-
-def test_production_accepts_a_real_admin_key():
-    assert Settings(environment="production", admin_api_key="generated-by-render").admin_api_key
 
 
 def test_development_allows_the_default_admin_key():
