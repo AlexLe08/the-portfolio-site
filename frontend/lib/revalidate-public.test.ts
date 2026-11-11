@@ -9,13 +9,10 @@ vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
 
 describe("revalidatePublic", () => {
   it("marks every tag it's given stale with the max profile", () => {
-    revalidatePublic(CACHE_TAGS.content, CACHE_TAGS.characterSheet, CACHE_TAGS.projects);
+    const tags = Object.values(CACHE_TAGS);
+    revalidatePublic(...tags);
 
-    expect(vi.mocked(revalidateTag).mock.calls).toEqual([
-      [CACHE_TAGS.content, "max"],
-      [CACHE_TAGS.characterSheet, "max"],
-      [CACHE_TAGS.projects, "max"],
-    ]);
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual(tags.map((tag) => [tag, "max"]));
   });
 
   it("does nothing without tags", () => {

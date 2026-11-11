@@ -126,13 +126,12 @@ export async function setDefaultCharacterJob(
 }
 
 // Removes a job from the saved copy; nothing else in the document
-// changes. A job already gone
-// (removed in another tab or as JSON) counts as removed: same end state,
-// so it redirects without saving, as stale "empty" ids are ignored. The
-// default job is refused rather than picking a new default here: it's
-// what / shows, so changing it is a deliberate choice, made with the
-// default job form first. That also keeps the last job, which has to be
-// the default.
+// changes. A job already gone (removed in another tab or as JSON) counts
+// as removed: same end state, so it redirects without saving, as stale
+// "empty" ids are ignored. The default job is refused rather than picking
+// a new default here: it's what / shows, so changing it is a deliberate
+// choice, made with the default job form first. That also keeps the last
+// job, which has to be the default.
 export async function removeCharacterJob(
   jobId: string,
   _previous: CharacterSheetFormState,
