@@ -48,7 +48,7 @@ export function CharacterDefaultJobForm({ action, jobs, defaultJobId }: Props) {
           </p>
         </div>
 
-        <CharacterSheetSaveStatus state={state} pending={pending} unknownKeys={[]} deadAnchors={[]} deadParams={[]} />
+        <CharacterSheetSaveStatus state={state} pending={pending} />
 
         <div className="form-actions">
           <button type="submit" className="form-button" disabled={pending}>

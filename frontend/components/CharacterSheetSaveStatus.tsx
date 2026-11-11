@@ -9,18 +9,24 @@ type Props = {
   // Keys in the stored copy that the schema doesn't have (see
   // findUnknownKeys), from before saves refused them. Cleared by a save,
   // which can only succeed without them.
-  unknownKeys: string[];
+  unknownKeys?: string[];
   // Anchor actions with no section to scroll to (see findDeadAnchors),
   // replaced on save the same way.
-  deadAnchors: string[];
+  deadAnchors?: string[];
   // Param actions whose parameter the home page doesn't read (see
   // findDeadParams), likewise.
-  deadParams: string[];
+  deadParams?: string[];
 };
 
 // What a character sheet save reports, shared by the form and the raw JSON
 // editor, which save through the same checks (see actions.ts).
-export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnchors, deadParams }: Props) {
+export function CharacterSheetSaveStatus({
+  state,
+  pending,
+  unknownKeys = [],
+  deadAnchors = [],
+  deadParams = [],
+}: Props) {
   const saved = state && "saved" in state ? state : null;
   const problems = state && "problems" in state ? state.problems : undefined;
   // Not repeated under a refused save that already lists every one.
@@ -34,11 +40,7 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
       {state && "error" in state && problems ? (
         <StatusMessage tone="error">
           {state.error}
-          <ul className="json-editor__problems">
-            {problems.map((problem) => (
-              <li key={problem}>{problem}</li>
-            ))}
-          </ul>
+          <ProblemList items={problems} />
         </StatusMessage>
       ) : (
         <SaveStatus state={state} pending={pending} />
@@ -48,11 +50,7 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
         <StatusMessage tone="info">
           The saved copy has keys the schema doesn&rsquo;t have (typos?). The next save will be
           refused until they&rsquo;re removed, in the JSON editor if the form doesn&rsquo;t show them:
-          <ul className="json-editor__problems">
-            {storedUnknownKeys.map((key) => (
-              <li key={key}>{key}</li>
-            ))}
-          </ul>
+          <ProblemList items={storedUnknownKeys} />
         </StatusMessage>
       )}
       {/* Saved anyway: the section may be the next edit. */}
@@ -60,11 +58,7 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
         <StatusMessage tone="info">
           These slots link to a section the home page doesn&rsquo;t show for their job, so clicking
           them goes nowhere. Add the section, or link somewhere else:
-          <ul className="json-editor__problems">
-            {brokenAnchors.map((anchor) => (
-              <li key={anchor}>{anchor}</li>
-            ))}
-          </ul>
+          <ProblemList items={brokenAnchors} />
         </StatusMessage>
       )}
       {/* Saved anyway: the package allows any name, for other sites. */}
@@ -73,14 +67,22 @@ export function CharacterSheetSaveStatus({ state, pending, unknownKeys, deadAnch
           These slots set a query parameter the home page doesn&rsquo;t read, so clicking them only
           changes the address. The home page reads {STACK_PARAM}, which filters the projects by a
           stack tag:
-          <ul className="json-editor__problems">
-            {unreadParams.map((param) => (
-              <li key={param}>{param}</li>
-            ))}
-          </ul>
+          <ProblemList items={unreadParams} />
         </StatusMessage>
       )}
     </>
+  );
+}
+
+// The bulleted list inside a StatusMessage: a refused save's problems, or
+// the keys, anchors, or params a warning names.
+export function ProblemList({ items }: { items: string[] }) {
+  return (
+    <ul className="json-editor__problems">
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
   );
 }
 

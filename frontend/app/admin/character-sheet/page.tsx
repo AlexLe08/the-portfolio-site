@@ -5,6 +5,7 @@ import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import { CharacterJobRemoveForm } from "@/components/CharacterJobRemoveForm";
+import { ProblemList } from "@/components/CharacterSheetSaveStatus";
 import type { PortraitUpload } from "@/components/PortraitPicker";
 import type { SlotActionLimits } from "@/components/SlotActionFields";
 import type { TooltipFieldLimits } from "@/components/SlotTooltipFields";
@@ -73,11 +74,7 @@ export default async function AdminCharacterSheetPage({
       <Sheet title="Character sheet" back={{ href: "/admin", label: "Admin" }}>
         <StatusMessage tone="error">
           The saved copy has problems the form can&rsquo;t fix. Fix them as JSON first:
-          <ul className="json-editor__problems">
-            {parsed.errors.map((error) => (
-              <li key={error}>{error}</li>
-            ))}
-          </ul>
+          <ProblemList items={parsed.errors} />
         </StatusMessage>
         <p>{jsonLink}</p>
       </Sheet>
