@@ -28,6 +28,22 @@ def issues_by_path(config):
     }
 
 
+def issue_kinds(config):
+    return [(issue.path, issue.kind) for issue in character_sheet.find_issues(config)]
+
+
+def set_action(config, action):
+    config["jobs"][0]["slots"]["core"]["action"] = action
+
+
+# Valid actions of each kind with options; the PUT test saves each one.
+VALID_ACTIONS = [
+    {"kind": "external", "href": "https://github.com/AlexLe08", "newTab": True},
+    {"kind": "param", "name": "stack", "value": "fastapi", "target": "projects"},
+    {"kind": "param", "name": "stack", "value": "fastapi"},
+]
+
+
 def test_bundled_config_is_valid(config):
     assert character_sheet.find_issues(config) == []
 
@@ -40,7 +56,7 @@ def test_reports_problem_at_its_path(config):
 
 def test_slot_action_reports_errors_from_the_branch_its_kind_selects(config):
     # jsonschema's best_match() would blame the anchor branch's "target".
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "link", "href": "//elsewhere.example"}
+    set_action(config, {"kind": "link", "href": "//elsewhere.example"})
 
     issues = character_sheet.find_issues(config)
 
@@ -48,7 +64,7 @@ def test_slot_action_reports_errors_from_the_branch_its_kind_selects(config):
 
 
 def test_slot_action_reports_missing_field_for_its_kind(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "anchor"}
+    set_action(config, {"kind": "anchor"})
 
     assert issues_by_path(config) == {
         "jobs.0.slots.core.action": "'target' is a required property"
@@ -56,7 +72,7 @@ def test_slot_action_reports_missing_field_for_its_kind(config):
 
 
 def test_slot_action_with_unknown_kind_lists_the_allowed_kinds(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "teleport"}
+    set_action(config, {"kind": "teleport"})
 
     assert issues_by_path(config) == {
         "jobs.0.slots.core.action.kind": 'must be one of "anchor", "link", "external", "param", "none"'
@@ -68,51 +84,26 @@ def test_slot_action_with_unknown_kind_lists_the_allowed_kinds(config):
     ["javascript:alert(1)", "JAVASCRIPT:alert(1)", "data:text/html,hi", "ftp://example.com"],
 )
 def test_external_links_must_be_http_or_https(config, href):
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "external", "href": href}
+    set_action(config, {"kind": "external", "href": href})
 
     issues = character_sheet.find_issues(config)
 
     assert [(issue.path[-1], issue.kind) for issue in issues] == [("href", "pattern")]
 
 
-def test_external_https_link_is_valid(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {
-        "kind": "external",
-        "href": "https://github.com/AlexLe08",
-        "newTab": True,
-    }
-
-    assert character_sheet.find_issues(config) == []
-
-
-@pytest.mark.parametrize(
-    "action",
-    [
-        {"kind": "param", "name": "stack", "value": "fastapi", "target": "projects"},
-        {"kind": "param", "name": "stack", "value": "fastapi"},
-    ],
-)
-def test_param_action_is_valid_with_or_without_a_target(config, action):
-    config["jobs"][0]["slots"]["core"]["action"] = action
-
-    assert character_sheet.find_issues(config) == []
-
-
 @pytest.mark.parametrize("name", ["job", "Stack Filter"])
 def test_param_action_name_must_match_the_pattern(config, name):
     # "job" picks the job, so a param action may not set it. The issue being
     # at action.name shows the kind picked the param branch.
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "param", "name": name, "value": "x"}
+    set_action(config, {"kind": "param", "name": name, "value": "x"})
 
-    issues = character_sheet.find_issues(config)
-
-    assert [(issue.path, issue.kind) for issue in issues] == [
+    assert issue_kinds(config) == [
         (["jobs", 0, "slots", "core", "action", "name"], "pattern")
     ]
 
 
 def test_param_action_reports_a_missing_value(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "param", "name": "stack"}
+    set_action(config, {"kind": "param", "name": "stack"})
 
     assert issues_by_path(config) == {
         "jobs.0.slots.core.action": "'value' is a required property"
@@ -120,32 +111,29 @@ def test_param_action_reports_a_missing_value(config):
 
 
 def test_param_action_value_has_a_max_length(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {
-        "kind": "param",
-        "name": "stack",
-        "value": "x" * 81,
-    }
+    set_action(config, {"kind": "param", "name": "stack", "value": "x" * 81})
 
-    issues = character_sheet.find_issues(config)
-
-    assert [(issue.path, issue.kind) for issue in issues] == [
+    assert issue_kinds(config) == [
         (["jobs", 0, "slots", "core", "action", "value"], "maxLength")
     ]
 
 
-def test_param_action_with_a_key_from_another_kind_names_the_key(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {
-        "kind": "param",
-        "name": "stack",
-        "value": "fastapi",
-        "href": "/",
-    }
+@pytest.mark.parametrize(
+    "action",
+    [
+        {"kind": "param", "name": "stack", "value": "fastapi", "href": "/"},
+        {"kind": "none", "href": "/"},
+    ],
+    ids=["param", "none"],
+)
+def test_slot_action_with_a_key_from_another_kind_names_the_key(config, action):
+    set_action(config, action)
 
     assert issues_by_path(config) == {
         "jobs.0.slots.core.action.href": "not in the schema (a typo?)"
     }
-    assert [issue.kind for issue in character_sheet.find_issues(config)] == [
-        "additionalProperties"
+    assert issue_kinds(config) == [
+        (["jobs", 0, "slots", "core", "action", "href"], "additionalProperties")
     ]
 
 
@@ -209,19 +197,9 @@ def test_top_level_schema_key_is_allowed(config):
     assert character_sheet.find_issues(config) == []
 
 
-def test_slot_action_with_a_key_from_another_kind_names_the_key(config):
-    config["jobs"][0]["slots"]["core"]["action"] = {"kind": "none", "href": "/"}
-
-    issues = character_sheet.find_issues(config)
-
-    assert [(issue.path, issue.kind) for issue in issues] == [
-        (["jobs", 0, "slots", "core", "action", "href"], "additionalProperties")
-    ]
-
-
 def test_slot_action_without_kind_keeps_the_oneof_error(config):
     # Every branch is still possible without a "kind", so none is picked.
-    config["jobs"][0]["slots"]["core"]["action"] = {"href": "/"}
+    set_action(config, {"href": "/"})
 
     issues = character_sheet.find_issues(config)
 
@@ -254,9 +232,7 @@ def test_tooltip_pair_item_reports_errors_from_the_pair_branch(config):
     items = config["jobs"][0]["slots"]["skills"]["tooltip"]["items"]
     items[0]["label"] = 5
 
-    issues = character_sheet.find_issues(config)
-
-    assert [(issue.path, issue.kind) for issue in issues] == [
+    assert issue_kinds(config) == [
         (["jobs", 0, "slots", "skills", "tooltip", "items", 0, "label"], "type")
     ]
 
@@ -363,15 +339,9 @@ def test_put_saves_and_get_returns_it_publicly(client, config):
     assert stored.json()["config"] == config
 
 
-@pytest.mark.parametrize(
-    "action",
-    [
-        {"kind": "param", "name": "stack", "value": "fastapi", "target": "projects"},
-        {"kind": "param", "name": "stack", "value": "fastapi"},
-    ],
-)
-def test_put_saves_a_param_action(client, config, action):
-    config["jobs"][0]["slots"]["core"]["action"] = action
+@pytest.mark.parametrize("action", VALID_ACTIONS, ids=["external", "param-target", "param"])
+def test_put_saves_a_valid_action(client, config, action):
+    set_action(config, action)
 
     response = client.put("/character-sheet", json={"config": config}, headers=ADMIN_HEADERS)
 
@@ -433,10 +403,13 @@ def test_put_with_an_unknown_key_keeps_the_saved_config(client, config):
     assert client.get("/character-sheet").json()["config"] == config
 
 
-def test_put_rejects_a_config_that_is_not_an_object(client):
-    for body in ({"config": []}, {"config": "{}"}, {}):
-        response = client.put("/character-sheet", json=body, headers=ADMIN_HEADERS)
-        assert response.status_code == 422, body
+@pytest.mark.parametrize(
+    "body", [{"config": []}, {"config": "{}"}, {}], ids=["list", "string", "missing"]
+)
+def test_put_rejects_a_config_that_is_not_an_object(client, body):
+    response = client.put("/character-sheet", json=body, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 422
 
 
 def test_put_rejects_unknown_fields(client, config):
