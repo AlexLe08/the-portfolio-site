@@ -20,8 +20,6 @@ export async function updateContent(
   // blank spot on the page instead of falling back to the built-in text.
   if (!value) return { error: "This can't be empty." };
 
-  // adminRequest() checks the session: Server Actions can be POSTed to
-  // directly, without the page that renders the form.
   const result = await adminRequest((api) =>
     api.PUT("/content/{key}", { params: { path: { key } }, body: { value } }),
   );

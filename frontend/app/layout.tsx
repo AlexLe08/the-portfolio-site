@@ -4,12 +4,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { FALLBACK_CONTENT } from "@/lib/content";
 import "./globals.css";
 
-// IBM Plex isn't a variable font on Google Fonts, so weights must be
-// listed explicitly. Plex Sans carries both headlines and body copy --
-// one family, not a display/body split, kept legible with a deliberate
-// weight range. Plex Mono is scoped narrowly in globals.css to places
-// something is literally a technical identifier (stack tags, the title
-// block's metadata row) -- not used as generic small-label decoration.
+// Plex isn't variable on Google Fonts, so weights are listed. Plex Sans
+// carries all text; Plex Mono is only for literal identifiers (see
+// globals.css).
 const plexSans = IBM_Plex_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
