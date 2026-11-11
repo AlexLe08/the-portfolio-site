@@ -39,12 +39,3 @@ def test_admin_detail_missing_project_returns_404(client):
     response = client.get("/admin/projects/nope", headers=ADMIN_HEADERS)
 
     assert response.status_code == 404
-
-
-def test_public_list_still_omits_admin_fields(client, db_session):
-    make_project(db_session, slug="p")
-
-    [project] = client.get("/projects").json()
-
-    assert "published" not in project
-    assert "sort_order" not in project

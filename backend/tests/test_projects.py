@@ -25,12 +25,13 @@ def test_list_projects_orders_by_sort_order_then_id(client, db_session):
     assert slugs == ["tied-first", "tied-second", "third"]
 
 
-def test_project_summary_omits_case_study_body(client, db_session):
+def test_public_list_returns_only_summary_fields(client, db_session):
+    # No case_study_md (heavy) and no admin fields (published, sort_order).
     make_project(db_session, slug="published-one")
 
-    response = client.get("/projects")
+    [project] = client.get("/projects").json()
 
-    assert "case_study_md" not in response.json()[0]
+    assert set(project) == {"slug", "title", "summary", "stack"}
 
 
 def test_get_unpublished_project_returns_404(client, db_session):

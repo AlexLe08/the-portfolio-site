@@ -50,7 +50,8 @@ ROW_ID = 1
 
 # No format_checker: "format" (e.g. "uri") is only an annotation in JSON
 # Schema 2020-12, and checking "uri" would need an extra package. Rules that
-# matter are written as patterns in schema.ts, which are always enforced.
+# matter are written as patterns in the package's zod schema, which are
+# always enforced.
 _validator = Draft202012Validator(json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
 
 
