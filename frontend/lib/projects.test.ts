@@ -80,6 +80,16 @@ describe("fetchProjects", () => {
     answer(500);
     await expect(fetchProjects()).rejects.toThrow("Failed to load projects");
   });
+
+  it("gives up after 5 seconds on a sleeping backend", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    answer(200, PROJECTS);
+    await fetchProjects();
+
+    expect(timeout).toHaveBeenCalledWith(5000);
+    expect(api.GET).toHaveBeenCalledWith("/projects", { signal: timeout.mock.results[0].value });
+    timeout.mockRestore();
+  });
 });
 
 describe("loadProjects", () => {
@@ -107,6 +117,17 @@ describe("loadProjects", () => {
 
     await expect(loadProjects()).resolves.toBeNull();
     expect(Sentry.captureException).toHaveBeenCalledWith(error, undefined);
+  });
+
+  it("returns null and only logs a timeout, which every cold start hits", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = new DOMException("The operation was aborted due to timeout", "TimeoutError");
+    vi.mocked(api.GET).mockRejectedValue(error);
+
+    await expect(loadProjects()).resolves.toBeNull();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(expect.any(String), error);
+    consoleError.mockRestore();
   });
 });
 

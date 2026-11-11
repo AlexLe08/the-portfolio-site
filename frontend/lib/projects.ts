@@ -19,11 +19,22 @@ class ProjectsHttpError extends Error {
   }
 }
 
+// Same limit as CONTENT_TIMEOUT_MS in lib/content.ts. A cold miss then shows
+// the page within seconds, with ProjectsUnavailable where the list goes and
+// AutoRetry filling it in once Render is awake, and a background refresh
+// against a sleeping backend doesn't hold the function open while it wakes.
+// Project pages have no timeout: without the case study there is nothing to
+// show, so waiting for the backend beats app/error.tsx.
+const PROJECTS_TIMEOUT_MS = 5000;
+
 // The published project list, straight from the backend. Throws on any
-// failure (openapi-fetch throws when the backend is unreachable), so
-// unstable_cache below only ever stores good data.
+// failure (openapi-fetch throws when the backend is unreachable or the
+// timeout aborts the request), so unstable_cache below only ever stores
+// good data.
 export async function fetchProjects(): Promise<ProjectSummary[]> {
-  const { data, error } = await api.GET("/projects");
+  const { data, error } = await api.GET("/projects", {
+    signal: AbortSignal.timeout(PROJECTS_TIMEOUT_MS),
+  });
   if (!data) throw new ProjectsHttpError("Failed to load projects", error);
   return data;
 }
@@ -40,11 +51,17 @@ const cachedProjects = unstable_cache(fetchProjects, ["projects", apiBaseUrl, CA
 // null when the load failed, so the page can still render its copy (which
 // has fallbacks) instead of the whole-page app/error.tsx. Catching here
 // means onRequestError never sees the failure, so it's reported to Sentry
-// by hand.
+// by hand. A timeout is only logged: a sleeping Render accepts the
+// connection and holds it, so every cold start would otherwise be an event.
+// An unreachable backend (connection refused) is still reported.
 async function orNull(load: () => Promise<ProjectSummary[]>): Promise<ProjectSummary[] | null> {
   try {
     return await load();
   } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      console.error("Project list timed out:", error);
+      return null;
+    }
     Sentry.captureException(
       error,
       error instanceof ProjectsHttpError ? { extra: { error: error.body } } : undefined,
