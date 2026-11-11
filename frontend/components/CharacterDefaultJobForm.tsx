@@ -2,11 +2,11 @@
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import { CharacterSheetSaveStatus } from "@/components/CharacterSheetSaveStatus";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // setDefaultCharacterJob, which re-renders the page once it's saved.
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   // The published jobs, in menu order: drafts and hidden jobs can't be
   // the default.
   jobs: { id: string; name: string }[];

@@ -2,11 +2,11 @@
 
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import { CharacterSheetSaveStatus } from "@/components/CharacterSheetSaveStatus";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // addCharacterJob, which goes to the new job's form once it's saved.
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   // The jobs a new one can start from, in menu order.
   jobs: { id: string; name: string }[];
   // The job being edited, preselected as the one to copy.

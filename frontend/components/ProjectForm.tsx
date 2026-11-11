@@ -4,13 +4,13 @@ import type { ProjectFormState } from "@/app/admin/projects/actions";
 import { SaveStatus } from "@/components/SaveStatus";
 import type { components } from "@/lib/api-types";
 import { MAX_LENGTH, SLUG_PATTERN } from "@/lib/project-rules";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Project = components["schemas"]["ProjectAdmin"];
 
 type Props = {
   // createProject, or updateProject bound to a slug.
-  action: (state: ProjectFormState, formData: FormData) => Promise<ProjectFormState>;
+  action: SaveAction<ProjectFormState>;
   // Absent when creating. The slug field only appears then, because the
   // slug is the project's URL and can't change afterwards.
   project?: Project;

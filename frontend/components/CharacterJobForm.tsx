@@ -7,7 +7,7 @@ import { useRef, useState } from "react";
 import { PortraitPicker, type PortraitUpload } from "@/components/PortraitPicker";
 import { SlotActionFields, type SlotActionLimits } from "@/components/SlotActionFields";
 import { SlotTooltipFields, type TooltipFieldLimits } from "@/components/SlotTooltipFields";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 // Max lengths, from the package's LIMITS (read by the page).
 export type JobFieldLimits = Record<
@@ -24,7 +24,7 @@ const STATUS_LABELS: Record<JobStatus, string> = {
 
 type Props = {
   // updateCharacterJob bound to the job's id.
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   job: Job;
   // The default job has to stay published.
   isDefault: boolean;

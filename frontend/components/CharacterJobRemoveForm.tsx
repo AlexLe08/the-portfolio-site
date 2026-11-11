@@ -4,12 +4,12 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import type { CharacterSheetFormState } from "@/app/admin/character-sheet/actions";
 import { CharacterSheetSaveStatus } from "@/components/CharacterSheetSaveStatus";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // removeCharacterJob bound to the job's id, which goes to the default
   // job's form once it's saved.
-  action: (state: CharacterSheetFormState, formData: FormData) => Promise<CharacterSheetFormState>;
+  action: SaveAction<CharacterSheetFormState>;
   job: { id: string; name: string };
   // The default job can't be removed from the form (see actions.ts).
   isDefault: boolean;

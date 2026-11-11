@@ -3,11 +3,11 @@
 import type { MediaFormState } from "@/app/admin/media/actions";
 import { SaveStatus } from "@/components/SaveStatus";
 import { ALT_TEXT_MAX_LENGTH } from "@/lib/media-rules";
-import { useSaveAction } from "@/lib/use-save-action";
+import { type SaveAction, useSaveAction } from "@/lib/use-save-action";
 
 type Props = {
   // updateAltText bound to this image's id.
-  action: (state: MediaFormState, formData: FormData) => Promise<MediaFormState>;
+  action: SaveAction<MediaFormState>;
   id: number;
   altText: string;
 };
