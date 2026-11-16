@@ -1316,6 +1316,162 @@
 
 ## Next up (candidates, unordered)
 
+- Review follow-ups (asked 2026-11-16, after a whole-project review at
+  `01cfc29`). Unlike the rest of this list, these are in order: one PR
+  per numbered step, each through planner, implementer and reviewer,
+  with `.github/`, `scripts/`, `docs/`, `CLAUDE.md` and root files
+  changed by the orchestrator. Baseline that day on a fresh install:
+  backend 263 passed, frontend 170 passed, lint 0 errors and 3
+  warnings, build passes. What the review found: the engineering is
+  ahead of the content, installs aren't reproducible, and several rules
+  hold only by convention. When a step merges, move it to Done with
+  what was verified, like every other entry.
+  - Step 0, the owner's, in production (no code; agents can't touch
+    production, and it doesn't block the steps below): remove the
+    leftover test edits a visitor sees (Healthcare's level "React guy",
+    slot texts "truth" and "test text", icons "HLC"/"ECM", the portrait
+    alt text "lami's avatar sticker"), then the Education sections and
+    the AI development job. Raised from low priority (2026-11-05): it's
+    the first thing a visitor reads.
+  - Step 1, frontend security updates (frontend-implementer). `npm
+    audit` at the repo root lists 15 advisories:
+    - critical: `next` 16.0.0 to 16.4.0, fixed in 16.4.6. It concerns
+      `use cache`, which the site doesn't use, but the pin is stale;
+    - high: `sharp` below 0.35.5 (installed through `next`) and `zod`
+      below 4.6.6;
+    - moderate: `@sentry/nextjs` up to 11.10.0, and the
+      `typescript-eslint` packages under `eslint-config-next`.
+
+    `next` and `eslint-config-next` are pinned to the same version and
+    move together. Don't run `npm audit fix --force`: its fix for the
+    lint packages is a downgrade to `eslint-config-next` 15. Read Next's
+    changelog from 16.3.6 first, because entries above record behavior
+    read from that version's source: `unstable_cache` serving a stale
+    entry and keeping it when a refresh fails, `revalidateTag(tag,
+    "max")`, `scroll={false}` cancelling the hash scroll, and
+    `force-dynamic` not skipping `unstable_cache`. Done when: `npm
+    audit` is clean, or each advisory left is listed with why it stays;
+    `scripts/lockfile-diff.mjs` is reported; `scripts/check.sh frontend`
+    passes; and on the demo stack the public pages still serve cached
+    data with the backend stopped, and an admin save shows on the second
+    visit.
+  - Step 2, small fixes (one PR). Run `scripts/gen-types.sh` and commit
+    the result: `backend/openapi.json` and `lib/api-types.ts` are stale
+    by one docstring (`CharacterSheetUpdate`'s description), which no
+    check catches yet (step 4). Fix the three lint warnings and make
+    `npm run lint` fail on warnings (`--max-warnings 0`), since CI
+    passes with them today: `_previous` and `_formData` unused in
+    `removeCharacterJob` (`app/admin/character-sheet/actions.ts:137`),
+    and an `eslint-disable` that no longer suppresses anything in
+    `components/ProjectsUnavailable.tsx:27` (the link's `href` became a
+    prop in #84).
+  - Step 3, a backend lockfile (backend-implementer for
+    `backend/`; the orchestrator for the rest). `pyproject.toml` has
+    open ranges and nothing pins what they resolve to, so every Render
+    build, CI run and new venv can install different versions; that has
+    broken things twice (see CLAUDE.md's gotchas). Keep the ranges as
+    the statement of what's supported and add a lock that the
+    Dockerfile, CI and local setup all install from. The planner
+    proposes the tool for the owner to approve. Requirements: free; one
+    lock that resolves for both Linux on Python 3.12 (Docker, CI) and
+    the owner's macOS Python; one documented command to refresh it; and
+    a format Dependabot can update (step 7). Every place that installs
+    has to change together: `backend/Dockerfile`,
+    `.github/workflows/backend.yml`, `scripts/setup-worktree.sh`,
+    `backend/README.md`, and CLAUDE.md's Setup line, its "rebuild the
+    venv" note and its "ranges are open upward" gotcha (all of which
+    describe today's behavior). Done when: the Dockerfile, CI and
+    `setup-worktree.sh` install only the versions named in the lock, the
+    Docker image builds and starts locally (`alembic upgrade head`, then
+    `/health`), and `scripts/check.sh backend` passes from a venv built
+    from the lock.
+  - Step 4, a check that the generated client is current, after step 3
+    (FastAPI and Pydantic versions change the OpenAPI output, so the
+    check is only stable once they're locked). Backend: a test that
+    `app.openapi()` equals the committed `backend/openapi.json`.
+    Frontend: a check that `lib/api-types.ts` equals what
+    `openapi-typescript` generates from that file, in the style of
+    `lib/character-schema.test.ts`. Backend CI has no Node and frontend
+    CI has no Python, which is why it's two checks. Both failure
+    messages should name `scripts/gen-types.sh`. Break each on purpose
+    (`scripts/mutate.py`, `scripts/mutate.mjs`) to show it's caught.
+    Note in `docs/ci-cd-runbook.md` that a FastAPI or Pydantic update
+    can fail this check until the types are regenerated, which is the
+    point.
+  - Step 5, backend lint and type check. Nothing checks `backend/`
+    statically today. Add a linter and a type checker (the planner
+    compares the options; `ruff` and either `mypy` or `pyright` are the
+    usual ones) as steps in the existing `test` job, whose id must not
+    change, and as lines in `scripts/check.sh backend`. Fix what they
+    find instead of ignoring it, and report every rule or error code
+    turned off with its reason. Leave auto-formatting out of this PR:
+    report how many files a formatter would rewrite, so the owner can
+    decide on that diff separately. Tests stay as they are (CLAUDE.md,
+    "Agent workflow").
+  - Step 6, Postgres in CI. CI only runs SQLite, and the differences
+    have bitten before (`String(n)` lengths, row order).
+    `scripts/check-migration.sh` already runs the
+    migrations up, down, up and `alembic check` on a throwaway Postgres
+    container, and GitHub's Ubuntu runners have Docker, so the first
+    option to evaluate is running that script in the `test` job. No
+    `paths:` filter on `pull_request`. The planner should also say what
+    running the pytest suite itself on Postgres would take (the suite
+    is built on in-memory SQLite with `StaticPool`), as a follow-up to
+    decide on, not part of this step.
+  - Step 7, automated dependency updates: `.github/dependabot.yml`
+    (free) for npm at the repo root (the one lockfile is there), the
+    backend's lock from step 3, and GitHub Actions. Weekly and grouped,
+    so it's a few PRs a week, each running the required checks.
+    Orchestrator's change; add a short section to
+    `docs/ci-cd-runbook.md` on reviewing those PRs
+    (`scripts/lockfile-diff.mjs` for npm ones).
+  - Step 8, a committed end-to-end suite on a local stack. Most PRs in
+    Done were verified with a multi-step Playwright script on the demo
+    stack, but the scripts were never committed (they're written to the
+    gitignored `.logs/`), so none of those checks run again. Keep them
+    as tests:
+    - Where: a second Playwright config beside the smoke one, with its
+      own directory. It must not be able to reach production: the smoke
+      config's `baseURL` defaults to the live site, so the new config
+      hard-codes localhost and starts its own stack with the same
+      isolation as `frontend/demo/stack.mjs` (throwaway seeded SQLite,
+      notifications, Cloudinary and Sentry blank). Reuse that file's
+      `startStack()`, `login()` and stoppable backend where they fit.
+    - CI: a new job in `frontend.yml` that sets up both Python and Node.
+      Not a required check at first; adding it to the ruleset is the
+      owner's decision once it has been stable for a while. The job ids
+      `test` and `build` don't change.
+    - First flows, taken from the "Verified with Playwright" lists in
+      Done (the planner picks a set that runs in a few minutes):
+      - public: the project list, `?job=` and its fallback, `?stack=`
+        and its clear link, a project page, a 404;
+      - contact: a sent message, a 422 message, and the 429 text with
+        `CONTACT_RATE_LIMIT=1`;
+      - outages: cached pages with the backend stopped, and the fallback
+        notice clearing on its own once the backend is back;
+      - admin: signed-out redirect, wrong password, a project created
+        and published showing on the public page, a content save, the
+        job form (edit, fill and empty a slot, add and remove a job,
+        change the default), the JSON editor refusing an unknown key,
+        a stale token landing on `?expired=1`, and a save with the
+        backend down keeping the edit.
+    - Uploads stay off on the stack, so media tests cover the 503
+      message and rows inserted through `dbPath`.
+    - Then update CLAUDE.md's testing paragraph ("pages are checked on
+      the demo stack") and `docs/ci-cd-runbook.md`. Component tests stay
+      out, as decided below.
+  - Not in these steps, recorded so the review's other findings aren't
+    lost (candidates, unordered):
+    - frontend security headers and a CSP (`next.config.ts` sets none);
+    - the shared login limit lets anyone lock the admin UI for a window
+      at a time, and both limiters reset whenever Render sleeps;
+    - contact messages are stored with no way to read or delete them;
+    - the backend container runs as root;
+    - short decision records split out of this file, which is mostly a
+      changelog by now, and a root `README.md` with an architecture
+      diagram (its "Architecture" code fences are broken today);
+    - a sitemap, `robots.txt`, an Open Graph image, and a custom domain.
+
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
     more jobs as needed (Teacher added 2026-11-05; AI development not
@@ -1365,9 +1521,9 @@
   switch `EMAIL_FROM` to it.
 - Low priority (decided 2026-11-05): keeping the built-in values
   (`FALLBACK_CONTENT`, `lib/character-config.json`) in step with edits
-  saved in production, and cleaning up production's leftover test edits
-  (Healthcare's level "React guy", slot texts "truth" and "test text",
-  icons "HLC"/"ECM", the portrait alt text "lami's avatar sticker"). The
-  fallback notice makes it visible when built-in values are showing, so
-  they don't need to match production. Copy changes across only when they
-  matter during an outage, as with the portrait.
+  saved in production. The fallback notice makes it visible when built-in
+  values are showing, so they don't need to match production. Copy
+  changes across only when they matter during an outage, as with the
+  portrait. (Cleaning up production's leftover test edits was part of
+  this item; it moved to step 0 of the review follow-ups above on
+  2026-11-16.)
