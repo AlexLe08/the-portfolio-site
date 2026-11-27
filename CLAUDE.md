@@ -153,7 +153,8 @@ Frontend:
   page whose loads failed with `router.refresh()`) and the messages that
   read it, `components/FallbackNotice.tsx` and
   `components/ProjectsUnavailable.tsx`,
-  the character sheet package's `SlotHover` (a dependency's own file),
+  the character sheet package's `SlotHover` and `JobMenuFocus` (a
+  dependency's own files),
   `lib/cloudinary-loader.ts` (Next requires it for `images.loaderFile`),
   and the required error boundaries
   `app/error.tsx`, `app/admin/error.tsx`, and `app/global-error.tsx`,
@@ -206,7 +207,7 @@ Frontend:
   own repository (`AlexLe08/wol-character-panel`); changes to it go
   there, and this site picks them up by upgrading. Import it only
   through its entries: `.` (data: `parseConfig`, `resolveJob`, `LIMITS`, types; no
-  React), `/react` (`CharacterSheet`), `/schema` (the config's zod
+  React), `/react` (`EquipmentPanel`, `CharacterWindow`), `/schema` (the config's zod
   schema). Forms read max lengths from `LIMITS` and patterns from the
   exported `ID_PATTERN` / `PARAM_NAME_PATTERN`, never from zod. Public
   pages get the config from `getCharacterConfig()`, which applies
