@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
-import { jobHref, withQuery, type CharacterSheetConfig, type Job } from "@solution-nine/wol-character-panel";
-import { CharacterSheet } from "@solution-nine/wol-character-panel/react";
+import { jobHref, withQuery, type CharacterPanelConfig, type Job } from "@solution-nine/wol-character-panel";
+import { EquipmentPanel } from "@solution-nine/wol-character-panel/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
@@ -27,7 +27,7 @@ const FACTS: { label: string; key: ContentKey }[] = [
 ];
 
 type Props = {
-  config: CharacterSheetConfig;
+  config: CharacterPanelConfig;
   job: Job;
   content: SiteContent;
   // null when loading them failed.
@@ -56,15 +56,16 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
     <Sheet
       notice={notice}
       lead={
-        <CharacterSheet
+        <EquipmentPanel
           config={config}
           job={job}
           basePath={basePath}
+          // 1.x's default name for the region; 2.0 defaults to "Character panel".
+          label="Character sheet"
           renderLink={renderLink}
           renderPortrait={renderPortrait}
           isParamActive={stackParamActive(stack)}
-          showSockets
-          showToolbar
+          parts={{ sockets: true, toolbar: true }}
         />
       }
     >

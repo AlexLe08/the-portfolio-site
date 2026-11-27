@@ -1,4 +1,4 @@
-import type { CharacterSheetConfig, Job, SlotDef } from "@solution-nine/wol-character-panel";
+import type { CharacterPanelConfig, Job, SlotDef } from "@solution-nine/wol-character-panel";
 import type { ProjectSummary } from "./projects";
 
 // What the home page (components/HomeView.tsx) renders below the panel and
@@ -16,12 +16,12 @@ export const STACK_PARAM = "stack";
 
 // The job's page sections, in slot order; each is rendered with its
 // slot's id.
-export function homeSections(config: CharacterSheetConfig, job: Job): SlotDef[] {
+export function homeSections(config: CharacterPanelConfig, job: Job): SlotDef[] {
   return config.slots.filter((slot) => job.sections?.[slot.id]);
 }
 
 // The ids an anchor action can scroll to when the home page shows this job.
-export function homeAnchorTargets(config: CharacterSheetConfig, job: Job): string[] {
+export function homeAnchorTargets(config: CharacterPanelConfig, job: Job): string[] {
   return [...homeSections(config, job).map((slot) => slot.id), PROJECTS_ANCHOR];
 }
 
@@ -69,7 +69,7 @@ export function stackTags(projects: { stack: string[] }[]): string[] {
 // drafts and hidden ones included, so a link is fixed before the job is
 // published. Reported after saving rather than blocking it, unlike unknown
 // keys: the config is valid, and the missing section may be the next edit.
-export function findDeadAnchors(config: CharacterSheetConfig): string[] {
+export function findDeadAnchors(config: CharacterPanelConfig): string[] {
   return config.jobs.flatMap((job) => {
     const targets = new Set(homeAnchorTargets(config, job));
     return config.slots.flatMap((slot) => {
@@ -85,7 +85,7 @@ export function findDeadAnchors(config: CharacterSheetConfig): string[] {
 // Param actions whose name the home page doesn't read, so clicking the
 // slot only changes the URL. Reported like dead anchors: the config is
 // valid, and the package allows any name for other hosts.
-export function findDeadParams(config: CharacterSheetConfig): string[] {
+export function findDeadParams(config: CharacterPanelConfig): string[] {
   return config.jobs.flatMap((job) =>
     config.slots.flatMap((slot) => {
       const action = job.slots[slot.id]?.action;

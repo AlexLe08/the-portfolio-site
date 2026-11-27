@@ -5,7 +5,7 @@ import {
   loadConfig,
   parseConfig,
   publicConfig,
-  type CharacterSheetConfig,
+  type CharacterPanelConfig,
   type ConfigSource,
 } from "@solution-nine/wol-character-panel";
 import { api } from "./api";
@@ -32,7 +32,7 @@ if (unknownKeys.length > 0) {
   throw new Error(`lib/character-config.json has unknown keys:\n${unknownKeys.join("\n")}`);
 }
 
-export const characterConfig: CharacterSheetConfig = config;
+export const characterConfig: CharacterPanelConfig = config;
 
 // Thrown when the backend is unreachable or timed out (a Render cold
 // start). It counts as a failed load, so the page says it shows the bundled
@@ -77,7 +77,7 @@ const apiSource: ConfigSource = {
 };
 
 export type CharacterConfigResult = {
-  config: CharacterSheetConfig;
+  config: CharacterPanelConfig;
   // True when the bundled file is showing because loading the saved copy
   // failed, not because nothing is saved. Pages pass it to FallbackNotice.
   fallback: boolean;

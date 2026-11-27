@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { resolveJob } from "@solution-nine/wol-character-panel";
-import { CharacterSheet } from "@solution-nine/wol-character-panel/react";
+import { EquipmentPanel } from "@solution-nine/wol-character-panel/react";
 import { AutoRetry } from "@/components/AutoRetry";
 import { FallbackNotice } from "@/components/FallbackNotice";
 import { Sheet } from "@/components/Sheet";
@@ -28,8 +28,7 @@ export default async function CharacterSheetLabPage({ searchParams }: PageProps<
     basePath: BASE_PATH,
     renderLink,
     renderPortrait,
-    showSockets: true,
-    showToolbar: true,
+    parts: { sockets: true, toolbar: true },
   };
 
   return (
@@ -47,12 +46,12 @@ export default async function CharacterSheetLabPage({ searchParams }: PageProps<
         <div className="section-rule">
           <h2 className="section-rule__label">Document theme</h2>
         </div>
-        <CharacterSheet {...shared} theme="document" label="Character sheet, document theme" />
+        <EquipmentPanel {...shared} theme="document" label="Character sheet, document theme" />
 
         <div className="section-rule">
           <h2 className="section-rule__label">Game theme</h2>
         </div>
-        <CharacterSheet {...shared} theme="game" label="Character sheet, game theme" />
+        <EquipmentPanel {...shared} theme="game" label="Character sheet, game theme" />
       </Sheet>
     </AutoRetry>
   );
