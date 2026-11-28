@@ -38,3 +38,22 @@ describe("dark theme tokens", () => {
     expect(saved.get("color-scheme")).toBe("dark");
   });
 });
+
+// With no saved choice, ThemeToggle draws both states of its button and
+// relies on these rules to hide one, JavaScript or not.
+describe("theme toggle hide rules", () => {
+  const flat = css.replace(/\s+/g, " ");
+  it.each([
+    [':root[data-theme="light"] [data-theme-when="dark"]', ""],
+    [':root[data-theme="dark"] [data-theme-when="light"]', ""],
+    [':root:not([data-theme]) [data-theme-when="dark"]', "@media not all and (prefers-color-scheme: dark) {"],
+    [':root:not([data-theme]) [data-theme-when="light"]', "@media (prefers-color-scheme: dark) {"],
+  ])("hides %s", (selector, media) => {
+    const at = flat.indexOf(selector);
+    expect(at, selector).toBeGreaterThanOrEqual(0);
+    // The rule's own block hides it...
+    expect(flat.slice(at, flat.indexOf("}", at))).toMatch(/\{ display: none; $/);
+    // ...under the right media query, if any.
+    if (media) expect(flat.slice(0, at).trimEnd().endsWith(media), media).toBe(true);
+  });
+});

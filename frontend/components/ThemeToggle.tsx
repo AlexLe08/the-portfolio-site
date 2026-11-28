@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { setTheme } from "@/app/theme-actions";
-import type { Theme } from "@/lib/theme";
+import { readTheme, THEME_COOKIE, type Theme } from "@/lib/theme";
 
 type Props = {
   // "header": a text button in the site header. "panel": a square
@@ -9,21 +10,26 @@ type Props = {
 };
 
 // The site's light/dark switch, in the site header and the character
-// window. A Server Component: one form, two buttons, no client JavaScript.
+// window: one "Dark theme" toggle button (aria-pressed) in a form, no
+// client JavaScript. Both toggles follow the same cookie and
+// <html data-theme>, so flipping either updates the other.
 //
-// The server doesn't know the device's setting, so it can't tell which
-// state to draw when there's no cookie. Instead both buttons are drawn
-// and globals.css hides the one that doesn't match the theme showing now
-// (data-theme-when), whether that came from the cookie or from
-// prefers-color-scheme. Each is the same "Dark theme" toggle button
-// (aria-pressed) in one of its two states, and pressing it saves the
-// other theme. Both toggles read the same <html data-theme>, so flipping
-// either updates the other.
-export function ThemeToggle({ variant }: Props) {
+// With a saved choice it draws the one button for that theme. Pressing it
+// re-renders the page with the button in the same place, so React keeps
+// the element: focus stays on it and aria-pressed changes in place.
+//
+// With no saved choice the server can't know the device's setting, so it
+// draws the button in both states and globals.css hides the one that
+// doesn't match prefers-color-scheme (data-theme-when). The light state
+// comes first, in the same place as the single button, so a first press
+// on a light device keeps focus too; on a dark device it's lost that
+// once, since the button that had it goes away.
+export async function ThemeToggle({ variant }: Props) {
+  const saved = readTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
     <form action={setTheme} className={`theme-toggle theme-toggle--${variant}`}>
-      <ToggleButton variant={variant} showsIn="light" />
-      <ToggleButton variant={variant} showsIn="dark" />
+      <ToggleButton variant={variant} showsIn={saved ?? "light"} />
+      {!saved && <ToggleButton variant={variant} showsIn="dark" />}
     </form>
   );
 }

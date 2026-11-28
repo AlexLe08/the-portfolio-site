@@ -505,18 +505,22 @@ button:focus-visible {
   gap: 0.25rem 1.25rem;
 }
 
-/* The nav and the theme toggle, together at the right. */
+/* The nav and the theme toggle, together at the right. On a narrow phone
+   the toggle wraps under the nav instead of squeezing it. */
 .site-header__end {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: 0.25rem 1.25rem;
+  gap: 0.5rem 1.25rem;
 }
 
 /* ---------------------------------------------------------------------
    Theme toggle (see ThemeToggle.tsx)
-   Each toggle holds both states of one "Dark theme" button; the one that
-   doesn't match the theme showing is hidden. The cookie's choice first,
-   then the device's setting when there's no cookie.
+   With no saved choice a toggle holds both states of its "Dark theme"
+   button, and the one that doesn't match the theme showing is hidden:
+   the saved choice first, then the device's setting. lib/theme-css.test.ts
+   checks these four rules exist.
    ------------------------------------------------------------------ */
 .theme-toggle {
   display: contents;

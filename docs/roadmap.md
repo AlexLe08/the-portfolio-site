@@ -1392,14 +1392,16 @@
   character window's `gearSetEnd`: a form posting to `setTheme`
   (`app/theme-actions.ts`), which saves a `theme` cookie (a year,
   `httpOnly`, `path=/`); the root layout reads it into `data-theme`.
-  Each toggle draws both states of one "Dark theme" button
-  (`aria-pressed`) and CSS hides the one that doesn't match, so it works
-  with JavaScript off, never flashes the wrong theme, and the server
-  never needs the device's setting. Reading the cookie in the root
+  With a saved choice each toggle draws one "Dark theme" button
+  (`aria-pressed`), which keeps focus across a press. With none it draws
+  both states and CSS hides the one that doesn't match the device, so it
+  works with JavaScript off, never flashes the wrong theme, and the
+  server never needs the device's setting. On narrow phones the header
+  toggle wraps under the nav. Reading the cookie in the root
   layout made no route dynamic that wasn't already (only `/_not-found`
   was static). Two states, no "system" option: once a visitor picks,
-  the device setting no longer applies. Verified: tests (12, 7
-  mutations caught), the rendered HTML for each cookie value, the
+  the device setting no longer applies. Verified: tests (16, 10
+  mutations caught), a review pass (focus and phone-width fixes taken), the rendered HTML for each cookie value, the
   no-JS post (sets the cookie, keeps `?job=`/`?tab=`) and the JS call
   (its response carries the re-rendered `<html data-theme>`). Not seen
   in a browser here (none in the agent's container).
@@ -1422,6 +1424,12 @@
     dark theme; a small token change of its own.
   - A "use device setting" option, only if visitors ask for one: the
     toggle would need a third state.
+  - Small rough edges, from review: a first press on a dark device (no
+    saved choice yet) drops keyboard focus once, since that button goes
+    away; the toggle waits for the page's re-render, so a sleeping
+    backend can hold it on an admin page; with JavaScript off, a reload
+    after toggling asks to resubmit the form. A tiny client island
+    (set `data-theme` at once, move focus) would cover the first two.
 - Self-host IBM Plex with `next/font/local` if the Google Fonts download
   fails a build again. On 2026-11-28 a Vercel preview build of #110
   failed with 24 Turbopack errors ("Can't resolve
