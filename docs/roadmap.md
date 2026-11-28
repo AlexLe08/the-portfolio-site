@@ -1353,16 +1353,26 @@
   the generic oneOf message with the whole object, and `maxItems`,
   `maxLength` and `pattern` messages echo the value or the raw regex.
 
+- The home page and the admin preview as `CharacterWindow` (2026-11-28):
+  `?tab=` and `?page=` pick the view, tab links keep the scroll position
+  like job links, and the dead-anchor and dead-param checks walk gear-set
+  links (a job's own or the shared row) and every tab, page and detail
+  window row, with the job's block replacements. With no `tabs` in the
+  config the window draws only the equipment pane, so the live site looks
+  the same until a config with tabs is saved. Tab links drop `?stack=`;
+  param links keep the tab and page. Checked on the demo stack with the
+  package's `portfolio` example saved: tabs, pages, `aria-current`, job
+  and stack links, an unknown `?tab=` falling back to the first, and the
+  preview's links keeping its own path.
+
 ## Next up (candidates, unordered)
 
 - The rest of the 2.0 move, in order (planned 2026-11-27):
-  - The home page and preview as `CharacterWindow` (`?tab=`, `?page=`),
-    a fresh default in `lib/character-config.json` started from the
-    package's `portfolio` example (whether the production-only Teacher
-    job comes back is open), and the dead-anchor and dead-param checks
-    over gear-set links and row actions. The owner pastes the new default
-    into the JSON editor after that deploy. Tab links and param slots drop
-    `?stack=` (their hrefs keep only job, tab and page).
+  - A fresh default in `lib/character-config.json` started from the
+    package's `portfolio` example, without the production-only Teacher
+    job (owner, 2026-11-28), in a PR of its own so the content can be
+    reviewed on its own. The owner pastes it into the JSON editor after
+    that deploy.
   - Admin: tabs and blocks edited as JSON only for now; a small form for
     `characterName` and the gear-set caption.
   - Light/dark mode: dark values for the `:root` tokens (the panel's
