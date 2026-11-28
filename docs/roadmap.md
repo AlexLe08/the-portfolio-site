@@ -1341,11 +1341,21 @@
   2.0 document got readable 422s (a tooltip's 6 items; a block's unknown
   `type` named the allowed ones).
 
+- Backend tests for 2.0's window parts in `find_issues` (2026-11-28): a
+  `window_config` fixture adds a gear set, tabs with blocks of each kind
+  of union, a page, a detail window and a job block override to the
+  bundled config. The tests break one spot each and check the issue comes
+  from the branch its `type` or `kind` picked, including job overrides
+  and detail windows (branches reached through `$ref`) and a row action
+  inside a block (a union inside a union), and that param actions refuse
+  `tab` and `page`. `_explain` needed no change. Two messages stay
+  hard to read, as in 1.x: a block or action with no `type`/`kind` gives
+  the generic oneOf message with the whole object, and `maxItems`,
+  `maxLength` and `pattern` messages echo the value or the raw regex.
+
 ## Next up (candidates, unordered)
 
 - The rest of the 2.0 move, in order (planned 2026-11-27):
-  - Backend tests for 2.0 shapes in `find_issues` (tabs, block `type`
-    union, row actions, gear set).
   - The home page and preview as `CharacterWindow` (`?tab=`, `?page=`),
     a fresh default in `lib/character-config.json` started from the
     package's `portfolio` example (whether the production-only Teacher

@@ -274,6 +274,234 @@ def test_reported_issues_are_capped(config):
     assert len(issues) == character_sheet.MAX_REPORTED_ERRORS
 
 
+# 2.0's window parts: blocks are a oneOf on "type" (tabs inline, job
+# overrides and detail windows through $ref), row and gear-set actions a
+# oneOf on "kind". Each test below breaks one spot and checks that the
+# issue comes from the branch the discriminator picked, at its own path.
+
+
+@pytest.fixture()
+def window_config(config):
+    """The bundled config plus one of each 2.0 window part, valid."""
+    config["characterName"] = "Alex"
+    config["gearSet"] = {
+        "label": "Résumé",
+        "value": "Nov 2026",
+        "jobMenu": {"label": "Change job"},
+        "links": [
+            {"id": "contact", "label": "Contact", "action": {"kind": "anchor", "target": "contact"}}
+        ],
+    }
+    tooltip = {"title": "Front end", "items": [{"label": "Libraries", "value": "React"}]}
+    detail = {
+        "label": "All notes",
+        "title": "Notes",
+        "blocks": [{"type": "stats", "groups": [{"rows": [{"label": "Posts", "value": "3"}]}]}],
+    }
+    config["tabs"] = [
+        {
+            "id": "overview",
+            "label": "Overview",
+            "blocks": [
+                {"type": "gauges", "id": "vitals", "rows": [{"label": "Years", "value": "4", "fill": 80}]},
+                {
+                    "type": "stats",
+                    "groups": [{"rows": [{"label": "Front end", "value": "92", "tooltip": tooltip}]}],
+                },
+                {
+                    "type": "fields",
+                    "rows": [
+                        {
+                            "label": "Writing",
+                            "value": "Notes",
+                            "action": {"kind": "link", "href": "/writing"},
+                            "detail": detail,
+                        }
+                    ],
+                },
+            ],
+        },
+        {
+            "id": "work",
+            "label": "Work",
+            "pages": [
+                {
+                    "id": "recent",
+                    "label": "Recent",
+                    "blocks": [
+                        {
+                            "type": "levels",
+                            "groups": [
+                                {
+                                    "rows": [
+                                        {
+                                            "label": "Healthcare",
+                                            "level": "50",
+                                            "action": {"kind": "job", "id": "healthcare"},
+                                        }
+                                    ]
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        },
+    ]
+    config["jobs"][0]["blocks"] = {
+        "vitals": {"type": "gauges", "rows": [{"label": "Years", "value": "3", "fill": 60}]}
+    }
+    return config
+
+
+def gauges(config):
+    return config["tabs"][0]["blocks"][0]
+
+
+def field_row(config):
+    return config["tabs"][0]["blocks"][2]["rows"][0]
+
+
+BLOCK_TYPES = '"gauges", "stats", "fields", "levels", "progress"'
+ROW_ACTION_KINDS = '"anchor", "link", "external", "param", "none", "job"'
+
+
+def test_window_config_is_valid(window_config):
+    assert character_sheet.find_issues(window_config) == []
+
+
+def test_block_with_unknown_type_lists_the_allowed_types(window_config):
+    gauges(window_config)["type"] = "gauge"
+
+    assert issues_by_path(window_config) == {
+        "tabs.0.blocks.0.type": f"must be one of {BLOCK_TYPES}"
+    }
+
+
+def test_block_reports_errors_from_the_branch_its_type_selects(window_config):
+    gauges(window_config)["rows"][0]["fill"] = 150
+
+    assert issue_kinds(window_config) == [
+        (["tabs", 0, "blocks", 0, "rows", 0, "fill"], "maximum")
+    ]
+
+
+def test_block_with_a_key_from_another_type_names_the_key(window_config):
+    gauges(window_config)["groups"] = []
+
+    assert issues_by_path(window_config) == {
+        "tabs.0.blocks.0.groups": "not in the schema (a typo?)"
+    }
+
+
+def test_block_without_type_keeps_the_oneof_error(window_config):
+    # As with a slot action without "kind": every branch is still possible.
+    del gauges(window_config)["type"]
+
+    issues = character_sheet.find_issues(window_config)
+
+    assert [(issue.path, issue.kind) for issue in issues] == [(["tabs", 0, "blocks", 0], "oneOf")]
+
+
+def test_job_block_override_reports_errors_from_its_branch(window_config):
+    # Job overrides reach their branches through $ref, unlike tab blocks.
+    override = window_config["jobs"][0]["blocks"]["vitals"]
+    override["rows"][0]["value"] = ""
+    window_config["jobs"][1]["blocks"] = {"vitals": {"type": "gauge", "rows": []}}
+
+    assert issues_by_path(window_config) == {
+        "jobs.0.blocks.vitals.rows.0.value": "'' should be non-empty",
+        "jobs.1.blocks.vitals.type": f"must be one of {BLOCK_TYPES}",
+    }
+
+
+def test_detail_window_block_reports_errors_from_its_branch(window_config):
+    row = field_row(window_config)["detail"]["blocks"][0]["groups"][0]["rows"][0]
+    row["years"] = "4"
+
+    assert issues_by_path(window_config) == {
+        "tabs.0.blocks.2.rows.0.detail.blocks.0.groups.0.rows.0.years": "not in the schema (a typo?)"
+    }
+
+
+def test_page_block_with_unknown_type_lists_the_allowed_types(window_config):
+    window_config["tabs"][1]["pages"][0]["blocks"][0]["type"] = "chart"
+
+    assert issues_by_path(window_config) == {
+        "tabs.1.pages.0.blocks.0.type": f"must be one of {BLOCK_TYPES}"
+    }
+
+
+def test_row_action_inside_a_block_reports_errors_from_its_kind(window_config):
+    # A oneOf (the action) inside a oneOf (the block): both branches picked.
+    field_row(window_config)["action"] = {"kind": "external", "href": "//elsewhere.example"}
+
+    assert issue_kinds(window_config) == [
+        (["tabs", 0, "blocks", 2, "rows", 0, "action", "href"], "pattern")
+    ]
+
+
+def test_row_action_with_unknown_kind_lists_the_allowed_kinds(window_config):
+    field_row(window_config)["action"] = {"kind": "teleport"}
+
+    assert issues_by_path(window_config) == {
+        "tabs.0.blocks.2.rows.0.action.kind": f"must be one of {ROW_ACTION_KINDS}"
+    }
+
+
+def test_job_action_needs_an_id(window_config):
+    row = window_config["tabs"][1]["pages"][0]["blocks"][0]["groups"][0]["rows"][0]
+    row["action"] = {"kind": "job"}
+
+    assert issues_by_path(window_config) == {
+        "tabs.1.pages.0.blocks.0.groups.0.rows.0.action": "'id' is a required property"
+    }
+
+
+def test_gear_set_link_reports_errors_from_its_kind(window_config):
+    link = window_config["gearSet"]["links"][0]
+    link["action"] = {"kind": "anchor", "target": "Contact Me"}
+
+    assert issue_kinds(window_config) == [
+        (["gearSet", "links", 0, "action", "target"], "pattern")
+    ]
+
+
+def test_gear_set_link_with_unknown_kind_lists_the_allowed_kinds(window_config):
+    window_config["gearSet"]["links"][0]["action"] = {"kind": "teleport"}
+
+    assert issues_by_path(window_config) == {
+        "gearSet.links.0.action.kind": f"must be one of {ROW_ACTION_KINDS}"
+    }
+
+
+def test_gear_set_has_at_most_three_links(window_config):
+    window_config["gearSet"]["links"] *= 4
+
+    assert issue_kinds(window_config) == [(["gearSet", "links"], "maxItems")]
+
+
+@pytest.mark.parametrize("name", ["tab", "page"])
+def test_param_actions_may_not_set_tab_or_page(window_config, name):
+    # 2.0 reads ?tab= and ?page= itself, as it reads ?job=.
+    set_action(window_config, {"kind": "param", "name": name, "value": "x"})
+    window_config["gearSet"]["links"][0]["action"] = {"kind": "param", "name": name, "value": "x"}
+
+    assert issue_kinds(window_config) == [
+        (["gearSet", "links", 0, "action", "name"], "pattern"),
+        (["jobs", 0, "slots", "core", "action", "name"], "pattern"),
+    ]
+
+
+def test_tooltip_in_a_block_row_reports_errors_from_the_pair_branch(window_config):
+    tooltip = window_config["tabs"][0]["blocks"][1]["groups"][0]["rows"][0]["tooltip"]
+    tooltip["items"] = [{"label": "Libraries"}]
+
+    assert issues_by_path(window_config) == {
+        "tabs.0.blocks.1.groups.0.rows.0.tooltip.items.0": "'value' is a required property"
+    }
+
+
 def test_get_config_is_none_until_saved(db_session):
     assert character_sheet.get_config(db_session) is None
 
@@ -347,6 +575,13 @@ def test_put_saves_a_valid_action(client, config, action):
 
     assert response.status_code == 200
     assert response.json()["config"]["jobs"][0]["slots"]["core"]["action"] == action
+
+
+def test_put_saves_a_config_with_window_parts(client, window_config):
+    response = client.put("/character-sheet", json={"config": window_config}, headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert client.get("/character-sheet").json()["config"] == window_config
 
 
 def test_put_is_idempotent(client, config):
