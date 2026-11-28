@@ -1365,14 +1365,23 @@
   and stack links, an unknown `?tab=` falling back to the first, and the
   preview's links keeping its own path.
 
+- A fresh default `lib/character-config.json` (2026-11-28): the
+  `portfolio` example's layout (`characterName`, a gear set, tabs) with
+  the site's own facts only, taken from the existing jobs, the site
+  content and the seeded case studies. The two jobs and the slots are
+  unchanged; the Teacher job stays out (owner, 2026-11-28). The gear set
+  has no `end` link, which phase 5's `gearSetEnd` toggle will take.
+  Tabs: Profile (role, location, CVS Health, and an industry row each
+  job replaces through `job.blocks`), Skills and Projects, whose rows
+  link to sections, `?stack=` filters and the package's repository. No
+  scores or bars: every number is one the case studies state.
+
 ## Next up (candidates, unordered)
 
 - The rest of the 2.0 move, in order (planned 2026-11-27):
-  - A fresh default in `lib/character-config.json` started from the
-    package's `portfolio` example, without the production-only Teacher
-    job (owner, 2026-11-28), in a PR of its own so the content can be
-    reviewed on its own. The owner pastes it into the JSON editor after
-    that deploy.
+  - The owner pastes the new default `lib/character-config.json` into
+    the JSON editor once its deploy is live (Render and Vercel on the
+    new commit), replacing the saved copy.
   - Admin: tabs and blocks edited as JSON only for now; a small form for
     `characterName` and the gear-set caption.
   - Light/dark mode: dark values for the `:root` tokens (the panel's
