@@ -8,13 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "generate:types": "openapi-typescript ../backend/openapi.json -o lib/api-types.ts",
-    "generate:character-schema": "node -e \"fs.copyFileSync(require.resolve('@solution-nine/wol-character-panel/character-sheet.schema.json'), '../backend/app/services/character_sheet.schema.json')\"",
+    "generate:character-schema": "node -e \"fs.copyFileSync(require.resolve('@solution-nine/wol-character-panel/character-panel.schema.json'), '../backend/app/services/character_sheet.schema.json')\"",
     "test": "vitest run",
     "test:smoke": "playwright test"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.9.0",
-    "@solution-nine/wol-character-panel": "^1.0.1",
+    "@solution-nine/wol-character-panel": "^2.0.0",
     "next": "16.3.6",
     "openapi-fetch": "^0.17.0",
     "react": "19.2.8",

@@ -1,4 +1,4 @@
-import type { CharacterSheetConfig, Job, SlotAction } from "@solution-nine/wol-character-panel";
+import type { CharacterPanelConfig, Job, SlotAction } from "@solution-nine/wol-character-panel";
 import { describe, expect, it } from "vitest";
 import {
   filterByStack,
@@ -28,7 +28,7 @@ function job(name: string, actions: Record<string, SlotAction>, sections?: Recor
   return { id: name.toLowerCase(), name, title: name, status: "draft", level: { label: "Lv.", value: "1" }, slots, sections };
 }
 
-function config(...jobs: Job[]): CharacterSheetConfig {
+function config(...jobs: Job[]): CharacterPanelConfig {
   return {
     defaultJobId: jobs[0].id,
     slots: [

@@ -27,8 +27,9 @@ test("character sheet changes job through the URL", async ({ page }) => {
   const defaultTitle = (await title.textContent())?.trim();
   await expect(sheet.locator(".cs-slot").first()).toBeVisible();
 
-  // Any job other than the current one; the menu is a plain <details>.
-  await sheet.getByText("Change job").click();
+  // Any job other than the current one. The menu's toggle is an icon
+  // button named "Change job" (visually hidden text), opening a popover.
+  await sheet.getByRole("button", { name: "Change job" }).click();
   await sheet.locator(".cs__jobs-link:not([aria-current])").first().click();
   await expect(page).toHaveURL(/[?&]job=/);
   await expect(title).not.toHaveText(defaultTitle ?? "");

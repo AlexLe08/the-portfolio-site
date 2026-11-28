@@ -1,7 +1,7 @@
 {
-  "title": "Character sheet config",
+  "title": "Character panel config",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cdn.jsdelivr.net/npm/@solution-nine/wol-character-panel@1/character-sheet.schema.json",
+  "$id": "https://cdn.jsdelivr.net/npm/@solution-nine/wol-character-panel@2/character-panel.schema.json",
   "type": "object",
   "properties": {
     "$schema": {
@@ -13,10 +13,132 @@
       "minLength": 1,
       "maxLength": 60
     },
+    "characterName": {
+      "description": "Text at the right of the top bar.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+    },
     "defaultJobId": {
       "type": "string",
       "maxLength": 40,
       "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+    },
+    "gearSet": {
+      "description": "The row above the job header: a caption, icon links and the job menu.",
+      "$ref": "#/$defs/gearSet"
+    },
+    "tabs": {
+      "description": "The content pane's tabs. Without them, only the equipment pane is drawn.",
+      "minItems": 1,
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^[a-z0-9][a-z0-9\\-]*$",
+            "description": "Used in the URL: ?tab=<id>."
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "icon": {
+            "description": "Up to 4 characters drawn as the icon.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
+          "iconSrc": {
+            "description": "An image drawn as the icon. Wins over icon and iconName.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "iconName": {
+            "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+            "$ref": "#/$defs/iconName"
+          },
+          "hidden": {
+            "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+            "type": "boolean"
+          },
+          "blocks": {
+            "description": "The tab's content. A tab has blocks or pages, not both.",
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/block"
+            }
+          },
+          "pages": {
+            "description": "Sub-tabs, each with its own blocks. A tab has blocks or pages, not both.",
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 40,
+                  "pattern": "^[a-z0-9][a-z0-9\\-]*$",
+                  "description": "Used in the URL: ?page=<id>. Unique within its tab."
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 24
+                },
+                "icon": {
+                  "description": "Up to 4 characters drawn as the icon.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4
+                },
+                "iconSrc": {
+                  "description": "An image drawn as the icon. Wins over icon and iconName.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "iconName": {
+                  "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+                  "$ref": "#/$defs/iconName"
+                },
+                "hidden": {
+                  "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+                  "type": "boolean"
+                },
+                "blocks": {
+                  "minItems": 1,
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/block"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "blocks"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      }
     },
     "slots": {
       "minItems": 1,
@@ -45,7 +167,7 @@
               "right",
               "header-end"
             ],
-            "description": "left/right: the columns beside the portrait (6 each fills them). header-start/header-end: one slot each, either side of the job name."
+            "description": "left/right: the columns beside the portrait (up to 6 each). header-start/header-end: one slot each, either side of the job name."
           },
           "icon": {
             "description": "Up to 4 characters drawn in the square. Defaults to the label's first two letters.",
@@ -109,7 +231,7 @@
               "label": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 20,
+                "maxLength": 16,
                 "description": "e.g. \"Lv.\" or \"Experience\"."
               },
               "value": {
@@ -170,12 +292,12 @@
               "label": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 40
+                "maxLength": 24
               },
               "value": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 80
+                "maxLength": 24
               }
             },
             "required": [
@@ -195,93 +317,7 @@
               "type": "object",
               "properties": {
                 "tooltip": {
-                  "type": "object",
-                  "properties": {
-                    "title": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80
-                    },
-                    "tags": {
-                      "description": "Short markers above the title.",
-                      "maxItems": 3,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 24
-                      }
-                    },
-                    "subtitle": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 120
-                    },
-                    "stat": {
-                      "description": "One headline figure, on its own ruled line.",
-                      "type": "object",
-                      "properties": {
-                        "label": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 40
-                        },
-                        "value": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 80
-                        }
-                      },
-                      "required": [
-                        "label",
-                        "value"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "items": {
-                      "description": "Listed in order, most relevant first. Label/value pairs render as a two-column table.",
-                      "maxItems": 10,
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 80
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "label": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 40
-                              },
-                              "value": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 80
-                              }
-                            },
-                            "required": [
-                              "label",
-                              "value"
-                            ],
-                            "additionalProperties": false
-                          }
-                        ]
-                      }
-                    },
-                    "note": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 240
-                    }
-                  },
-                  "required": [
-                    "title"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/$defs/tooltip"
                 },
                 "action": {
                   "oneOf": [
@@ -358,8 +394,8 @@
                         "name": {
                           "type": "string",
                           "maxLength": 40,
-                          "pattern": "^(?!job$)[a-z][a-z0-9_\\-]*$",
-                          "description": "A query parameter to set on the current page (keeping ?job=), e.g. \"stack\". Not \"job\", which picks the job."
+                          "pattern": "^(?!(?:job|tab|page)$)[a-z][a-z0-9_\\-]*$",
+                          "description": "A query parameter to set on the current page (keeping ?job=), e.g. \"stack\". Not \"job\", \"tab\" or \"page\", which the panel uses."
                         },
                         "value": {
                           "type": "string",
@@ -423,6 +459,22 @@
               "type": "string",
               "maxLength": 10000
             }
+          },
+          "blocks": {
+            "description": "Block id to a whole block of the same type, shown instead of that shared block for this job.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/jobBlock"
+            }
+          },
+          "gearSet": {
+            "description": "Replaces the config's gearSet for this job.",
+            "$ref": "#/$defs/gearSet"
           }
         },
         "required": [
@@ -441,5 +493,1460 @@
     "slots",
     "jobs"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "gearSet": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "description": "The caption's small line.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "value": {
+          "description": "The caption's larger line.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "jobMenu": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "description": "The job menu button's accessible name. Defaults to \"Change job\".",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            }
+          },
+          "additionalProperties": false
+        },
+        "links": {
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 40,
+                "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "The button's accessible name."
+              },
+              "icon": {
+                "description": "Up to 4 characters drawn as the icon.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4
+              },
+              "iconSrc": {
+                "description": "An image drawn as the icon. Wins over icon and iconName.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "iconName": {
+                "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+                "$ref": "#/$defs/iconName"
+              },
+              "position": {
+                "description": "start (the default): before the job menu, up to 2. end: at the row's right end, 1.",
+                "type": "string",
+                "enum": [
+                  "start",
+                  "end"
+                ]
+              },
+              "action": {
+                "$ref": "#/$defs/rowAction"
+              }
+            },
+            "required": [
+              "label",
+              "action"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "hidden": {
+          "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "iconName": {
+      "type": "string",
+      "enum": [
+        "sword",
+        "shield",
+        "wand",
+        "cross",
+        "bow",
+        "star",
+        "heart",
+        "person",
+        "note",
+        "list",
+        "save",
+        "gear",
+        "hammer",
+        "leaf",
+        "crest",
+        "flag"
+      ]
+    },
+    "rowAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "anchor"
+            },
+            "target": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$",
+              "description": "Element id on the same page, without the #."
+            }
+          },
+          "required": [
+            "kind",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "link"
+            },
+            "href": {
+              "type": "string",
+              "maxLength": 300,
+              "pattern": "^\\/(?![/\\\\])",
+              "description": "A path on the same site."
+            }
+          },
+          "required": [
+            "kind",
+            "href"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "external"
+            },
+            "href": {
+              "type": "string",
+              "maxLength": 300,
+              "pattern": "^https?:\\/\\/"
+            },
+            "newTab": {
+              "description": "Open in a new tab. Off by default.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "href"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "param"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^(?!(?:job|tab|page)$)[a-z][a-z0-9_\\-]*$",
+              "description": "A query parameter to set on the current page (keeping ?job=), e.g. \"stack\". Not \"job\", \"tab\" or \"page\", which the panel uses."
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "The value to set it to."
+            },
+            "target": {
+              "description": "Element id on the same page to scroll to after, without the #.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "none"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "job"
+            },
+            "id": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$",
+              "description": "The job to switch to. One the config doesn't have renders the row without a link."
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "block": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "gauges"
+            },
+            "label": {
+              "description": "A heading above the block.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            },
+            "rows": {
+              "minItems": 1,
+              "maxItems": 4,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/gaugeRow"
+              }
+            },
+            "id": {
+              "description": "Unique across all tabs. Only a block with an id can be replaced by a job.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "hidden": {
+              "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "rows"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "stats"
+            },
+            "label": {
+              "description": "A heading above the block.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            },
+            "groups": {
+              "$ref": "#/$defs/statsGroups"
+            },
+            "id": {
+              "description": "Unique across all tabs. Only a block with an id can be replaced by a job.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "hidden": {
+              "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "groups"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "fields"
+            },
+            "label": {
+              "description": "A heading above the block.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            },
+            "rows": {
+              "minItems": 1,
+              "maxItems": 12,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40,
+                    "description": "A small ruled heading above the value."
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "overline": {
+                    "description": "A small line above the value.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "caption": {
+                    "description": "A small line below the value.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "icon": {
+                    "description": "Up to 4 characters drawn as the icon.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4
+                  },
+                  "iconSrc": {
+                    "description": "An image drawn as the icon. Wins over icon and iconName.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "iconName": {
+                    "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+                    "$ref": "#/$defs/iconName"
+                  },
+                  "action": {
+                    "$ref": "#/$defs/rowAction"
+                  },
+                  "detail": {
+                    "description": "A button at the row's right end that opens a window of more blocks.",
+                    "$ref": "#/$defs/detail"
+                  }
+                },
+                "required": [
+                  "label",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "id": {
+              "description": "Unique across all tabs. Only a block with an id can be replaced by a job.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "hidden": {
+              "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "rows"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "levels"
+            },
+            "label": {
+              "description": "A heading above the block.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            },
+            "groups": {
+              "$ref": "#/$defs/levelsGroups"
+            },
+            "id": {
+              "description": "Unique across all tabs. Only a block with an id can be replaced by a job.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "hidden": {
+              "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "groups"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "progress"
+            },
+            "label": {
+              "description": "A heading above the block.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "icon": {
+              "description": "Up to 4 characters drawn as the icon.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "iconSrc": {
+              "description": "An image drawn as the icon. Wins over icon and iconName.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "iconName": {
+              "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+              "$ref": "#/$defs/iconName"
+            },
+            "groups": {
+              "$ref": "#/$defs/progressGroups"
+            },
+            "id": {
+              "description": "Unique across all tabs. Only a block with an id can be replaced by a job.",
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^[a-z0-9][a-z0-9\\-]*$"
+            },
+            "hidden": {
+              "description": "Kept in the config, never rendered; publicConfig() leaves it out.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "groups"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "gaugeRow": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "secondary": {
+          "description": "A small line under the bar.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "fill": {
+          "description": "How full the bar is, 0 to 100. Defaults to 100.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "secondary"
+          ]
+        },
+        "tooltip": {
+          "$ref": "#/$defs/tooltip"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "tooltip": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "tags": {
+          "description": "Short markers above the title.",
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          }
+        },
+        "subtitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "stat": {
+          "description": "One headline figure, on its own ruled line.",
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "required": [
+            "label",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        "items": {
+          "description": "Listed in order, most relevant first. Label/value pairs render as a two-column table.",
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "label",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "statsGroups": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "icon": {
+            "description": "Up to 4 characters drawn as the icon.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
+          "iconSrc": {
+            "description": "An image drawn as the icon. Wins over icon and iconName.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "iconName": {
+            "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+            "$ref": "#/$defs/iconName"
+          },
+          "column": {
+            "description": "Consecutive groups that set it form two columns: start ones on the left, end ones on the right. Left out, the group spans the pane.",
+            "type": "string",
+            "enum": [
+              "start",
+              "end"
+            ]
+          },
+          "collapsible": {
+            "description": "Draws the group as a disclosure, open or closed at first. Needs a label.",
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "rows": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/statRow"
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "statRow": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "default",
+            "muted",
+            "highlight"
+          ]
+        },
+        "tooltip": {
+          "$ref": "#/$defs/tooltip"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "detail": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "The button's accessible name."
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "The window's title."
+        },
+        "blocks": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/gaugesBlock"
+              },
+              {
+                "$ref": "#/$defs/statsBlock"
+              },
+              {
+                "$ref": "#/$defs/detailFieldsBlock"
+              },
+              {
+                "$ref": "#/$defs/levelsBlock"
+              },
+              {
+                "$ref": "#/$defs/progressBlock"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "label",
+        "title",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "gaugesBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "gauges"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "rows": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gaugeRow"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "statsBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "stats"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "groups": {
+          "$ref": "#/$defs/statsGroups"
+        }
+      },
+      "required": [
+        "type",
+        "groups"
+      ],
+      "additionalProperties": false
+    },
+    "detailFieldsBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "fields"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "rows": {
+          "minItems": 1,
+          "maxItems": 12,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldRow"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "fieldRow": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "A small ruled heading above the value."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "overline": {
+          "description": "A small line above the value.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "caption": {
+          "description": "A small line below the value.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "action": {
+          "$ref": "#/$defs/rowAction"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "levelsBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "levels"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "groups": {
+          "$ref": "#/$defs/levelsGroups"
+        }
+      },
+      "required": [
+        "type",
+        "groups"
+      ],
+      "additionalProperties": false
+    },
+    "levelsGroups": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "icon": {
+            "description": "Up to 4 characters drawn as the icon.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
+          "iconSrc": {
+            "description": "An image drawn as the icon. Wins over icon and iconName.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "iconName": {
+            "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+            "$ref": "#/$defs/iconName"
+          },
+          "column": {
+            "description": "Consecutive groups that set it form two columns: start ones on the left, end ones on the right. Left out, the group spans the pane.",
+            "type": "string",
+            "enum": [
+              "start",
+              "end"
+            ]
+          },
+          "collapsible": {
+            "description": "Draws the group as a disclosure, open or closed at first. Needs a label.",
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "rows": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/levelRow"
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "levelRow": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "level": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4,
+          "description": "Short text drawn large, e.g. \"90\"."
+        },
+        "fill": {
+          "description": "How full the row's bar is, 0 to 100. Left out, no bar is drawn.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "default",
+            "highlight"
+          ]
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "action": {
+          "$ref": "#/$defs/rowAction"
+        },
+        "tooltip": {
+          "$ref": "#/$defs/tooltip"
+        }
+      },
+      "required": [
+        "label",
+        "level"
+      ],
+      "additionalProperties": false
+    },
+    "progressBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "progress"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "groups": {
+          "$ref": "#/$defs/progressGroups"
+        }
+      },
+      "required": [
+        "type",
+        "groups"
+      ],
+      "additionalProperties": false
+    },
+    "progressGroups": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "icon": {
+            "description": "Up to 4 characters drawn as the icon.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
+          "iconSrc": {
+            "description": "An image drawn as the icon. Wins over icon and iconName.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "iconName": {
+            "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+            "$ref": "#/$defs/iconName"
+          },
+          "column": {
+            "description": "Consecutive groups that set it form two columns: start ones on the left, end ones on the right. Left out, the group spans the pane.",
+            "type": "string",
+            "enum": [
+              "start",
+              "end"
+            ]
+          },
+          "collapsible": {
+            "description": "Draws the group as a disclosure, open or closed at first. Needs a label.",
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "rows": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/progressRow"
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "progressRow": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "fill": {
+          "description": "How full the row's bar is, 0 to 100. Left out, no bar is drawn.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "caption": {
+          "description": "Under the bar's left end.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "value": {
+          "description": "Under the bar's right end.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "action": {
+          "$ref": "#/$defs/rowAction"
+        },
+        "tooltip": {
+          "$ref": "#/$defs/tooltip"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "jobBlock": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/gaugesBlock"
+        },
+        {
+          "$ref": "#/$defs/statsBlock"
+        },
+        {
+          "$ref": "#/$defs/fieldsBlock"
+        },
+        {
+          "$ref": "#/$defs/levelsBlock"
+        },
+        {
+          "$ref": "#/$defs/progressBlock"
+        }
+      ]
+    },
+    "fieldsBlock": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "fields"
+        },
+        "label": {
+          "description": "A heading above the block.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "icon": {
+          "description": "Up to 4 characters drawn as the icon.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "iconSrc": {
+          "description": "An image drawn as the icon. Wins over icon and iconName.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "iconName": {
+          "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+          "$ref": "#/$defs/iconName"
+        },
+        "rows": {
+          "minItems": 1,
+          "maxItems": 12,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "A small ruled heading above the value."
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "overline": {
+                "description": "A small line above the value.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "caption": {
+                "description": "A small line below the value.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "icon": {
+                "description": "Up to 4 characters drawn as the icon.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4
+              },
+              "iconSrc": {
+                "description": "An image drawn as the icon. Wins over icon and iconName.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "iconName": {
+                "description": "One of the package's built-in drawings. Used when neither iconSrc nor icon is set.",
+                "$ref": "#/$defs/iconName"
+              },
+              "action": {
+                "$ref": "#/$defs/rowAction"
+              },
+              "detail": {
+                "description": "A button at the row's right end that opens a window of more blocks.",
+                "$ref": "#/$defs/detail"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "type",
+        "rows"
+      ],
+      "additionalProperties": false
+    }
+  }
 }

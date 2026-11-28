@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 // JSON Schema. These checks live here, not in backend tests, because only
 // the frontend installs the package.
 const require = createRequire(import.meta.url);
-const PACKAGE_SCHEMA = require.resolve("@solution-nine/wol-character-panel/character-sheet.schema.json");
+const PACKAGE_SCHEMA = require.resolve("@solution-nine/wol-character-panel/character-panel.schema.json");
 const PACKAGE_VERSION: string = require("@solution-nine/wol-character-panel/package.json").version;
 const BACKEND_SCHEMA = new URL("../../backend/app/services/character_sheet.schema.json", import.meta.url);
 
@@ -18,10 +18,11 @@ describe("backend's copy of the character sheet schema", () => {
 
   it("has an $id pinned to the installed major version", () => {
     // The package's README promises this URL, so other tools can fetch the
-    // schema. The schema has no $refs (zod inlines everything), so an
-    // absolute $id doesn't change how the backend's validation resolves.
+    // schema. Since 2.0 its shared parts are $defs reached by "#/$defs/…"
+    // $refs, which resolve inside the document itself, so the absolute $id
+    // never makes the backend fetch anything.
     const schema = JSON.parse(readFileSync(BACKEND_SCHEMA, "utf8"));
-    const match = /^https:\/\/cdn\.jsdelivr\.net\/npm\/@solution-nine\/wol-character-panel@(\d+)\/character-sheet\.schema\.json$/.exec(
+    const match = /^https:\/\/cdn\.jsdelivr\.net\/npm\/@solution-nine\/wol-character-panel@(\d+)\/character-panel\.schema\.json$/.exec(
       schema.$id,
     );
 

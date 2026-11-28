@@ -1314,8 +1314,57 @@
   matters only for a key a later schema version adds, so it isn't pinned
   with a test of unknown keys. The frontend suite is now 170 tests.
 
+- The character sheet package upgraded to 2.0.0 (step 1 of the 2.0 move,
+  same look; decided 2026-11-27). The renames, with no aliases in the
+  package: `CharacterSheet` is `EquipmentPanel` (HomeView and the lab
+  page), the type `CharacterSheetConfig` is `CharacterPanelConfig`, and
+  `showSockets`/`showToolbar` are `parts={{ sockets, toolbar }}`. The
+  home page passes `label="Character sheet"`, keeping 1.x's region name
+  (2.0's default is "Character panel"). The schema is now
+  `character-panel.schema.json` with an `@2` `$id`;
+  `generate:character-schema` copies it to the backend's unchanged
+  `character_sheet.schema.json` (so the table and `/character-sheet`
+  stay), and the schema test checks the new name. 2.0's schema shares its
+  parts through `#/$defs/…` `$ref`s, which resolve inside the document.
+  Visible change: the job menu is an icon button ("Change job", visually
+  hidden) in the new gear-set row, opening a popover; the smoke test
+  finds it by role. Tighter limits (tooltip items 5, note 120, subtitle
+  60, level label 16, badge 24) reach the admin form through `LIMITS`.
+  The bundled `lib/character-config.json` passes 2.0's `parseConfig` and
+  both majors' JSON Schemas, so the plan is a fresh default: before
+  merging, the saved copy is backed up and replaced with the bundled file
+  through the JSON editor (the owner's step). The lockfile changed only
+  that package's entry. Checked on the local stack (no browser
+  available): `/`, `?job=ecommerce`, the lab page, the admin form, JSON
+  editor and preview render; a backend `PUT` accepted the bundled file
+  and the package's `portfolio` example (tabs, gear set), and a broken
+  2.0 document got readable 422s (a tooltip's 6 items; a block's unknown
+  `type` named the allowed ones).
+
 ## Next up (candidates, unordered)
 
+- The rest of the 2.0 move, in order (planned 2026-11-27):
+  - Backend tests for 2.0 shapes in `find_issues` (tabs, block `type`
+    union, row actions, gear set).
+  - The home page and preview as `CharacterWindow` (`?tab=`, `?page=`),
+    a fresh default in `lib/character-config.json` started from the
+    package's `portfolio` example (whether the production-only Teacher
+    job comes back is open), and the dead-anchor and dead-param checks
+    over gear-set links and row actions. The owner pastes the new default
+    into the JSON editor after that deploy. Tab links and param slots drop
+    `?stack=` (their hrefs keep only job, tab and page).
+  - Admin: tabs and blocks edited as JSON only for now; a small form for
+    `characterName` and the gear-set caption.
+  - Light/dark mode: dark values for the `:root` tokens (the panel's
+    document theme reads them), a toggle as the panel's `gearSetEnd` and
+    one in the site header sharing one state (a cookie set by a Server
+    Action form, read into `<html data-theme>` by the root layout; no
+    cookie follows `prefers-color-scheme`), so either reflects the other.
+- A better character sheet editor (owner's idea, 2026-11-27): separate
+  the values to fill in for the component instead of one JSON document,
+  possibly as a companion editor component shipped with
+  `@solution-nine/wol-character-panel`, so a project installing the panel
+  gets a quick out-of-the-box setup.
 - Character sheet follow-ups, roughly in order:
   - Content, entered in production through the form (no code needed):
     more jobs as needed (Teacher added 2026-11-05; AI development not
