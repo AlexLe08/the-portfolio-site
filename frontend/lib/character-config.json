@@ -1,7 +1,144 @@
 {
   "$schema": "../../node_modules/@solution-nine/wol-character-panel/character-panel.schema.json",
   "title": "Character profile",
+  "characterName": "Alex Le",
   "defaultJobId": "healthcare",
+  "gearSet": {
+    "label": "Status",
+    "value": "Open to opportunities",
+    "jobMenu": { "label": "Change job", "iconName": "note" },
+    "links": [
+      { "id": "contact", "label": "Contact", "iconName": "person", "action": { "kind": "link", "href": "/contact" } },
+      {
+        "id": "github",
+        "label": "GitHub",
+        "iconName": "star",
+        "action": { "kind": "external", "href": "https://github.com/AlexLe08", "newTab": true }
+      }
+    ]
+  },
+  "tabs": [
+    {
+      "id": "profile",
+      "label": "Profile",
+      "iconName": "person",
+      "blocks": [
+        {
+          "type": "fields",
+          "id": "about",
+          "rows": [
+            { "label": "Role", "value": "Software Engineer", "iconName": "crest" },
+            { "label": "Location", "value": "Worcester, MA", "iconName": "flag" },
+            {
+              "label": "Experience",
+              "value": "CVS Health",
+              "caption": "Four years of production React",
+              "iconName": "star",
+              "action": { "kind": "anchor", "target": "experience" }
+            }
+          ]
+        },
+        {
+          "type": "fields",
+          "id": "focus",
+          "rows": [
+            {
+              "label": "Industry focus",
+              "value": "Healthcare",
+              "iconName": "cross",
+              "action": { "kind": "anchor", "target": "summary" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "skills",
+      "label": "Skills",
+      "iconName": "hammer",
+      "blocks": [
+        {
+          "type": "fields",
+          "rows": [
+            {
+              "label": "Front end",
+              "value": "React, TypeScript, Next.js",
+              "caption": "Accessible UI",
+              "iconName": "wand",
+              "action": { "kind": "param", "name": "stack", "value": "React", "target": "projects" }
+            },
+            {
+              "label": "Back end",
+              "value": "Python, FastAPI, SQLAlchemy, PostgreSQL",
+              "iconName": "gear",
+              "action": { "kind": "anchor", "target": "skills" }
+            },
+            {
+              "label": "Quality",
+              "value": "Playwright, Vitest, CI on every pull request",
+              "caption": "Sentry monitoring in production",
+              "iconName": "shield",
+              "action": { "kind": "param", "name": "stack", "value": "Vitest", "target": "projects" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "projects",
+      "label": "Projects",
+      "iconName": "list",
+      "blocks": [
+        {
+          "type": "fields",
+          "rows": [
+            {
+              "label": "This site",
+              "value": "Next.js and FastAPI",
+              "caption": "Case study and admin, deployed on every merge",
+              "iconName": "note",
+              "action": { "kind": "anchor", "target": "projects" }
+            },
+            {
+              "label": "Production Discord bot",
+              "value": "TypeScript, discord.js, SQLite",
+              "caption": "Scheduled reminders across servers and DMs",
+              "iconName": "heart",
+              "action": { "kind": "param", "name": "stack", "value": "discord.js", "target": "projects" }
+            },
+            {
+              "label": "SearchInput",
+              "value": "React component library",
+              "caption": "Autosuggest, full keyboard support",
+              "iconName": "bow",
+              "action": { "kind": "param", "name": "stack", "value": "Floating UI", "target": "projects" }
+            },
+            {
+              "label": "This character panel",
+              "value": "@solution-nine/wol-character-panel",
+              "caption": "Open-source npm package",
+              "iconName": "save",
+              "action": { "kind": "external", "href": "https://github.com/AlexLe08/wol-character-panel", "newTab": true }
+            }
+          ]
+        },
+        {
+          "type": "stats",
+          "groups": [
+            {
+              "label": "Testing",
+              "iconName": "shield",
+              "rows": [
+                { "label": "Discord bot coverage", "value": "About 96%" },
+                { "label": "SearchInput tests", "value": "89" },
+                { "label": "CI", "value": "Every pull request", "tone": "muted" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "slots": [
     { "id": "core", "label": "Core stack", "position": "header-start", "icon": "◆" },
     { "id": "focus", "label": "Industry focus", "position": "header-end", "icon": "◇" },
@@ -189,6 +326,19 @@
         "summary": "Software engineer building technology for e-commerce. TypeScript and Python across the stack, from the pages customers see to the API and database behind them.",
         "skills": "- **Front end:** TypeScript, Next.js, React\n- **Back end:** Python, FastAPI, PostgreSQL\n- **Delivery:** CI on every pull request, automatic deploys, Playwright smoke tests against production",
         "experience": "**CVS Health:** four years of production React."
+      },
+      "blocks": {
+        "focus": {
+          "type": "fields",
+          "rows": [
+            {
+              "label": "Industry focus",
+              "value": "E-commerce",
+              "iconName": "leaf",
+              "action": { "kind": "anchor", "target": "summary" }
+            }
+          ]
+        }
       }
     }
   ]
