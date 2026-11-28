@@ -125,6 +125,32 @@ export async function setDefaultCharacterJob(
   return result;
 }
 
+// The window's own text: the name in the top bar and the shared gear set's
+// caption. Empty fields remove their key; a gear set left with nothing
+// (no caption, menu or links) is removed too, since the panel draws its
+// row from what's there. Jobs' own gear sets are edited as JSON.
+export async function updateCharacterWindowText(
+  _previous: CharacterSheetFormState,
+  formData: FormData,
+): Promise<CharacterSheetFormState> {
+  const loaded = await loadSavedConfig();
+  if ("error" in loaded) return loaded;
+  const { config } = loaded;
+
+  setOrDelete(config, "characterName", formText(formData, "character_name"));
+  // Anything but an object is left for saveConfig to name.
+  const gearSet = config.gearSet ?? {};
+  if (isObject(gearSet)) {
+    setOrDelete(gearSet, "label", formText(formData, "gear_set_label"));
+    setOrDelete(gearSet, "value", formText(formData, "gear_set_value"));
+    if (Object.keys(gearSet).length > 0) config.gearSet = gearSet;
+    else delete config.gearSet;
+  }
+  const result = await saveConfig(config);
+  if (result && "saved" in result) refresh();
+  return result;
+}
+
 // Removes a job from the saved copy; nothing else in the document
 // changes. A job already gone (removed in another tab or as JSON) counts
 // as removed: same end state, so it redirects without saving, as stale

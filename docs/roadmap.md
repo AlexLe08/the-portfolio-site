@@ -1376,14 +1376,19 @@
   link to sections, `?stack=` filters and the package's repository. No
   scores or bars: every number is one the case studies state.
 
+- An admin form for the window's own text (2026-11-28): "Name and
+  gear-set caption", folded on the character sheet page like the default
+  job, sets `characterName` and the shared gear set's `label` and
+  `value`. Empty fields remove their key, and a gear set left empty is
+  removed. Jobs' own gear sets, the gear set's links, and tabs and blocks
+  stay JSON-only, as decided (owner, 2026-11-27).
+
 ## Next up (candidates, unordered)
 
 - The rest of the 2.0 move, in order (planned 2026-11-27):
   - The owner pastes the new default `lib/character-config.json` into
     the JSON editor once its deploy is live (Render and Vercel on the
     new commit), replacing the saved copy.
-  - Admin: tabs and blocks edited as JSON only for now; a small form for
-    `characterName` and the gear-set caption.
   - Light/dark mode: dark values for the `:root` tokens (the panel's
     document theme reads them), a toggle as the panel's `gearSetEnd` and
     one in the site header sharing one state (a cookie set by a Server
