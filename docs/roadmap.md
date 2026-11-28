@@ -1383,17 +1383,45 @@
   removed. Jobs' own gear sets, the gear set's links, and tabs and blocks
   stay JSON-only, as decided (owner, 2026-11-27).
 
+- Light/dark theme (2026-11-28), the last step of the 2.0 move. Dark
+  values for every `:root` color token (each text pair at least as
+  legible as in light, all WCAG AA), set by `<html data-theme>` or, with
+  no saved choice, by `prefers-color-scheme`. The two dark blocks in
+  `globals.css` must match; `lib/theme-css.test.ts` compares them.
+  `ThemeToggle` (a Server Component) sits in the site header and as the
+  character window's `gearSetEnd`: a form posting to `setTheme`
+  (`app/theme-actions.ts`), which saves a `theme` cookie (a year,
+  `httpOnly`, `path=/`); the root layout reads it into `data-theme`.
+  Each toggle draws both states of one "Dark theme" button
+  (`aria-pressed`) and CSS hides the one that doesn't match, so it works
+  with JavaScript off, never flashes the wrong theme, and the server
+  never needs the device's setting. Reading the cookie in the root
+  layout made no route dynamic that wasn't already (only `/_not-found`
+  was static). Two states, no "system" option: once a visitor picks,
+  the device setting no longer applies. Verified: tests (12, 7
+  mutations caught), the rendered HTML for each cookie value, the
+  no-JS post (sets the cookie, keeps `?job=`/`?tab=`) and the JS call
+  (its response carries the re-rendered `<html data-theme>`). Not seen
+  in a browser here (none in the agent's container).
+
 ## Next up (candidates, unordered)
 
 - The rest of the 2.0 move, in order (planned 2026-11-27):
   - The owner pastes the new default `lib/character-config.json` into
     the JSON editor once its deploy is live (Render and Vercel on the
     new commit), replacing the saved copy.
-  - Light/dark mode: dark values for the `:root` tokens (the panel's
-    document theme reads them), a toggle as the panel's `gearSetEnd` and
-    one in the site header sharing one state (a cookie set by a Server
-    Action form, read into `<html data-theme>` by the root layout; no
-    cookie follows `prefers-color-scheme`), so either reflects the other.
+- Light/dark follow-ups, if wanted:
+  - `app/global-error.tsx` draws its own `<html>` as a client component,
+    so it follows the device's setting, not the saved theme. It only
+    shows when the root layout itself fails.
+  - The window's `gearSetEnd` replaces a config's own `position: "end"`
+    gear-set link, so one saved in the JSON editor won't show. The
+    default config has none; the job form could warn about one.
+  - Light `--rule-strong` (input borders) is 2.4:1 on paper, under
+    WCAG's 3:1 for control boundaries. Dark is 3.7:1. Older than the
+    dark theme; a small token change of its own.
+  - A "use device setting" option, only if visitors ask for one: the
+    toggle would need a third state.
 - Self-host IBM Plex with `next/font/local` if the Google Fonts download
   fails a build again. On 2026-11-28 a Vercel preview build of #110
   failed with 24 Turbopack errors ("Can't resolve

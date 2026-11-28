@@ -189,6 +189,12 @@ Frontend:
   `SaveStatus`, which submit through `onSubmit` so a rejected save keeps
   the edit; their `action` prop is typed `SaveAction<State>`. Project field rules (slug pattern, max lengths) live in
   `lib/project-rules.ts`, mirroring `schemas.ProjectCreate`.
+- The light/dark theme is the `theme` cookie (`lib/theme.ts`), read by
+  the root layout into `<html data-theme>`; no cookie follows
+  `prefers-color-scheme`. Colors only through the `:root` tokens, which
+  have dark values in two blocks of `globals.css` that must stay equal
+  (`lib/theme-css.test.ts`). `ThemeToggle` is a Server Component form;
+  it's the header's toggle and the character window's `gearSetEnd`.
 - Every page renders inside `Sheet` (`components/Sheet.tsx`: the sheet,
   an optional back link and ruled header, and a top `notice` slot, used for
   `FallbackNotice` from the `fallback` flags of `getContent()` and

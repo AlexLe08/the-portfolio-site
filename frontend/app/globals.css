@@ -22,6 +22,46 @@
 
   --content-width: 42rem; /* ~75-80ch at body size */
   --sheet-width: 56rem; /* wider "sheet" the content sits inside on desktop */
+
+  color-scheme: light;
+}
+
+/* Dark: the same document, with dimmed paper and light ink. Every pair
+   in use is at least as legible as in light (WCAG AA, 4.5:1 for text).
+   <html data-theme> comes from the theme cookie (lib/theme.ts); with no
+   cookie the device's setting decides. The two blocks must match, so
+   lib/theme-css.test.ts compares them. (light-dark() would need one
+   block, but in a browser without it every color would fail.) */
+:root[data-theme="dark"] {
+  --paper: #16181b;
+  --paper-raised: #1f2226;
+  --ink: #e6e8eb;
+  --muted: #a0a7b1;
+  --rule: #363b42;
+  --rule-strong: #6b737d;
+  --signal: #86aee6;
+  --signal-soft: #1d2a3b;
+  --oxide: #e8916f;
+  --oxide-soft: #38241c;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --paper: #16181b;
+    --paper-raised: #1f2226;
+    --ink: #e6e8eb;
+    --muted: #a0a7b1;
+    --rule: #363b42;
+    --rule-strong: #6b737d;
+    --signal: #86aee6;
+    --signal-soft: #1d2a3b;
+    --oxide: #e8916f;
+    --oxide-soft: #38241c;
+
+    color-scheme: dark;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -35,7 +75,6 @@
 
 html {
   height: 100%;
-  color-scheme: light;
   scroll-padding-top: env(safe-area-inset-top, 0px);
 }
 
@@ -464,6 +503,69 @@ button:focus-visible {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.25rem 1.25rem;
+}
+
+/* The nav and the theme toggle, together at the right. */
+.site-header__end {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem 1.25rem;
+}
+
+/* ---------------------------------------------------------------------
+   Theme toggle (see ThemeToggle.tsx)
+   Each toggle holds both states of one "Dark theme" button; the one that
+   doesn't match the theme showing is hidden. The cookie's choice first,
+   then the device's setting when there's no cookie.
+   ------------------------------------------------------------------ */
+.theme-toggle {
+  display: contents;
+}
+
+:root[data-theme="light"] [data-theme-when="dark"],
+:root[data-theme="dark"] [data-theme-when="light"] {
+  display: none;
+}
+
+@media not all and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) [data-theme-when="dark"] {
+    display: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) [data-theme-when="light"] {
+    display: none;
+  }
+}
+
+/* In the header: a quiet bordered button, pressed when dark. The panel's
+   button takes its look from the package (cs__gear-button). */
+.theme-toggle--header .theme-toggle__button {
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--signal);
+  background: none;
+  border: 1px solid var(--rule-strong);
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme-toggle--header .theme-toggle__button:hover {
+  border-color: var(--signal);
+}
+
+.theme-toggle--header .theme-toggle__button[aria-pressed="true"] {
+  border-color: var(--signal);
+  background: var(--signal-soft);
+}
+
+/* As the package marks a current gear-set link, so it follows the
+   panel's own theme. */
+.theme-toggle--panel .theme-toggle__button[aria-pressed="true"] {
+  border-color: var(--cs-accent);
+  background: var(--cs-accent-soft);
 }
 
 /* ---------------------------------------------------------------------

@@ -7,6 +7,7 @@ import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
 import { StatusMessage } from "@/components/StatusMessage";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   filterByStack,
   homeSections,
@@ -71,6 +72,8 @@ export function HomeView({ config, job, content, projects, basePath, stack, tab,
           renderPortrait={renderPortrait}
           isParamActive={stackParamActive(stack)}
           parts={{ sockets: true, toolbar: true }}
+          // The same switch as the site header's, in the gear-set row.
+          gearSetEnd={<ThemeToggle variant="panel" />}
         />
       }
     >
