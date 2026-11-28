@@ -6,6 +6,7 @@ import {
   setDefaultCharacterJob,
   updateCharacterJob,
   updateCharacterSheet,
+  updateCharacterWindowText,
 } from "@/app/admin/character-sheet/actions";
 import { adminRequest } from "./admin-api";
 import bundledConfig from "./character-config.json";
@@ -548,6 +549,78 @@ describe("setDefaultCharacterJob", () => {
     const result = await setDefaultCharacterJob(null, form({ job_id: "ecommerce" }));
 
     expect(result).toMatchObject({ error: "Not saved. Fix these problems first:" });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateCharacterWindowText", () => {
+  // The bundled gear set has a caption, a job menu and two links.
+  function windowForm(name: string, label: string, value: string) {
+    return form({ character_name: name, gear_set_label: label, gear_set_value: value });
+  }
+
+  it("sets the name and caption, keeps the rest of the gear set, and refreshes", async () => {
+    saved(config());
+
+    const result = await updateCharacterWindowText(null, windowForm("Alex", "Now", "Building things"));
+
+    const expected = config();
+    expected.characterName = "Alex";
+    expected.gearSet = { ...(expected.gearSet as JsonObject), label: "Now", value: "Building things" };
+    expect(sent()).toEqual(expected);
+    expect(result).toMatchObject({ saved: expect.any(String) });
+    expect(revalidatePublic).toHaveBeenCalledWith("character-sheet");
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it("removes empty fields, keeping a gear set that still has links", async () => {
+    saved(config());
+
+    await updateCharacterWindowText(null, windowForm("", "", ""));
+
+    const { characterName, gearSet, ...rest } = config();
+    const { label, value, ...links } = gearSet as JsonObject;
+    expect([characterName, label, value].every(Boolean)).toBe(true);
+    expect(sent()).toEqual({ ...rest, gearSet: links });
+  });
+
+  it("removes a gear set left empty", async () => {
+    const stored = config();
+    stored.gearSet = { label: "Status", value: "Open" };
+    saved(stored);
+
+    await updateCharacterWindowText(null, windowForm("Alex Le", "", ""));
+
+    expect(sent()).not.toHaveProperty("gearSet");
+  });
+
+  it("starts a gear set when there's none", async () => {
+    const stored = config();
+    delete stored.gearSet;
+    saved(stored);
+
+    await updateCharacterWindowText(null, windowForm("Alex Le", "Status", ""));
+
+    expect(sent().gearSet).toEqual({ label: "Status" });
+  });
+
+  it("leaves a job's own gear set alone", async () => {
+    const stored = config();
+    stored.jobs[1].gearSet = { label: "Shop", value: "E-commerce" };
+    saved(stored);
+
+    await updateCharacterWindowText(null, windowForm("Alex Le", "Now", "Here"));
+
+    expect(sent().jobs[1].gearSet).toEqual({ label: "Shop", value: "E-commerce" });
+  });
+
+  it("doesn't save or refresh a name over the limit", async () => {
+    saved(config());
+
+    const result = await updateCharacterWindowText(null, windowForm("x".repeat(41), "Status", "Open"));
+
+    expect(result).toMatchObject({ error: "Not saved. Fix these problems first:" });
+    expect(api.PUT).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
   });
 });

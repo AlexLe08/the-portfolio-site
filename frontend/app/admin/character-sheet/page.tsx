@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { addCharacterJob, removeCharacterJob, setDefaultCharacterJob, updateCharacterJob } from "./actions";
+import {
+  addCharacterJob,
+  removeCharacterJob,
+  setDefaultCharacterJob,
+  updateCharacterJob,
+  updateCharacterWindowText,
+} from "./actions";
 import { ID_PATTERN, jobHref, LIMITS, PARAM_NAME_PATTERN, resolveJob } from "@solution-nine/wol-character-panel";
 import { CharacterDefaultJobForm } from "@/components/CharacterDefaultJobForm";
 import { CharacterJobAddForm } from "@/components/CharacterJobAddForm";
 import { CharacterJobForm, type JobFieldLimits } from "@/components/CharacterJobForm";
 import { CharacterJobRemoveForm } from "@/components/CharacterJobRemoveForm";
+import { CharacterWindowTextForm } from "@/components/CharacterWindowTextForm";
 import { ProblemList } from "@/components/CharacterSheetSaveStatus";
 import type { PortraitUpload } from "@/components/PortraitPicker";
 import type { SlotActionLimits } from "@/components/SlotActionFields";
@@ -117,8 +124,16 @@ export default async function AdminCharacterSheetPage({
         </div>
       </div>
       <p className="form-help admin-intro">
-        The slots themselves (names, icons, order) are edited as JSON.
+        The slots themselves (names, icons, order), the window&rsquo;s tabs and blocks, and the
+        gear set&rsquo;s links are edited as JSON.
       </p>
+      <CharacterWindowTextForm
+        action={updateCharacterWindowText}
+        characterName={config.characterName}
+        gearSetLabel={config.gearSet?.label}
+        gearSetValue={config.gearSet?.value}
+        limits={{ characterName: LIMITS.config.characterName, label: LIMITS.pair.label, value: LIMITS.pair.value }}
+      />
       <CharacterDefaultJobForm
         action={setDefaultCharacterJob}
         // Only published jobs can be the default (parseConfig).
