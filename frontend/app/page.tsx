@@ -9,8 +9,9 @@ import { loadProjects } from "@/lib/projects";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { content } = await getContent();
-  // ?job= only changes emphasis and ?stack= only filters the project list,
-  // so every variant points at the one URL.
+  // ?job= only changes emphasis, ?stack= only filters the project list,
+  // and ?tab= and ?page= only pick a view of the window, so every variant
+  // points at the one URL.
   return { description: content["site.description"], alternates: { canonical: "/" } };
 }
 
@@ -21,7 +22,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     projects,
     { content, fallback: contentFallback },
     { config: characterConfig, fallback: characterFallback },
-    { job: jobParam, stack },
+    { job: jobParam, stack, tab, page },
   ] = await Promise.all([
     loadProjects(),
     getContent(),
@@ -43,6 +44,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         content={content}
         projects={projects}
         stack={stack}
+        tab={tab}
+        page={page}
         notice={fallback && <FallbackNotice />}
       />
     </AutoRetry>

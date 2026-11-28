@@ -197,9 +197,11 @@ Frontend:
   role). Spacing goes in `globals.css` classes, not inline styles.
 - The home page (and the admin preview) reads `?stack=` (`STACK_PARAM`
   in `lib/character-anchors.ts`) and filters the project list on the
-  server by one stack tag. A `param` slot action with any other name does
+  server by one stack tag. A `param` action with any other name does
   nothing on this site; the job form warns about one after saving
-  (`findDeadParams`).
+  (`findDeadParams`, which like `findDeadAnchors` checks slots, gear-set
+  links and tab rows). It also passes `?tab=` and `?page=` to the
+  package's `CharacterWindow`.
 - Page titles are just the page's own name; `title.template` in
   `app/layout.tsx` and `app/admin/layout.tsx` adds the suffix.
 - The home page's character sheet is the npm package

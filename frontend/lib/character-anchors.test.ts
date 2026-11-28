@@ -181,3 +181,101 @@ describe("findDeadParams", () => {
     ]);
   });
 });
+
+describe("the checks over gear-set links and tab rows", () => {
+  const anchor = (target: string): SlotAction => ({ kind: "anchor", target });
+
+  // One tab of blocks and one tab of pages; the fields row opens a detail
+  // window whose own row links too.
+  function withWindow(c: CharacterPanelConfig): CharacterPanelConfig {
+    return {
+      ...c,
+      gearSet: { links: [{ label: "Contact", action: anchor("contact") }] },
+      tabs: [
+        {
+          id: "overview",
+          label: "Overview",
+          blocks: [
+            {
+              type: "fields",
+              id: "links",
+              rows: [
+                {
+                  label: "Notes",
+                  value: "3 posts",
+                  action: anchor("notes"),
+                  detail: {
+                    label: "All notes",
+                    title: "Notes",
+                    blocks: [{ type: "fields", rows: [{ label: "Latest", value: "Nov", action: { kind: "param", name: "tag", value: "x" } }] }],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "work",
+          label: "Work",
+          pages: [
+            {
+              id: "recent",
+              label: "Recent",
+              blocks: [{ type: "levels", groups: [{ rows: [{ label: "Web", level: "4", action: anchor("about") }] }] }],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  it("names each link and row by where it sits", () => {
+    const c = withWindow(config(job("Web", {})));
+    expect(findDeadAnchors(c)).toEqual([
+      "Web, gear set, Contact: #contact isn't a section this job shows",
+      "Web, Overview, Notes: #notes isn't a section this job shows",
+      "Web, Work, Recent, Web: #about isn't a section this job shows",
+    ]);
+    expect(findDeadParams(c)).toEqual(["Web, Overview, Notes, Latest: ?tag= isn't read by the home page"]);
+  });
+
+  it("checks the shared rows against each job's own sections", () => {
+    const c = withWindow(config(job("Web", {}, { about: "x" }), job("Data", {})));
+    expect(findDeadAnchors(c).filter((line) => line.includes("#about"))).toEqual([
+      "Data, Work, Recent, Web: #about isn't a section this job shows",
+    ]);
+  });
+
+  it("uses a job's own gear set and block replacements", () => {
+    const c = withWindow(config(job("Web", {}, { about: "x" })));
+    c.jobs[0].gearSet = { links: [{ label: "About", action: anchor("about") }] };
+    c.jobs[0].blocks = { links: { type: "fields", rows: [{ label: "About", value: "x", action: anchor("about") }] } };
+    expect(findDeadAnchors(c)).toEqual([]);
+    expect(findDeadParams(c)).toEqual([]);
+  });
+
+  it("checks progress rows too", () => {
+    const c = config(job("Web", {}));
+    c.tabs = [
+      {
+        id: "goals",
+        label: "Goals",
+        blocks: [{ type: "progress", groups: [{ rows: [{ label: "Writing", fill: 40, action: anchor("writing") }] }] }],
+      },
+    ];
+    expect(findDeadAnchors(c)).toEqual(["Web, Goals, Writing: #writing isn't a section this job shows"]);
+  });
+
+  it("ignores job, link and external actions", () => {
+    const c = config(job("Web", {}));
+    c.gearSet = {
+      links: [
+        { label: "Data", action: { kind: "job", id: "data" } },
+        { label: "Writing", action: { kind: "link", href: "/writing" } },
+        { label: "GitHub", action: { kind: "external", href: "https://github.com" } },
+      ],
+    };
+    expect(findDeadAnchors(c)).toEqual([]);
+    expect(findDeadParams(c)).toEqual([]);
+  });
+});

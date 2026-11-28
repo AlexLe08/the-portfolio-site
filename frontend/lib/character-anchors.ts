@@ -1,4 +1,4 @@
-import type { CharacterPanelConfig, Job, SlotDef } from "@solution-nine/wol-character-panel";
+import type { Block, CharacterPanelConfig, Job, RowAction, SlotDef } from "@solution-nine/wol-character-panel";
 import type { ProjectSummary } from "./projects";
 
 // What the home page (components/HomeView.tsx) renders below the panel and
@@ -64,33 +64,77 @@ export function stackTags(projects: { stack: string[] }[]): string[] {
   );
 }
 
+// Every action a job can show, with where it sits, for the checks below:
+// its slots, then its gear-set links (the job's own row or the shared one),
+// then the rows of every tab and page, with the job's block replacements
+// and the rows inside detail windows. Hidden tabs, pages and blocks are
+// included, like drafts, so a link is fixed before it's shown.
+type PlacedAction = { where: string; action: RowAction };
+
+export function jobActions(config: CharacterPanelConfig, job: Job): PlacedAction[] {
+  const slots = config.slots.flatMap((slot) => {
+    const action = job.slots[slot.id]?.action;
+    return action ? [{ where: slot.label, action }] : [];
+  });
+  const links = ((job.gearSet ?? config.gearSet)?.links ?? []).map((link) => ({
+    where: `gear set, ${link.label}`,
+    action: link.action,
+  }));
+  const rows = (config.tabs ?? []).flatMap((tab) =>
+    [
+      ...(tab.blocks ?? []).map((block) => ({ where: tab.label, block })),
+      ...(tab.pages ?? []).flatMap((page) =>
+        page.blocks.map((block) => ({ where: `${tab.label}, ${page.label}`, block })),
+      ),
+    ].flatMap(({ where, block }) =>
+      blockActions(block.id ? (job.blocks?.[block.id] ?? block) : block, where),
+    ),
+  );
+  return [...slots, ...links, ...rows];
+}
+
+// The parts of a row these checks read; detail windows only on fields rows.
+type ActionRow = { label: string; action?: RowAction; detail?: { blocks: Block[] } };
+
+// A block's rows with an action, each named by the row's label, and the
+// rows of a fields row's detail window.
+function blockActions(block: Block, where: string): PlacedAction[] {
+  const rows: ActionRow[] =
+    block.type === "fields" ? block.rows
+    : block.type === "levels" ? block.groups.flatMap((group) => group.rows)
+    : block.type === "progress" ? block.groups.flatMap((group) => group.rows)
+    : [];
+  return rows.flatMap((row) => [
+    ...(row.action ? [{ where: `${where}, ${row.label}`, action: row.action }] : []),
+    ...(row.detail?.blocks.flatMap((inner) => blockActions(inner, `${where}, ${row.label}`)) ?? []),
+  ]);
+}
+
 // Anchor actions, and param actions' targets, that the home page doesn't
-// render for their job, so clicking the slot scrolls nowhere. Every job,
+// render for their job, so clicking them scrolls nowhere. Every job,
 // drafts and hidden ones included, so a link is fixed before the job is
 // published. Reported after saving rather than blocking it, unlike unknown
 // keys: the config is valid, and the missing section may be the next edit.
 export function findDeadAnchors(config: CharacterPanelConfig): string[] {
   return config.jobs.flatMap((job) => {
     const targets = new Set(homeAnchorTargets(config, job));
-    return config.slots.flatMap((slot) => {
-      const action = job.slots[slot.id]?.action;
+    return jobActions(config, job).flatMap(({ where, action }) => {
       const target =
-        action?.kind === "anchor" ? action.target : action?.kind === "param" ? action.target : undefined;
+        action.kind === "anchor" ? action.target : action.kind === "param" ? action.target : undefined;
       if (target === undefined || targets.has(target)) return [];
-      return [`${job.name}, ${slot.label}: #${target} isn't a section this job shows`];
+      return [`${job.name}, ${where}: #${target} isn't a section this job shows`];
     });
   });
 }
 
-// Param actions whose name the home page doesn't read, so clicking the
-// slot only changes the URL. Reported like dead anchors: the config is
-// valid, and the package allows any name for other hosts.
+// Param actions whose name the home page doesn't read, so clicking them
+// only changes the URL. Reported like dead anchors: the config is valid,
+// and the package allows any name for other hosts.
 export function findDeadParams(config: CharacterPanelConfig): string[] {
   return config.jobs.flatMap((job) =>
-    config.slots.flatMap((slot) => {
-      const action = job.slots[slot.id]?.action;
-      if (action?.kind !== "param" || action.name === STACK_PARAM) return [];
-      return [`${job.name}, ${slot.label}: ?${action.name}= isn't read by the home page`];
+    jobActions(config, job).flatMap(({ where, action }) => {
+      if (action.kind !== "param" || action.name === STACK_PARAM) return [];
+      return [`${job.name}, ${where}: ?${action.name}= isn't read by the home page`];
     }),
   );
 }

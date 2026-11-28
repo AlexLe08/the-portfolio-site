@@ -31,7 +31,7 @@ export default async function CharacterSheetPreviewPage({
 }: PageProps<"/admin/character-sheet/preview">) {
   // The admin loads check the session first (adminApi()). The project list
   // is public, so it starts alongside them rather than after.
-  const [{ parsed }, stored, projects, { job: jobParam, stack }] = await Promise.all([
+  const [{ parsed }, stored, projects, { job: jobParam, stack, tab, page }] = await Promise.all([
     loadCharacterSheetForAdmin(),
     adminLoad("content", (api) => api.GET("/content")),
     loadProjectsLive(),
@@ -63,6 +63,8 @@ export default async function CharacterSheetPreviewPage({
         projects={projects}
         basePath={BASE_PATH}
         stack={stack}
+        tab={tab}
+        page={page}
         notice={
           <StatusMessage tone="info">
             {`Preview of ${job.name}. ${STATUS_NOTE[job.status]} `}

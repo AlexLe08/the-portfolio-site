@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import Markdown from "react-markdown";
 import { jobHref, withQuery, type CharacterPanelConfig, type Job } from "@solution-nine/wol-character-panel";
-import { EquipmentPanel } from "@solution-nine/wol-character-panel/react";
+import { CharacterWindow } from "@solution-nine/wol-character-panel/react";
 import { ProjectsUnavailable } from "@/components/ProjectsUnavailable";
 import { Sheet } from "@/components/Sheet";
 import { StackTags } from "@/components/StackTags";
@@ -36,12 +36,15 @@ type Props = {
   basePath?: string;
   // ?stack=, which filters the project list by one stack tag.
   stack?: string | string[];
+  // ?tab= and ?page=, the window's tab and sub-tab (the first by default).
+  tab?: string | string[];
+  page?: string | string[];
   notice?: ReactNode;
 };
 
 // The home page's body, shared by app/page.tsx (published jobs only) and
 // the admin preview (every job), so the preview can't drift from it.
-export function HomeView({ config, job, content, projects, basePath, stack, notice }: Props) {
+export function HomeView({ config, job, content, projects, basePath, stack, tab, page, notice }: Props) {
   // The job's page sections, in slot order, labelled like their slots.
   // Their ids are the anchor targets the admin editor checks against.
   const sections = homeSections(config, job);
@@ -56,9 +59,11 @@ export function HomeView({ config, job, content, projects, basePath, stack, noti
     <Sheet
       notice={notice}
       lead={
-        <EquipmentPanel
+        <CharacterWindow
           config={config}
           job={job}
+          tab={tab}
+          page={page}
           basePath={basePath}
           // 1.x's default name for the region; 2.0 defaults to "Character panel".
           label="Character sheet"
