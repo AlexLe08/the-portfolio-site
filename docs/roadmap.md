@@ -1389,6 +1389,14 @@
     one in the site header sharing one state (a cookie set by a Server
     Action form, read into `<html data-theme>` by the root layout; no
     cookie follows `prefers-color-scheme`), so either reflects the other.
+- Self-host IBM Plex with `next/font/local` if the Google Fonts download
+  fails a build again. On 2026-11-28 a Vercel preview build of #110
+  failed with 24 Turbopack errors ("Can't resolve
+  '@vercel/turbopack-next/internal/font/google/font'"), which is how a
+  failed `next/font/google` download surfaces; main had built the same
+  code fine. The owner chose to redeploy that time. Self-hosting means
+  committing the Plex Sans (400, 500, 600, 700) and Mono (400, 500) latin
+  files and changing `app/layout.tsx`, as a PR of its own.
 - A better character sheet editor (owner's idea, 2026-11-27): separate
   the values to fill in for the component instead of one JSON document,
   possibly as a companion editor component shipped with
